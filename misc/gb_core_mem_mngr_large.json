@@ -1,0 +1,53 @@
+{
+  "instr_name" : "GB_CORE_MEM_MNGR_LARGE",
+  "config_regs" : [
+    { 
+      "name" : "num_vector_0",
+      "width" : 8,
+      "decode" : [0],
+      "used" : true
+    },
+    {
+      "name" : "base_large_0",
+      "width" : 16,
+      "decode" : [2, 3],
+      "used" : true
+    },
+    { 
+      "name" : "num_vector_1",
+      "width" : 8,
+      "decode" : [4],
+      "used" : true
+    },
+    {
+      "name" : "base_large_1",
+      "width" : 16,
+      "decode" : [6, 7],
+      "used" : true
+    },
+    { 
+      "name" : "num_vector_2",
+      "width" : 8,
+      "decode" : [8],
+      "used" : true
+    },
+    {
+      "name" : "base_large_2",
+      "width" : 16,
+      "decode" : [10, 11],
+      "used" : true
+    },
+    { 
+      "name" : "num_vector_3",
+      "width" : 8,
+      "decode" : [12],
+      "used" : true
+    },
+    {
+      "name" : "base_large_3",
+      "width" : 16,
+      "decode" : [14, 15],
+      "used" : true
+    }
+  ]
+}

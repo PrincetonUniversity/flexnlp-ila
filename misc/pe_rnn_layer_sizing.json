@@ -1,0 +1,41 @@
+{
+  "instr_name" : "RNN_LAYER_SIZING",
+  "config_regs" : [
+    { 
+      "name" : "is_valid",
+      "width" : 1,
+      "decode" : [0],
+      "used" : true
+    },
+    {
+      "name" : "is_zero_first",
+      "width" : 1,
+      "decode" : [1],
+      "used" : true
+    },
+    {
+      "name" : "is_cluster",
+      "width" : 1,
+      "decode" : [2],
+      "used" : true
+    },
+    {
+      "name" : "is_bias",
+      "width" : 1,
+      "decode" : [3],
+      "used": true
+    },
+    {
+      "name" : "num_manager",
+      "width" : 4,
+      "decode" : [4],
+      "used" : true
+    },
+    {
+      "name" : "num_output",
+      "width" : 8,
+      "decode" : [5],
+      "used" : true
+    }
+  ]
+}

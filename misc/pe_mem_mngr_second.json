@@ -1,0 +1,53 @@
+{
+  "instr_name" : "MEM_MNGR_SECOND",
+  "config_regs" : [
+    { 
+      "name" : "zero_active",
+      "width" : 1,
+      "decode" : [0],
+      "used" : true
+    },
+    {
+      "name" : "adpfloat_bias_w",
+      "width" : 3,
+      "decode" : [1],
+      "used" : true
+    },
+    {
+      "name" : "adpfloat_bias_b",
+      "width" : 3,
+      "decode" : [2],
+      "used" : true
+    },
+    {
+      "name" : "adpfloat_bias_i",
+      "width" : 3,
+      "decode" : [3],
+      "used": true
+    },
+    {
+      "name" : "num_input",
+      "width" : 8,
+      "decode" : [4, 5],
+      "used" : true
+    },
+    {
+      "name" : "base_weight",
+      "width" : 16,
+      "decode" : [6, 7],
+      "used" : true
+    },
+    {
+      "name" : "base_bias",
+      "width" : 16,
+      "decode" : [8, 9],
+      "used" : true
+    },
+    {
+      "name" : "base_input",
+      "width" : 16,
+      "decode" : [10, 11],
+      "used" : true
+    }
+  ]
+}

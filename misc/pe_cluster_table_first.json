@@ -1,0 +1,101 @@
+{
+  "instr_name" : "CLUSTER_TABLE_FIRST",
+  "config_regs" : [
+    { 
+      "name" : "Entry0",
+      "width" : 8,
+      "decode" : [0],
+      "used" : true
+    },
+    { 
+      "name" : "Entry1",
+      "width" : 8,
+      "decode" : [1],
+      "used" : true
+    },
+    { 
+      "name" : "Entry2",
+      "width" : 8,
+      "decode" : [2],
+      "used" : true
+    },
+    { 
+      "name" : "Entry3",
+      "width" : 8,
+      "decode" : [3],
+      "used" : true
+    },
+    { 
+      "name" : "Entry4",
+      "width" : 8,
+      "decode" : [4],
+      "used" : true
+    },
+    { 
+      "name" : "Entry5",
+      "width" : 8,
+      "decode" : [5],
+      "used" : true
+    },
+    { 
+      "name" : "Entry6",
+      "width" : 8,
+      "decode" : [6],
+      "used" : true
+    },
+    { 
+      "name" : "Entry7",
+      "width" : 8,
+      "decode" : [7],
+      "used" : true
+    },
+    { 
+      "name" : "Entry8",
+      "width" : 8,
+      "decode" : [8],
+      "used" : true
+    },
+    { 
+      "name" : "Entry9",
+      "width" : 8,
+      "decode" : [9],
+      "used" : true
+    },
+    { 
+      "name" : "Entry10",
+      "width" : 8,
+      "decode" : [10],
+      "used" : true
+    },
+    { 
+      "name" : "Entry11",
+      "width" : 8,
+      "decode" : [11],
+      "used" : true
+    },
+    { 
+      "name" : "Entry12",
+      "width" : 8,
+      "decode" : [12],
+      "used" : true
+    },
+    { 
+      "name" : "Entry13",
+      "width" : 8,
+      "decode" : [13],
+      "used" : true
+    },
+    { 
+      "name" : "Entry14",
+      "width" : 8,
+      "decode" : [14],
+      "used" : true
+    },
+    { 
+      "name" : "Entry15",
+      "width" : 8,
+      "decode" : [15],
+      "used" : true
+    }
+  ]
+}

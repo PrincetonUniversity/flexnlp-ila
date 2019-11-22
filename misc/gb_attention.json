@@ -1,0 +1,83 @@
+{
+  "instr_name" : "GB_ATTENTION",
+  "config_regs" : [
+    { 
+      "name" : "is_valid",
+      "width" : 1,
+      "decode" : [0],
+      "used" : true
+    },
+    {
+      "name" : "mode",
+      "width" : 3,
+      "decode" : [1],
+      "used" : false
+    },
+    {
+      "name" : "is_rnn",
+      "width" : 1,
+      "decode" : [2],
+      "used" : false
+    },
+    {
+      "name" : "memory_index_1",
+      "width" : 3,
+      "decode" : [4],
+      "used": true
+    },
+    {
+      "name" : "memory_index_2",
+      "width" : 3,
+      "decode" : [5],
+      "used" : true
+    },
+    {
+      "name" : "num_vector_1",
+      "width" : 8,
+      "decode" : [6],
+      "used" : true
+    },
+    {
+      "name" : "num_vector_2",
+      "width" : 8,
+      "decode" : [7],
+      "used" : false
+    },
+    {
+      "name" : "num_timestep_1",
+      "width" : 16,
+      "decode" : [8, 9],
+      "used" : true
+    },
+    {
+      "name" : "num_timestep_2",
+      "width" : 16,
+      "decode" : [10, 11],
+      "used" : false
+    },
+    {
+      "name" : "adpbias_1",
+      "width" : 3,
+      "decode" : [12],
+      "used" : true
+    },
+    {
+      "name" : "adpbias_2",
+      "width" : 3,
+      "decode" : [13],
+      "used" : true
+    },
+    {
+      "name" : "adpbias_3",
+      "width" : 3,
+      "decode" : [14],
+      "used" : true
+    },
+    {
+      "name" : "adpbias_4",
+      "width" : 3,
+      "decode" : [15],
+      "used" : true
+    }
+  ]
+}

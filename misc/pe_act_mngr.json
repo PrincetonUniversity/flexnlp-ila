@@ -1,0 +1,47 @@
+{
+  "instr_name" : "ACT_MNGR",
+  "config_regs" : [
+    { 
+      "name" : "is_valid",
+      "width" : 1,
+      "decode" : [0],
+      "used" : true
+    },
+    {
+      "name" : "is_zero_first",
+      "width" : 1,
+      "decode" : [1],
+      "used" : true
+    },
+    {
+      "name" : "adpfloat_bias",
+      "width" : 3,
+      "decode" : [2],
+      "used" : true
+    },
+    {
+      "name" : "num_inst",
+      "width" : 6,
+      "decode" : [3],
+      "used": true
+    },
+    {
+      "name" : "num_output",
+      "width" : 8,
+      "decode" : [4],
+      "used" : true
+    },
+    {
+      "name" : "buffer_addr_base",
+      "width" : 16,
+      "decode" : [6, 7],
+      "used" : true
+    },
+    {
+      "name" : "output_addr_base",
+      "width" : 8,
+      "decode" : [8],
+      "used" : true
+    }
+  ]
+}

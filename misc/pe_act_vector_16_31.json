@@ -1,0 +1,101 @@
+{
+  "instr_name" : "ACT_VECTOR_16_31",
+  "config_regs" : [
+    { 
+      "name" : "Inst0",
+      "width" : 8,
+      "decode" : [0],
+      "used" : true
+    },
+    { 
+      "name" : "Inst1",
+      "width" : 8,
+      "decode" : [1],
+      "used" : true
+    },
+    { 
+      "name" : "Inst2",
+      "width" : 8,
+      "decode" : [2],
+      "used" : true
+    },
+    { 
+      "name" : "Inst3",
+      "width" : 8,
+      "decode" : [3],
+      "used" : true
+    },
+    { 
+      "name" : "Inst4",
+      "width" : 8,
+      "decode" : [4],
+      "used" : true
+    },
+    { 
+      "name" : "Inst5",
+      "width" : 8,
+      "decode" : [5],
+      "used" : true
+    },
+    { 
+      "name" : "Inst6",
+      "width" : 8,
+      "decode" : [6],
+      "used" : true
+    },
+    { 
+      "name" : "Inst7",
+      "width" : 8,
+      "decode" : [7],
+      "used" : true
+    },
+    { 
+      "name" : "Inst8",
+      "width" : 8,
+      "decode" : [8],
+      "used" : true
+    },
+    { 
+      "name" : "Inst9",
+      "width" : 8,
+      "decode" : [9],
+      "used" : true
+    },
+    { 
+      "name" : "Inst10",
+      "width" : 8,
+      "decode" : [10],
+      "used" : true
+    },
+    { 
+      "name" : "Inst11",
+      "width" : 8,
+      "decode" : [11],
+      "used" : true
+    },
+    { 
+      "name" : "Inst12",
+      "width" : 8,
+      "decode" : [12],
+      "used" : true
+    },
+    { 
+      "name" : "Inst13",
+      "width" : 8,
+      "decode" : [13],
+      "used" : true
+    },
+    { 
+      "name" : "Inst14",
+      "width" : 8,
+      "decode" : [14],
+      "used" : true
+    },
+    { 
+      "name" : "Inst15",
+      "width" : 8,
+      "decode" : [15],
+      "used" : true
+    }
+  ]
+}

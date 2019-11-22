@@ -1,0 +1,53 @@
+{
+  "instr_name" : "GB_CORE_MEM_MNGR_SMALL",
+  "config_regs" : [
+    { 
+      "name" : "base_small_0",
+      "width" : 16,
+      "decode" : [0, 1],
+      "used" : true
+    },
+    { 
+      "name" : "base_small_1",
+      "width" : 16,
+      "decode" : [2, 3],
+      "used" : true
+    },
+    { 
+      "name" : "base_small_2",
+      "width" : 16,
+      "decode" : [4, 5],
+      "used" : true
+    },
+    { 
+      "name" : "base_small_3",
+      "width" : 16,
+      "decode" : [6, 7],
+      "used" : true
+    },
+    { 
+      "name" : "base_small_4",
+      "width" : 16,
+      "decode" : [8, 9],
+      "used" : true
+    },
+    { 
+      "name" : "base_small_5",
+      "width" : 16,
+      "decode" : [10, 11],
+      "used" : true
+    },
+    { 
+      "name" : "base_small_6",
+      "width" : 16,
+      "decode" : [12, 13],
+      "used" : true
+    },
+    { 
+      "name" : "base_small_7",
+      "width" : 16,
+      "decode" : [14, 15],
+      "used" : true
+    }
+  ]
+}
