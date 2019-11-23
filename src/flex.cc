@@ -55,7 +55,7 @@ Ila GetFlexIla(const std::string& model_name) {
   auto is_wr_or_rd = m.input(TOP_IF_WR) | m.input(TOP_IF_RD);
   auto is_mmio_addr = (m.input(TOP_ADDR_IN) >= TOP_GB_ADDR_MIN) &
                       (m.input(TOP_ADDR_IN) <= TOP_PE3_ADDR_MAX);
-  m.SetValid(is_wr_or_rd | is_mmio_addr);
+  m.SetValid(is_wr_or_rd & is_mmio_addr);
 
   //
   // define instructions
