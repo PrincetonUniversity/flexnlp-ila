@@ -51,9 +51,10 @@ namespace ilang {
   "gb_layer_reduce_num_timestep_1"
 #define GB_LAYER_REDUCE_CONFIG_REG_NUM_TIMESTEP_1_WIDTH 16
 
-#define OP_MAX 0
-#define OP_MEAN 1
-#define OP_ADD 2
+// mode value
+#define GB_LAYER_REDUCE_OP_MAX 0
+#define GB_LAYER_REDUCE_OP_MEAN 1
+#define GB_LAYER_REDUCE_OP_ADD 2
 
 }; // namespace ilang
 
