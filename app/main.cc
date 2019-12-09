@@ -26,7 +26,6 @@
 
 #include <flex/flex.h>
 
-#include <fstream>
 #include <ilang/util/log.h>
 
 using namespace ilang;
@@ -41,12 +40,9 @@ int main() {
   ILA_INFO << "#state: " << flex.state_num();
   ILA_INFO << "#instr: " << flex.instr_num();
 
-#if 0
-  // export ILA to Verilog
-  std::ofstream fw("flex.v");
-  flex.ExportToVerilog(fw);
-  fw.close();
-#endif
+  for (auto i = 0; i < flex.instr_num(); i++) {
+    ILA_INFO << flex.instr(i);
+  }
 
   return 0;
 }
