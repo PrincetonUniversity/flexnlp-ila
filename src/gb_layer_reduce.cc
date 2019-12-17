@@ -60,24 +60,32 @@ void DefineStartGBLayerReduce(Ila& m) {
               m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_2) - 16,
               Ite((memory_index == 2),
                   m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3) - 16,
-                  BvConst(0xFFFF0, 20))));
-  // FIXME use GB_CORE_STORE_LARGE_ADDR_MAX/MIN instead of concrete number
-  // same as bit-width
+                  BvConst(GB_CORE_STORE_LARGE_SIZE, GB_CORE_STORE_LARGE_BITWIDTH))));
+  // FIXME: use GB_CORE_STORE_LARGE_ADDR_MAX/MIN instead of concrete number
+  // same as bit-width (done)
 
   // Parameter preprocessing, translating parameters used in ILA model
 
   // how many iterations should the layer reduce performs in pairs
   auto pair_num = Ite((SelectBit(num_timestep, 0) == 0), num_timestep / 2,
                       (num_timestep - 1) / 2);
+
   auto timestep_size = num_vector * 16;
+  
   auto block_size =
       memory_max_addr_offset -
       memory_min_addr_offset; // the size of the targeted memory block
-  auto is_overflow =
-      Ite((timestep_size * num_timestep > block_size), 1,
-          0); // check whether the data has exceeded the block size
-  auto iterations =
-      Ite((is_overflow == 1), block_size / (2 * timestep_size), pair_num);
+
+// The over_flow should be detected elsewhere?
+// the overwrite situation happens when num_of_timestep is larger than given.
+// Thus the additional operations will do the pooling on time_step which are already
+// been pooled.
+
+//   auto is_overflow =
+//       Ite((timestep_size * num_timestep > block_size), 1,
+//           0); // check whether the data has exceeded the block size
+ 
+  auto iterations = pair_num;
 
   // layer reduce operations
   // memory layout in ILA, fixed 128bit length for a vector, modeled using 8
@@ -89,40 +97,130 @@ void DefineStartGBLayerReduce(Ila& m) {
   // **************************
   //          ... ...
 
-  // operations, 3 layers of loops
+  // operations, 2 layers of loops
   // 1. loop of iterations: block level
   // 2. loop of vector_entries: vector level
+  // operations are implemented by 3 level of ILA model
+  // "start_gb_reduce" -> "gb_layer_reduce_timestep_level" -> "gb_layer_reduce_vector_level"
 
-  // ILA entry number = 2*iterations + timestep(0 or 1)*num_vector +
-  // vector_num*byte_num
-  auto mem = m.state(GB_CORE_LARGE_BUFFER);
+  instr.SetUpdate(GB_LAYER_REDUCE_ITERATIONS, iterations);
+  instr.SetUpdate(GB_LAYER_REDUCE_MEMORY_MIN_ADDR_OFFSET, memory_min_addr_offset);
+  instr.SetUpdate(GB_LAYER_REDUCE_MEMORY_BLOCK_SIZE, block_size);
+  instr.SetUpdate(GB_LAYER_REDUCE_TIMESTEP_SIZE, timestep_size);
+  instr.SetUpdate(GB_LAYER_REDUCE_TIME_STEP_OP_CNTR, 0);
 
-  // FIXME iterations is an expression --> cannot be used in the loop condition
-  // use child-instruction instead
-  for (auto i = 0; i < iterations; i = i + 1) {
-    auto entry_base_0 =
-        i * 2 * timestep_size; // byte level address for loading data
-    auto entry_base_1 = (i * 2 + 1) * timestep_size;
-    auto store_base =
-        i * 2 *
-        timestep_size; // byte level address for storing the pooling result
+  AddChild_gb_lr_ts(m);
+}
 
-    for (auto j = 0; j < timestep_size; j = j + 1) {
-      auto store_addr = store_base + j;
-      auto data_0_addr = entry_base_0 + j;
-      auto data_1_addr = entry_base_1 + j;
+// TODO: complete the time_step layer loop
+void AddChild_gb_lr_ts(Ila& m){
 
-      auto data_0 = Load(mem, data_0_addr);
-      auto data_1 = Load(mem, data_1_addr);
+    auto child_ts = m.NewChild("GB_LAYER_REDUCE_TIMESTEP_LEVEL");
 
-      auto result = Ite((mode == GB_LAYER_REDUCE_OP_MAX),
-                        Ite((data_0 > data_1), data_0, data_1),
-                        Ite((mode == GB_LAYER_REDUCE_OP_MEAN),
-                            (data_0 + data_1) / 2, data_0 + data_1));
+    auto counter = m.state(GB_LAYER_REDUCE_TIME_STEP_OP_CNTR);
+    
+    child_ts.SetValid(counter < m.State(GB_LAYER_REDUCE_ITERATIONS));
+    child_ts.SetFetch(BvConst(0x1, 1));
 
-      Store(mem, store_addr, result);
+    // internal states for this child
+    child_ts.NewState(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_0,
+                        GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_0_WIDTH);
+    child_ts.NewState(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_1,
+                        GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_1_WIDTH);
+    child_ts.NewState(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_RESULT,
+                        GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_RESULT_WIDTH);
+
+    child_ts.NewState(GB_LAYER_REDUCE_VECTOR_LEVEL_OP_CNTR,
+                    GB_LAYER_REDUCE_VECTOR_LEVEL_OP_CNTR_WIDTH);
+    
+    // states
+    auto ts_base_addr_0 = child_ts.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_0);
+    auto ts_base_addr_1 = child_ts.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_1);
+    auto ts_base_addr_result = child_ts.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_RESULT);
+
+    auto start_addr = m.state(GB_LAYER_REDUCE_MEMORY_MIN_ADDR_OFFSET);
+    auto block_size = m.state(GB_LAYER_REDUCE_MEMORY_BLOCK_SIZE);
+    auto timestep_size = m.state(GB_LAYER_REDUCE_TIMESTEP_SIZE);
+
+    // only 1 instructions, doing time_step level layer reduction,
+    // calculating timestep base address for sub_instructions
+    {
+        auto instr = child_ts.NewInstr("gb_layer_reduce_timestep_level_op");
+
+        instr.SetUpdate(counter, counter + 1);
+        // assumption: block size is of even multiple size of timestep_size
+        auto base_addr_0 = start_addr + URem((counter*2*timestep_size), block_size);
+        auto base_addr_1 = start_addr + URem(((2*counter+1)*timestep_size), block_size);
+        auto base_addr_result = start_addr + URem((counter*timestep_size), block_size);
+
+        // states update for sub-operations
+        instr.SetUpdate(ts_base_addr_0, base_addr_0);
+        instr.SetUpdate(ts_baes_addr_1, base_addr_1);
+        instr.SetUpdate(ts_base_addr_result, base_addr_result);
+
+        instr.SetUpdate(child_ts.state(GB_LAYER_REDUCE_VECTOR_LEVEL_OP_CNTR), 0);
+        
+        // TODO: implement the child instruction for the inner loop
+        AddChild_gb_lr_v(m, child_ts);
     }
-  }
+}
+
+void AddChild_gb_lr_v(Ila& m, Ila& child_ts) {
+
+    auto child_v = child_ts.NewChild("GB_LAYER_REDUCE_VECTOR_LEVEL");
+
+    auto counter = child_ts.state(GB_LAYER_REDUCE_VECTOR_LEVEL_OP_CNTR);
+    auto timestep_size = m.state(GB_LAYER_REDUCE_TIMESTEP_SIZE);
+
+    child_v.SetValid(counter < timestep_size);
+    child_v.SetFetch(BvConst(0x1, 1));
+
+    // states
+    child_v.NewState(GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_0,
+                        GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_0_WIDTH);
+    child_v.NewState(GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_1,
+                        GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_1_WIDTH);
+    child_v.NewState(GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_RESULT,
+                        GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_RESULT_WIDTH);
+
+    auto ts_base_addr_0 = child_ts.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_0);
+    auto ts_base_addr_1 = child_ts.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_1);
+    auto ts_base_addr_result = child_ts.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_RESULT);
+
+    auto v_addr_0 = child_v.state(GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_0);
+    auto v_addr_1 = child_v.state(GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_1);
+    auto v_addr_result = child.state(GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_RESULT);
+    auto op_mode = m.state(GB_LAYER_REDUCE_CONFIG_REG_MODE);
+
+    auto mem = m.state(GB_CORE_LARGE_BUFFER);
+
+    {
+        auto instr = child_ts.NewInstr("gb_layer_reduce_vector_level_op");
+
+        instr.SetUpdate(counter, counter+1);
+
+        auto addr_0 = Ite((counter == 0), ts_base_addr_0, v_addr_0);
+        auto addr_1 = Ite((counter == 0), ts_base_addr_1, v_addr_1);
+        auto addr_result = Ite((counter == 0, ts_base_addr_result, v_addr_result));
+
+        auto data_0 = Load(mem, addr_0);
+        auto data_1 = Load(mem, addr_1);
+
+        auto result = Ite((op_mode == GB_LAYER_REDUCE_OP_MAX),
+                        Ite((data_0 > data_1), data_0, data_1),
+                            Ite((op_mode == GB_LAYER_REDUCE_OP_MEAN),
+                                (data_0 + data_1) / 2, 
+                                    data_0 + data_1)); 
+        
+        instr.SetUpdate(mem, Store(mem, addr_result, result));
+        instr.SetUpdate(v_addr_0, Ite(counter == 0, ts_base_addr_0 + 1, v_addr_0 + 1));
+        instr.SetUpdate(v_addr_1, Ite(counter == 0, ts_base_addr_1 + 1, v_addr_1 + 1));
+        instr.SetUpdate(v_addr_result, Ite(counter == 0, ts_base_addr_result + 1, 
+                                                         v_addr_result + 1));
+        
+    }
+
+    
 }
 
 }; // namespace ilang
