@@ -63,6 +63,8 @@ void DefineStartGBZeroPadding(Ila& m);
 void DefineStartPERnnLayerSizing(Ila& m, const int& pe_idx,
                                  const uint64_t& base);
 
+void DefineGBInternalStates(Ila& m);
+
 }; // namespace ilang
 
 #endif // FLEX_FLEX_H__

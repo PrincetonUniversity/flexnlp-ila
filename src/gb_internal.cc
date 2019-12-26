@@ -30,18 +30,26 @@
 #include <ilang/ilang++.h>
 
 namespace ilang {
-// GB Layer Reduce Internal States
-// states for iterations, iterations = num_timestep/2
-m.NewBvState(GB_LAYER_REDUCE_ITERATIONS, GB_LAYER_REDUCE_ITERATIONS_WIDTH);
-// states for holding the minimun address of the in the large buffer
-m.NewBvState(GB_LAYER_REDUCE_MEMORY_MIN_ADDR_OFFSET,
-             GB_LAYER_REDUCE_MEMORY_MIN_ADDR_OFFSET_WIDTH);
-// states for holding the block size in the layer reduction
-m.NewBvState(GB_LAYER_REDUCE_MEMORY_BLOCK_SIZE,
-             GB_LAYER_REDUCE_MEMORY_BLOCK_SIZE_WIDTH);
+void DefineGBInternalStates(Ila& m) {
+  // GB Layer Reduce Internal States
+  // states for iterations, iterations = num_timestep/2
+  m.NewBvState(GB_LAYER_REDUCE_ITERATIONS, GB_LAYER_REDUCE_ITERATIONS_WIDTH);
+  // states for holding the minimun address of the in the large buffer
+  m.NewBvState(GB_LAYER_REDUCE_MEMORY_MIN_ADDR_OFFSET,
+              GB_LAYER_REDUCE_MEMORY_MIN_ADDR_OFFSET_WIDTH);
+  // states for holding the block size in the layer reduction
+  m.NewBvState(GB_LAYER_REDUCE_MEMORY_BLOCK_SIZE,
+              GB_LAYER_REDUCE_MEMORY_BLOCK_SIZE_WIDTH);
+  
+  // states for holding timestep size
+  m.NewBvState(GB_LAYER_REDUCE_TIMESTEP_SIZE,
+                GB_LAYER_REDUCE_TIMESTEP_SIZE_WIDTH);
 
-// state for time_step level pooling counter
-m.NewBvState(GB_LAYER_REDUCE_TIME_STEP_OP_CNTR,
-             GB_LAYER_REDUCE_TIME_STEP_OP_CNTR_WIDTH);
+  // state for time_step level pooling counter
+  m.NewBvState(GB_LAYER_REDUCE_TIME_STEP_OP_CNTR,
+              GB_LAYER_REDUCE_TIME_STEP_OP_CNTR_WIDTH);
+}
+
+
 
 }; // namespace ilang
