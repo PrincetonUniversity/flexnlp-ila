@@ -51,6 +51,71 @@ namespace ilang {
   "gb_layer_reduce_num_timestep_1"
 #define GB_LAYER_REDUCE_CONFIG_REG_NUM_TIMESTEP_1_WIDTH 16
 
+// mode value
+#define GB_LAYER_REDUCE_OP_MAX 0
+#define GB_LAYER_REDUCE_OP_MEAN 1
+#define GB_LAYER_REDUCE_OP_ADD 2
+
+// states for sub-instructions
+#define GB_LAYER_REDUCE_ITERATIONS "gb_layer_reduce_iterations"
+#define GB_LAYER_REDUCE_ITERATIONS_WIDTH                                      \
+  GB_LAYER_REDUCE_CONFIG_REG_NUM_TIMESTEP_1_WIDTH
+
+#define GB_LAYER_REDUCE_MEMORY_MIN_ADDR_OFFSET                                \
+  "gb_layer_reduce_memory_min_addr_offset"
+#define GB_LAYER_REDUCE_MEMORY_MIN_ADDR_OFFSET_WIDTH                          \
+  GB_CORE_STORE_LARGE_BITWIDTH
+
+#define GB_LAYER_REDUCE_MEMORY_MAX_ADDR_OFFSET                                \
+  "gb_layer_reduce_memory_max_addr_offset"
+
+#define GB_LAYER_REDUCE_MEMORY_BLOCK_SIZE                                     \
+  "gb_layer_reduce_memory_block_size"
+#define GB_LAYER_REDUCE_MEMORY_BLOCK_SIZE_WIDTH                               \
+  GB_CORE_STORE_LARGE_BITWIDTH
+
+#define GB_LAYER_REDUCE_TIMESTEP_SIZE "gb_layer_timestep_size"                
+#define GB_LAYER_REDUCE_TIMESTEP_SIZE_WIDTH GB_CORE_STORE_LARGE_BITWIDTH
+
+#define GB_LAYER_REDUCE_TIME_STEP_OP_CNTR                                     \
+  "gb_layer_reduce_time_step_op_cntr"
+
+#define GB_LAYER_REDUCE_TIME_STEP_OP_CNTR_WIDTH                               \
+  GB_LAYER_REDUCE_CONFIG_REG_NUM_TIMESTEP_1_WIDTH
+
+/* time step level child instructions states parameters*/
+#define GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_0                            \
+  "gb_layer_reduce_timestep_level_base_addr_0"
+#define GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_0_WIDTH                      \
+  TOP_ADDR_IN_WIDTH
+#define GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_1                            \
+  "gb_layer_reduce_timestep_level_base_addr_1"
+#define GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_1_WIDTH                      \
+  TOP_ADDR_IN_WIDTH
+#define GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_RESULT                       \
+  "gb_layer_reduce_timestep_level_base_addr_result"
+#define GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_RESULT_WIDTH                 \
+  TOP_ADDR_IN_WIDTH
+
+#define GB_LAYER_REDUCE_VECTOR_LEVEL_OP_CNTR                                  \
+  "gb_layer_reduce_vector_level_op_cntr"
+#define GB_LAYER_REDUCE_VECTOR_LEVEL_OP_CNTR_WIDTH                            \
+  GB_LAYER_REDUCE_CONFIG_REG_NUM_TIMESTEP_1_WIDTH
+
+/* vector level child instruction states parameter*/
+#define GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_0                                   \
+  "gb_layer_reduce_vector_level_addr_0"
+#define GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_0_WIDTH                             \
+  TOP_ADDR_IN_WIDTH
+#define GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_1                                   \
+  "gb_layer_reduce_vector_level_addr_1"
+#define GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_1_WIDTH                             \
+  TOP_ADDR_IN_WIDTH
+#define GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_RESULT                              \
+  "gb_layer_reduce_vector_level_addr_0"
+#define GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_RESULT_WIDTH                        \
+  TOP_ADDR_IN_WIDTH
+
 }; // namespace ilang
 
 #endif // FLEX_GB_LAYER_REDUCE_H__

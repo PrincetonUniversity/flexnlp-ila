@@ -22,49 +22,34 @@
 // SOFTWARE.
 // =============================================================================
 
-// File: flex.h
-
-#ifndef FLEX_FLEX_H__
-#define FLEX_FLEX_H__
+// File: gb_internal.cc
 
 #include <flex/gb_config.h>
-#include <flex/pe_config.h>
 #include <flex/top_config.h>
 
 #include <ilang/ilang++.h>
-#include <string>
 
 namespace ilang {
+void DefineGBInternalStates(Ila& m) {
+  // GB Layer Reduce Internal States
+  // states for iterations, iterations = num_timestep/2
+  m.NewBvState(GB_LAYER_REDUCE_ITERATIONS, GB_LAYER_REDUCE_ITERATIONS_WIDTH);
+  // states for holding the minimun address of the in the large buffer
+  m.NewBvState(GB_LAYER_REDUCE_MEMORY_MIN_ADDR_OFFSET,
+              GB_LAYER_REDUCE_MEMORY_MIN_ADDR_OFFSET_WIDTH);
+  // states for holding the block size in the layer reduction
+  m.NewBvState(GB_LAYER_REDUCE_MEMORY_BLOCK_SIZE,
+              GB_LAYER_REDUCE_MEMORY_BLOCK_SIZE_WIDTH);
+  
+  // states for holding timestep size
+  m.NewBvState(GB_LAYER_REDUCE_TIMESTEP_SIZE,
+                GB_LAYER_REDUCE_TIMESTEP_SIZE_WIDTH);
 
-Ila GetFlexIla(const std::string& model_name = "flex");
+  // state for time_step level pooling counter
+  m.NewBvState(GB_LAYER_REDUCE_TIME_STEP_OP_CNTR,
+              GB_LAYER_REDUCE_TIME_STEP_OP_CNTR_WIDTH);
+}
 
-// helper functions
-void DefineTopInput(Ila& m);
 
-void DefineGBConfigState(Ila& m);
-void DefineGBOtherState(Ila& m);
-
-void DefinePEConfigState(Ila& m, const int& pe_idx);
-void DefinePEOtherState(Ila& m, const int& pe_idx);
-
-void DefineGBConfigInstr(Ila& m);
-void DefinePEConfigInstr(Ila& m, const int& pe_idx, const uint64_t& base);
-
-void DefineGBCoreStore(Ila& m);
-void DefinePECoreStore(Ila& m, const int& pe_idx, const uint64_t& base);
-void DefinePEActStore(Ila& m, const int& pe_idx, const uint64_t& base);
-
-void DefineStartGBAttention(Ila& m);
-void DefineStartGBControl(Ila& m);
-void DefineStartGBLayerNorm(Ila& m);
-void DefineStartGBLayerReduce(Ila& m);
-void DefineStartGBZeroPadding(Ila& m);
-
-void DefineStartPERnnLayerSizing(Ila& m, const int& pe_idx,
-                                 const uint64_t& base);
-
-void DefineGBInternalStates(Ila& m);
 
 }; // namespace ilang
-
-#endif // FLEX_FLEX_H__

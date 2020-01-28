@@ -81,6 +81,9 @@ Ila GetFlexIla(const std::string& model_name) {
   DefinePEActStore(m, 2, TOP_PE2_ADDR_MIN);
   DefinePEActStore(m, 3, TOP_PE3_ADDR_MIN);
 
+  // GB internal states
+  DefineGBInternalStates(m);
+
   // GB specific start instructions
   DefineStartGBAttention(m);
   DefineStartGBControl(m);
