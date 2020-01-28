@@ -75,7 +75,8 @@ namespace ilang {
   GB_CORE_STORE_LARGE_BITWIDTH
 
 #define GB_LAYER_REDUCE_TIMESTEP_SIZE "gb_layer_timestep_size"                
-#define GB_LAYER_REDUCE_TIMESTEP_SIZE_WIDTH GB_CORE_STORE_LARGE_BITWIDTH
+#define GB_LAYER_REDUCE_TIMESTEP_SIZE_WIDTH                                   \
+  GB_LAYER_REDUCE_CONFIG_REG_NUM_TIMESTEP_1_WIDTH
 
 #define GB_LAYER_REDUCE_TIME_STEP_OP_CNTR                                     \
   "gb_layer_reduce_time_step_op_cntr"
@@ -87,15 +88,15 @@ namespace ilang {
 #define GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_0                            \
   "gb_layer_reduce_timestep_level_base_addr_0"
 #define GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_0_WIDTH                      \
-  TOP_ADDR_IN_WIDTH
+  GB_CORE_STORE_LARGE_BITWIDTH
 #define GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_1                            \
   "gb_layer_reduce_timestep_level_base_addr_1"
 #define GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_1_WIDTH                      \
-  TOP_ADDR_IN_WIDTH
+  GB_CORE_STORE_LARGE_BITWIDTH
 #define GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_RESULT                       \
   "gb_layer_reduce_timestep_level_base_addr_result"
 #define GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_RESULT_WIDTH                 \
-  TOP_ADDR_IN_WIDTH
+  GB_CORE_STORE_LARGE_BITWIDTH
 
 #define GB_LAYER_REDUCE_VECTOR_LEVEL_OP_CNTR                                  \
   "gb_layer_reduce_vector_level_op_cntr"
@@ -106,15 +107,15 @@ namespace ilang {
 #define GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_0                                   \
   "gb_layer_reduce_vector_level_addr_0"
 #define GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_0_WIDTH                             \
-  TOP_ADDR_IN_WIDTH
+  GB_CORE_STORE_LARGE_BITWIDTH
 #define GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_1                                   \
   "gb_layer_reduce_vector_level_addr_1"
 #define GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_1_WIDTH                             \
-  TOP_ADDR_IN_WIDTH
+  GB_CORE_STORE_LARGE_BITWIDTH
 #define GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_RESULT                              \
-  "gb_layer_reduce_vector_level_addr_0"
+  "gb_layer_reduce_vector_level_addr_0_result"
 #define GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_RESULT_WIDTH                        \
-  TOP_ADDR_IN_WIDTH
+  GB_CORE_STORE_LARGE_BITWIDTH
 
 }; // namespace ilang
 

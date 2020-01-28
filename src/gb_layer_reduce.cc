@@ -50,36 +50,36 @@ void DefineStartGBLayerReduce(Ila& m) {
   // Parameters form the GB_CORE_MEM_MNGR_LARGE
   auto memory_min_addr_offset =
       Ite((memory_index == 0),
-          m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_0),
+          Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_0), BvConst(0, 4)),
           Ite((memory_index == 1),
-              m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_1),
+              Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_1), BvConst(0, 4)),
               Ite((memory_index == 2),
-                  m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_2),
-                  m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3))));
+                  Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_2), BvConst(0, 4)),
+                  Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3), BvConst(0, 4)))));
 
   auto memory_max_addr_offset =
       Ite((memory_index == 0),
-          m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_1) - 16,
+          Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_1) - 16, BvConst(0, 4)),
           Ite((memory_index == 1),
-              m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_2) - 16,
+              Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_2) - 16, BvConst(0, 4)),
               Ite((memory_index == 2),
-                  m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3) - 16,
+                  Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3) - 16, BvConst(0, 4)),
                   BvConst(GB_CORE_STORE_LARGE_SIZE, GB_CORE_STORE_LARGE_BITWIDTH))));
   // FIXME: use GB_CORE_STORE_LARGE_ADDR_MAX/MIN instead of concrete number
   // same as bit-width (done)
 
   // Parameter preprocessing, translating parameters used in ILA model
-
+  
   // how many iterations should the layer reduce performs in pairs
   auto pair_num = Ite((SelectBit(num_timestep, 0) == 0), 
                     num_timestep / BvConst(2, GB_LAYER_REDUCE_CONFIG_REG_NUM_TIMESTEP_1_WIDTH),
                     (num_timestep - 1) / BvConst(2, GB_LAYER_REDUCE_CONFIG_REG_NUM_TIMESTEP_1_WIDTH));
 
   auto timestep_size = num_vector * 16;
-  
+
+  // the size of the targeted memory block
   auto block_size =
-      memory_max_addr_offset -
-      memory_min_addr_offset; // the size of the targeted memory block
+      memory_max_addr_offset - memory_min_addr_offset; 
 
 // The over_flow should be detected elsewhere?
 // the overwrite situation happens when num_of_timestep is larger than given.
@@ -124,7 +124,7 @@ void AddChild_gb_lr_ts(Ila& m){
 
     auto child_ts = m.NewChild("GB_LAYER_REDUCE_TIMESTEP_LEVEL");
 
-    auto counter = m.state(GB_LAYER_REDUCE_TIME_STEP_OP_CNTR);
+    auto counter = m.state(GB_LAYER_REDUCE_TIME_STEP_OP_CNTR); //16
     
     child_ts.SetValid(counter < m.state(GB_LAYER_REDUCE_ITERATIONS));
     child_ts.SetFetch(BvConst(0x1, 1));
@@ -141,13 +141,13 @@ void AddChild_gb_lr_ts(Ila& m){
                     GB_LAYER_REDUCE_VECTOR_LEVEL_OP_CNTR_WIDTH);
     
     // states
-    auto ts_base_addr_0 = child_ts.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_0);
-    auto ts_base_addr_1 = child_ts.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_1);
-    auto ts_base_addr_result = child_ts.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_RESULT);
+    auto ts_base_addr_0 = child_ts.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_0); //20
+    auto ts_base_addr_1 = child_ts.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_1); //20
+    auto ts_base_addr_result = child_ts.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_RESULT); //20
 
-    auto start_addr = m.state(GB_LAYER_REDUCE_MEMORY_MIN_ADDR_OFFSET);
-    auto block_size = m.state(GB_LAYER_REDUCE_MEMORY_BLOCK_SIZE);
-    auto timestep_size = m.state(GB_LAYER_REDUCE_TIMESTEP_SIZE);
+    auto start_addr = m.state(GB_LAYER_REDUCE_MEMORY_MIN_ADDR_OFFSET); //20
+    auto block_size = m.state(GB_LAYER_REDUCE_MEMORY_BLOCK_SIZE); //20
+    auto timestep_size = m.state(GB_LAYER_REDUCE_TIMESTEP_SIZE); //16
 
     // only 1 instructions, doing time_step level layer reduction,
     // calculating timestep base address for sub_instructions
@@ -156,9 +156,12 @@ void AddChild_gb_lr_ts(Ila& m){
 
         instr.SetUpdate(counter, counter + 1);
         // assumption: block size is of even multiple size of timestep_size
-        auto base_addr_0 = start_addr + URem((counter*2*timestep_size), block_size);
-        auto base_addr_1 = start_addr + URem(((counter*2+1)*timestep_size), block_size);
-        auto base_addr_result = start_addr + URem((counter*timestep_size), block_size);
+        auto counter_20 = Concat(BvConst(0,4), counter);
+        auto timestep_size_20 = Concat(BvConst(0,4), timestep_size);
+
+        auto base_addr_0 = start_addr + URem((counter_20*2*timestep_size_20), block_size);
+        auto base_addr_1 = start_addr + URem(((counter_20*2+1)*timestep_size_20), block_size);
+        auto base_addr_result = start_addr + URem((counter_20*timestep_size_20), block_size);
 
         // states update for sub-operations
         instr.SetUpdate(ts_base_addr_0, base_addr_0);
@@ -177,8 +180,8 @@ void AddChild_gb_lr_v(Ila& m, Ila& child_ts) {
 
     auto child_v = child_ts.NewChild("GB_LAYER_REDUCE_VECTOR_LEVEL");
 
-    auto counter = child_ts.state(GB_LAYER_REDUCE_VECTOR_LEVEL_OP_CNTR);
-    auto timestep_size = m.state(GB_LAYER_REDUCE_TIMESTEP_SIZE);
+    auto counter = child_ts.state(GB_LAYER_REDUCE_VECTOR_LEVEL_OP_CNTR); //16
+    auto timestep_size = m.state(GB_LAYER_REDUCE_TIMESTEP_SIZE); //16
 
     child_v.SetValid(counter < timestep_size);
     child_v.SetFetch(BvConst(0x1, 1));
@@ -191,13 +194,13 @@ void AddChild_gb_lr_v(Ila& m, Ila& child_ts) {
     child_v.NewBvState(GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_RESULT,
                         GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_RESULT_WIDTH);
 
-    auto ts_base_addr_0 = child_ts.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_0);
-    auto ts_base_addr_1 = child_ts.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_1);
-    auto ts_base_addr_result = child_ts.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_RESULT);
+    auto ts_base_addr_0 = child_ts.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_0); //20
+    auto ts_base_addr_1 = child_ts.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_1); //20
+    auto ts_base_addr_result = child_ts.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_RESULT); //20
 
-    auto v_addr_0 = child_v.state(GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_0);
-    auto v_addr_1 = child_v.state(GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_1);
-    auto v_addr_result = child_v.state(GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_RESULT);
+    auto v_addr_0 = child_v.state(GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_0); //20
+    auto v_addr_1 = child_v.state(GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_1); //20
+    auto v_addr_result = child_v.state(GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_RESULT); //20
     auto op_mode = m.state(GB_LAYER_REDUCE_CONFIG_REG_MODE);
 
     auto mem = m.state(GB_CORE_LARGE_BUFFER);
@@ -207,9 +210,9 @@ void AddChild_gb_lr_v(Ila& m, Ila& child_ts) {
 
         instr.SetUpdate(counter, counter+1);
 
-        auto addr_0 = Ite((counter == 0), ts_base_addr_0, v_addr_0);
-        auto addr_1 = Ite((counter == 0), ts_base_addr_1, v_addr_1);
-        auto addr_result = Ite(counter == 0, ts_base_addr_result, v_addr_result);
+        auto addr_0 = Concat(BvConst(0, 12), Ite((counter == 0), ts_base_addr_0, v_addr_0));
+        auto addr_1 = Concat(BvConst(0, 12), Ite((counter == 0), ts_base_addr_1, v_addr_1));
+        auto addr_result = Concat(BvConst(0, 12), Ite(counter == 0, ts_base_addr_result, v_addr_result));
 
         auto data_0 = Load(mem, addr_0);
         auto data_1 = Load(mem, addr_1);
@@ -220,6 +223,7 @@ void AddChild_gb_lr_v(Ila& m, Ila& child_ts) {
                                 (data_0 + data_1) / BvConst(2, TOP_DATA_IN_WIDTH), 
                                     data_0 + data_1)); 
         
+
         instr.SetUpdate(mem, Store(mem, addr_result, result));
         instr.SetUpdate(v_addr_0, Ite(counter == 0, ts_base_addr_0 + 1, v_addr_0 + 1));
         instr.SetUpdate(v_addr_1, Ite(counter == 0, ts_base_addr_1 + 1, v_addr_1 + 1));
