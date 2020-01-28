@@ -28,13 +28,20 @@
 
 #include <ilang/util/log.h>
 
+#include <iostream>
+// #include <simple/lib.h>
+#include <ilang/ila/instr_lvl_abs.h>
+#include <ilang/target-sc/ila_sim.h>
+
+
 using namespace ilang;
 
-int main() {
+int main(int argc, char *argv[]) {
   SetToStdErr(1);
 
   // get the ILA model
   auto flex = GetFlexIla("flex");
+
 
   ILA_INFO << "#input: " << flex.input_num();
   ILA_INFO << "#state: " << flex.state_num();
@@ -43,6 +50,16 @@ int main() {
   for (auto i = 0; i < flex.instr_num(); i++) {
     ILA_INFO << flex.instr(i);
   }
+
+  // simulation generation
+  auto model = flex.get();
+  IlaSim simulator_generator;
+  std::string sim_gen_dir = argv[1];
+  std::string systemc_path = argv[2];
+  bool cpp_gen = false;
+  simulator_generator.set_instr_lvl_abs(model);
+  simulator_generator.set_systemc_path(systemc_path);
+  simulator_generator.sim_gen(sim_gen_dir, false, true, cpp_gen);
 
   return 0;
 }
