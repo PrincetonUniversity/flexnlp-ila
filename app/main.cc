@@ -34,6 +34,7 @@ int main() {
   SetToStdErr(1);
 
   // get the ILA model
+
   auto flex = GetFlexIla("flex");
 
   ILA_INFO << "#input: " << flex.input_num();
