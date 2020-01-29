@@ -154,6 +154,10 @@ void AddChild_gb_lr_ts(Ila& m){
     {
         auto instr = child_ts.NewInstr("gb_layer_reduce_timestep_level_op");
 
+        // decode condition, same as child valid function.
+        instr.SetDecode(counter < m.state(GB_LAYER_REDUCE_ITERATIONS));
+
+        // state updates
         instr.SetUpdate(counter, counter + 1);
         // assumption: block size is of even multiple size of timestep_size
         auto counter_20 = Concat(BvConst(0,4), counter);
@@ -206,7 +210,9 @@ void AddChild_gb_lr_v(Ila& m, Ila& child_ts) {
     auto mem = m.state(GB_CORE_LARGE_BUFFER);
 
     {
-        auto instr = child_ts.NewInstr("gb_layer_reduce_vector_level_op");
+        auto instr = child_v.NewInstr("gb_layer_reduce_vector_level_op");
+
+        instr.SetDecode(counter < timestep_size);
 
         instr.SetUpdate(counter, counter+1);
 
