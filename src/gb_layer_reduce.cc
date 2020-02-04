@@ -59,11 +59,11 @@ void DefineStartGBLayerReduce(Ila& m) {
 
   auto memory_max_addr_offset =
       Ite((memory_index == 0),
-          Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_1) - 16, BvConst(0, 4)),
+          Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_1), BvConst(0, 4)) - 16,
           Ite((memory_index == 1),
-              Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_2) - 16, BvConst(0, 4)),
+              Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_2), BvConst(0, 4)) - 16,
               Ite((memory_index == 2),
-                  Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3) - 16, BvConst(0, 4)),
+                  Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3), BvConst(0, 4)) - 16,
                   BvConst(GB_CORE_STORE_LARGE_SIZE, GB_CORE_STORE_LARGE_BITWIDTH))));
   // FIXME: use GB_CORE_STORE_LARGE_ADDR_MAX/MIN instead of concrete number
   // same as bit-width (done)
