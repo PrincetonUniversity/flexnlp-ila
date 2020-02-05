@@ -57,6 +57,7 @@ void DefineStartGBLayerReduce(Ila& m) {
                   Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_2), BvConst(0, 4)),
                   Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3), BvConst(0, 4)))));
 
+// FIXME: uncertain about the max addr offset for some memory managing instructions
   auto memory_max_addr_offset =
       Ite((memory_index == 0),
           Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_1), BvConst(0, 4)) - 16,
@@ -65,7 +66,6 @@ void DefineStartGBLayerReduce(Ila& m) {
               Ite((memory_index == 2),
                   Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3), BvConst(0, 4)) - 16,
                   BvConst(GB_CORE_STORE_LARGE_SIZE, GB_CORE_STORE_LARGE_BITWIDTH))));
-  // FIXME: use GB_CORE_STORE_LARGE_ADDR_MAX/MIN instead of concrete number
   // same as bit-width (done)
 
   // Parameter preprocessing, translating parameters used in ILA model
@@ -78,8 +78,14 @@ void DefineStartGBLayerReduce(Ila& m) {
   auto timestep_size = num_vector * 16;
 
   // the size of the targeted memory block
-  auto block_size =
-      memory_max_addr_offset - memory_min_addr_offset; 
+  // FIXME: for now, I assume memory manager will not skip memory index, if max_addr_offset == 0, assume the 
+  // max addr for the block is the largest address.
+  auto block_size = 
+    Ite((memory_max_addr_offset == 0),
+        BvConst(GB_CORE_STORE_LARGE_SIZE, GB_CORE_STORE_LARGE_BITWIDTH) - memory_min_addr_offset,
+        memory_max_addr_offset - memory_min_addr_offset);
+  //   auto block_size =
+  //       memory_max_addr_offset - memory_min_addr_offset; 
 
 // The over_flow should be detected elsewhere?
 // the overwrite situation happens when num_of_timestep is larger than given.
