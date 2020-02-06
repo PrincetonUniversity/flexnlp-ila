@@ -88,7 +88,7 @@ void DefineStartGBLayerNorm(Ila& m) {
   AddChild_GB_LayerNorm_Timestep_Level(m); // add child model to handle timestep level instructions
 }
 
-void AddChild_LayerNorm_Timestep_Level(Ila& m) {
+void AddChild_GB_LayerNorm_Timestep_Level(Ila& m) {
   auto child_ts = m.NewChild("GBLayerNorm_Timestep_Level");
   
   auto counter_ts = m.state(GB_LAYER_NORM_CNTR_TIMESTEP);
@@ -129,8 +129,8 @@ void AddChild_LayerNorm_Timestep_Level(Ila& m) {
     instr.SetDecode(counter_ts < m.state(GB_LAYER_NORM_ITERATIONS));
 
     // state updates
-    auto timestep_size = num_vector * GB_CORE_SCALAR;
-    auto base_addr_offset = timestep_size * counter_ts;
+    auto timestep_size = Concat(BvConst(0, 8), num_vector) * GB_CORE_SCALAR;
+    auto base_addr_offset = Concat(BvConst(0,4), timestep_size * counter_ts);
 
     // update the base addr for the current timestep
     instr.SetUpdate(base_addr_ts, m.state(GB_LAYER_NORM_MEM_MIN_ADDR_OFFSET) + base_addr_offset);
@@ -178,7 +178,8 @@ void AddChild_GB_LayerNorm_Vector_Level_Sum(Ila& m) {
     auto instr = child_v_sum.NewInstr("gb_layer_norm_vector_level_sum");
     instr.SetDecode(counter_v < num_vector);
 
-    auto base_addr_v_tmp = base_addr_ts + counter_v * GB_CORE_SCALAR;
+    auto counter_v_20 = Concat(BvConst(0, 12), counter_v);
+    auto base_addr_v_tmp = base_addr_ts + counter_v_20 * GB_CORE_SCALAR;
 
     instr.SetUpdate(counter_v, counter_v + 1);
     instr.SetUpdate(counter_byte, BvConst(0, GB_LAYER_NORM_CNTR_BYTE_WIDTH));
@@ -215,10 +216,14 @@ void AddChild_GB_LayerNorm_Byte_Level_Sum(Ila& m) {
     instr.SetUpdate(counter_byte, counter_byte + 1);
 
     // data updates
-    auto addr = base_addr_v + counter_byte;
-    auto data = Load(mem, addr);
+    
+    auto counter_byte_20 = Concat(BvConst(0, 15), counter_byte);
+    auto addr = base_addr_v + counter_byte_20;
+    auto addr_32 = Concat(BvConst(0, 12), addr);
+    auto data = Load(mem, addr_32);
     // TODO: implement the conversion from data to adpfloat type.
-    auto adpfloat_data = data;
+    // TODO: Also need to extend the bit width the temp result in case of overflow.
+    auto adpfloat_data = Concat(BvConst(0, 16), data);
     // TODO: check the implementation of EMUL in the flexNLP code
     auto adpfloat_data_sq = (adpfloat_data * adpfloat_data) >> K_ACT_NUM_FRAC;
 
@@ -263,7 +268,8 @@ void AddChild_GB_LayerNorm_Timestep_Level_Mean(Ila& m) {
 
     // calcuate the mean, variance and inverted standard variance
     // E[X], E[X^2]
-    auto divisor = num_vector * GB_CORE_SCALAR;
+    auto num_vector_24 = Concat(BvConst(0, 16), num_vector);
+    auto divisor = num_vector_24 * GB_CORE_SCALAR;
     auto mean_tmp = sum_x / divisor; 
     auto sqmean_tmp = sum_x_sq / divisor;
 
@@ -320,11 +326,14 @@ void AddChild_GB_LayerNorm_Vector_Level_Norm(Ila& m) {
     auto instr = child_v_norm.NewInstr("gb_layer_norm_vector_level_norm");
     instr.SetDecode(counter_v < num_vector);
 
-    auto base_addr_v_tmp = base_addr_ts + counter_v * GB_CORE_SCALAR;
+    auto counter_v_20 = Concat(BvConst(0, 12), counter_v);
+    auto base_addr_v_tmp = base_addr_ts + counter_v_20 * GB_CORE_SCALAR;
+
+    auto counter_v_16 = Concat(BvConst(0, 8), counter_v);
     auto base_addr_gamma_tmp = m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_5) +    \
-                                counter_v * GB_CORE_SCALAR;
+                                counter_v_16 * GB_CORE_SCALAR;
     auto base_addr_beta_tmp = m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_6) +     \
-                                counter_v * GB_CORE_SCALAR;
+                                counter_v_16 * GB_CORE_SCALAR;
 
     instr.SetUpdate(counter_v, counter_v + 1);
     instr.SetUpdate(counter_byte, BvConst(0, GB_LAYER_NORM_CNTR_BYTE_WIDTH));
@@ -366,20 +375,27 @@ void AddChild_GB_LayerNorm_Byte_Level_Norm(Ila& m){
     // control signals update
     instr.SetUpdate(counter_byte, counter_byte + 1);
     // computation
-    auto addr_d = base_addr_v + counter_byte;
-    auto addr_g = base_addr_gamma + counter_byte;
-    auto addr_b = base_addr_beta + counter_byte;
+    auto counter_byte_20 = Concat(BvConst(0, 15), counter_byte);
+    auto counter_byte_14 = Concat(BvConst(0, 9), counter_byte);
+
+    auto addr_d = base_addr_v + counter_byte_20;
+    auto addr_g = base_addr_gamma + counter_byte_14;
+    auto addr_b = base_addr_beta + counter_byte_14;
+
+    auto addr_d_32 = Concat(BvConst(0, 12), addr_d);
+    auto addr_g_32 = Concat(BvConst(0, 18), addr_g);
+    auto addr_b_32 = Concat(BvConst(0, 18), addr_b);
 
     // TODO: implement adpfloat2fixed, both data, gamma, beta.
-    auto data = Load(large_buf, addr_d);
-    auto gamma = Load(small_buf, addr_g);
-    auto beta = Load(small_buf, addr_b);
+    auto data = Load(large_buf, addr_d_32);
+    auto gamma = Load(small_buf, addr_g_32);
+    auto beta = Load(small_buf, addr_b_32);
     // TODO: check the EMUL operations
     auto tmp1 = ((data - mean_x) * inv_std_x) >> K_ACT_NUM_FRAC;
     auto tmp2 = (tmp1 * gamma) >> K_ACT_NUM_FRAC;
     auto result = tmp2 + beta;
 
-    instr.SetUpdate(large_buf, Store(large_buf, result, addr_d));
+    instr.SetUpdate(large_buf, Store(large_buf, addr_d_32, result));
   }
 
 

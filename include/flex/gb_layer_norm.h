@@ -132,7 +132,7 @@ namespace ilang {
 
 // vector level state, counter for byte level sum in the current vector
 #define GB_LAYER_NORM_CNTR_BYTE "gb_layer_norm_cntr_byte"
-#define GB_LAYER_NORM_CNTR_BYTE_WIDTH GB_CORE_SCALAR
+#define GB_LAYER_NORM_CNTR_BYTE_WIDTH (GB_CORE_SCALAR_BITWIDTH + 1)
 
 // vector level state, base address for gamma and beta in the small buffer
 #define GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA                          \
