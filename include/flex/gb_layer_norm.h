@@ -61,6 +61,9 @@ namespace ilang {
 #define GB_LAYER_NORM_CONFIG_REG_ADPBIAS_4 "gb_layer_norm_adpbias_4"
 #define GB_LAYER_NORM_CONFIG_REG_ADPBIAS_4_WIDTH 3
 
+#define GB_LAYER_NORM_CONFIG_GAMMA_INDEX 5
+#define GB_LAYER_NORM_CONFIG_BETA_INDEX 6
+
 /****** gb_layer_norm instructions internal states **********/
 // internal states for LayerNorm instruction
 #define GB_LAYER_NORM_ITERATIONS "gb_layer_norm_iterations"
@@ -82,6 +85,12 @@ namespace ilang {
 #define GB_LAYER_NORM_TIMESTEP_LEVEL_BASE_ADDR "gb_layer_norm_timestep_level_base_addr"
 #define GB_LAYER_NORM_TIMESTEP_LEVEL_BASE_ADDR_WIDTH GB_CORE_STORE_LARGE_BITWIDTH
 
+// timestep level state, vector base address (put at timestep level to be shared by both
+// vector level childs)
+#define GB_LAYER_NORM_VECTOR_BASE_ADDR "gb_layer_norm_vector_base_addr"
+#define GB_LAYER_NORM_VECTOR_BASE_ADDR_WIDTH GB_CORE_STORE_LARGE_BITWIDTH
+
+
 // timestep level state, counter for vector level instructions
 #define GB_LAYER_NORM_CNTR_VECTOR "gb_layer_norm_cntr_vector"
 #define GB_LAYER_NORM_CNTR_VECTOR_WIDTH GB_LAYER_NORM_CONFIG_REG_NUM_VECTOR_1_WIDTH
@@ -93,6 +102,13 @@ namespace ilang {
 #define K_ADPFLOAT_WORD_WIDTH 8
 #define K_ADPFLOAT_EXP_WIDTH 3
 #define K_ADPFLOAT_MAN_WIDTH K_ADPFLOAT_WORD_WIDTH - K_ADPFLOAT_EXP_WIDTH - 1
+
+// timestep level flags, flags for three child models
+#define GB_LAYER_NORM_SUM_DONE_FLAG "gb_layer_norm_sum_done_flag"
+#define GB_LAYER_NORM_SUM_DONE_FLAG_WIDTH 1
+
+#define GB_LAYER_NORM_MEAN_DONE_FLAG "gb_layer_norm_mean_done_flag"
+#define GB_LAYER_NORM_MEAN_DONE_FLAG_WIDTH 1
 
 // timestep level state, sum for elements' values
 #define GB_LAYER_NORM_SUM_X "gb_layer_norm_sum_X"
@@ -113,6 +129,22 @@ namespace ilang {
 // timestep level state, standard variance of the data in the timestep
 #define GB_LAYER_NORM_INV_STD "gb_layer_norm_inv_std"
 #define GB_LAYER_NORM_INV_STD_WIDTH K_ADPFLOAT_WORD_WIDTH
+
+// vector level state, counter for byte level sum in the current vector
+#define GB_LAYER_NORM_CNTR_BYTE "gb_layer_norm_cntr_byte"
+#define GB_LAYER_NORM_CNTR_BYTE_WIDTH GB_CORE_SCALAR
+
+// vector level state, base address for gamma and beta in the small buffer
+#define GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA                          \
+  "gb_layer_norm_vector_level_base_addr_gamma"
+#define GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA_WIDTH                    \
+  GB_CORE_STORE_SMALL_BITWIDTH
+
+#define GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_BETA                           \
+  "gb_layer_norm_vector_level_base_addr_beta"
+#define GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDT_BETA_WIDTH                     \
+  GB_CORE_STORE_SMALL_BITWIDTH
+
 
 
 

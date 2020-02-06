@@ -44,6 +44,7 @@ namespace ilang {
 
 #define GB_CORE_STORE_SMALL_ADDR_MIN 0x00600000
 #define GB_CORE_STORE_SMALL_ADDR_MAX 0x00603FF0
+#define GB_CORE_STORE_SMALL_BITWIDTH 14 // 16KB small buffer size.
 
 // GBCore memory manager instructions
 #define CONFIG_ADDR_GB_CORE_MEM_MNGR_PHY_SRAM 0x00300000

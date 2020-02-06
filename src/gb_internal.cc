@@ -50,7 +50,7 @@ void DefineGBInternalStates(Ila& m) {
   m.NewBvState(GB_LAYER_REDUCE_TIME_STEP_OP_CNTR,
               GB_LAYER_REDUCE_TIME_STEP_OP_CNTR_WIDTH);
 
-  /******** GBLayerReduce internal architectural states ********/
+  /******** GBLayerReduce internal states ********/
   // state for iterations, iterations = num_timestep
   m.NewBvState(GB_LAYER_NORM_ITERATIONS, GB_LAYER_NORM_ITERATIONS_WIDTH);
   // state for 2nd level instructions coutner

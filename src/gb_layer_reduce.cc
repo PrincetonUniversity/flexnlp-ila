@@ -27,7 +27,6 @@
 #include <flex/flex.h>
 
 namespace ilang {
-
 void AddChild_gb_lr_ts(Ila& m);
 void AddChild_gb_lr_v(Ila& m);
 

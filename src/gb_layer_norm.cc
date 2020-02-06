@@ -30,7 +30,10 @@ namespace ilang {
 
 void AddChild_GB_LayerNorm_Timestep_Level(Ila& m);
 void AddChild_GB_LayerNorm_Vector_Level_Sum(Ila& m);
+void AddChild_GB_LayerNorm_Timestep_Level_Mean(Ila& m);
 void AddChild_GB_LayerNorm_Vector_Level_Norm(Ila& m);
+void AddChild_GB_LayerNorm_Byte_Level_Sum(Ila& m);
+void AddChild_GB_LayerNorm_Byte_Level_Norm(Ila& m);
 
 void DefineStartGBLayerNorm(Ila& m) {
   // TODO 
@@ -83,12 +86,11 @@ void DefineStartGBLayerNorm(Ila& m) {
   instr.SetUpdate(m.state(GB_LAYER_NORM_MEM_MIN_ADDR_OFFSET), memory_min_addr_offset);
   
   AddChild_GB_LayerNorm_Timestep_Level(m); // add child model to handle timestep level instructions
-  
 }
 
 void AddChild_LayerNorm_Timestep_Level(Ila& m) {
   auto child_ts = m.NewChild("GBLayerNorm_Timestep_Level");
-
+  
   auto counter_ts = m.state(GB_LAYER_NORM_CNTR_TIMESTEP);
 
   child_ts.SetValid(counter_ts < m.state(GB_LAYER_NORM_ITERATIONS));
@@ -96,22 +98,31 @@ void AddChild_LayerNorm_Timestep_Level(Ila& m) {
 
   // states for timestep level operations
   child_ts.NewBvState(GB_LAYER_NORM_TIMESTEP_LEVEL_BASE_ADDR, GB_LAYER_NORM_TIMESTEP_LEVEL_BASE_ADDR_WIDTH);
-  child_ts.NewBvState(GB_LAYER_NORM_CNTR_VECTOR, GB_LAYER_NORM_CNTR_VECTOR_WIDTH);
+  child_ts.NewBvState(GB_LAYER_NORM_VECTOR_BASE_ADDR, GB_LAYER_NORM_VECTOR_BASE_ADDR_WIDTH);
+
   child_ts.NewBvState(GB_LAYER_NORM_SUM_X, GB_LAYER_NORM_SUM_X_WIDTH);
   child_ts.NewBvState(GB_LAYER_NORM_SUM_X_SQ, GB_LAYER_NORM_SUM_X_SQ_WIDTH);
   child_ts.NewBvState(GB_LAYER_NORM_MEAN, GB_LAYER_NORM_MEAN_WIDTH);
   child_ts.NewBvState(GB_LAYER_NORM_INV_STD, GB_LAYER_NORM_INV_STD_WIDTH);
   child_ts.NewBvState(GB_LAYER_NORM_VAR, GB_LAYER_NORM_VAR_WIDTH);
 
+  // control related states  
+  child_ts.NewBvState(GB_LAYER_NORM_CNTR_VECTOR, GB_LAYER_NORM_CNTR_VECTOR_WIDTH);
+  child_ts.NewBvState(GB_LAYER_NORM_SUM_DONE_FLAG, GB_LAYER_NORM_SUM_DONE_FLAG_WIDTH);
+  child_ts.NewBvState(GB_LAYER_NORM_MEAN_DONE_FLAG, GB_LAYER_NORM_MEAN_DONE_FLAG_WIDTH);
+
   // common variables
   auto num_vector = m.state(GB_LAYER_NORM_CONFIG_REG_NUM_VECTOR_1);
+  
   auto counter_v = child_ts.state(GB_LAYER_NORM_CNTR_VECTOR);
   auto base_addr_ts = child_ts.state(GB_LAYER_NORM_TIMESTEP_LEVEL_BASE_ADDR);
+  auto base_addr_v = child_ts.state(GB_LAYER_NORM_VECTOR_BASE_ADDR);
+
   auto sum_x = child_ts.state(GB_LAYER_NORM_SUM_X);
   auto sum_x_sq = child_ts.state(GB_LAYER_NORM_SUM_X_SQ);
-  auto mean_x = child_ts.state(GB_LAYER_NORM_MEAN);
 
-  auto inv_std_x = child_ts.state(GB_LAYER_NORM_INV_STD);
+  auto flag_sum = child_ts.state(GB_LAYER_NORM_SUM_DONE_FLAG);
+  auto flag_mean = child_ts.state(GB_LAYER_NORM_MEAN_DONE_FLAG);
 
   {
     auto instr = child_ts.NewInstr("gb_layer_norm_timestep_level_op");
@@ -128,15 +139,249 @@ void AddChild_LayerNorm_Timestep_Level(Ila& m) {
     instr.SetUpdate(sum_x, BvConst(0, GB_LAYER_NORM_SUM_X_WIDTH));
     instr.SetUpdate(sum_x_sq, BvConst(0, GB_LAYER_NORM_SUM_X_SQ_WIDTH));
 
+    // initiate the control signals
+    instr.SetUpdate(counter_v, BvConst(0, GB_LAYER_NORM_CNTR_VECTOR_WIDTH));
+    instr.SetUpdate(flag_sum, BvConst(0, GB_LAYER_NORM_SUM_DONE_FLAG_WIDTH));
+    instr.SetUpdate(flag_mean, BvConst(0, GB_LAYER_NORM_MEAN_DONE_FLAG_WIDTH));
+
     // add 3rd level child here for computing the sum of the data for the whole timestep
     AddChild_GB_LayerNorm_Vector_Level_Sum(m);
 
-    // calculate Variance and Mean of the data in the whole timestep
-    
-    instr.SetUpdate()
+    // add child to compute the variance and mean of the data 
+    AddChild_GB_LayerNorm_Timestep_Level_Mean(m);
 
+    // add child to compute the norm of the data;
+    AddChild_GB_LayerNorm_Vector_Level_Norm(m);
+  }
+}
+
+// child that compute the sum of the current timestep
+void AddChild_GB_LayerNorm_Vector_Level_Sum(Ila& m) {
+  auto child_ts = m.child("GBLayerNorm_Timestep_Level");
+  auto child_v_sum = child_ts.NewChild("GBLayerNorm_Vector_Level_sum");
+
+  auto counter_v = child_ts.state(GB_LAYER_NORM_CNTR_VECTOR);
+  auto num_vector = m.state(GB_LAYER_NORM_CONFIG_REG_NUM_VECTOR_1);
+  auto flag_sum = child_ts.state(GB_LAYER_NORM_SUM_DONE_FLAG);
+  auto flag_mean = child_ts.state(GB_LAYER_NORM_MEAN_DONE_FLAG);
+
+  child_v_sum.SetValid((counter_v < num_vector) & (flag_sum == 0) & (flag_mean == 0));
+  child_v_sum.SetFetch(BvConst(1,1));
+
+  // states for Vector level model
+  child_v_sum.NewBvState(GB_LAYER_NORM_CNTR_BYTE, GB_LAYER_NORM_CNTR_BYTE_WIDTH);
+  auto counter_byte = child_v_sum.state(GB_LAYER_NORM_CNTR_BYTE);
+  auto base_addr_ts = child_ts.state(GB_LAYER_NORM_TIMESTEP_LEVEL_BASE_ADDR);
+  auto base_addr_v = child_ts.state(GB_LAYER_NORM_VECTOR_BASE_ADDR);
+
+  {
+    auto instr = child_v_sum.NewInstr("gb_layer_norm_vector_level_sum");
+    instr.SetDecode(counter_v < num_vector);
+
+    auto base_addr_v_tmp = base_addr_ts + counter_v * GB_CORE_SCALAR;
+
+    instr.SetUpdate(counter_v, counter_v + 1);
+    instr.SetUpdate(counter_byte, BvConst(0, GB_LAYER_NORM_CNTR_BYTE_WIDTH));
+    instr.SetUpdate(base_addr_v, base_addr_v_tmp);
+
+    AddChild_GB_LayerNorm_Byte_Level_Sum(m);
+  }
+}
+
+void AddChild_GB_LayerNorm_Byte_Level_Sum(Ila& m) {
+  auto child_ts = m.child("GBLayerNorm_Timestep_Level");
+  auto child_v_sum = child_ts.child("GBLayerNorm_Vector_Level_sum");
+  auto child_b_sum = child_v_sum.NewChild("GBLayerNorm_Byte_Level_sum");
+
+  auto counter_byte = child_v_sum.state(GB_LAYER_NORM_CNTR_BYTE);
+  
+  child_b_sum.SetValid(counter_byte < GB_CORE_SCALAR);
+  child_b_sum.SetFetch(BvConst(1,1));
+
+  auto counter_v = child_ts.state(GB_LAYER_NORM_CNTR_VECTOR);
+  auto num_vector = m.state(GB_LAYER_NORM_CONFIG_REG_NUM_VECTOR_1);
+  auto flag_sum = child_ts.state(GB_LAYER_NORM_SUM_DONE_FLAG);
+
+  auto mem = m.state(GB_CORE_LARGE_BUFFER);
+  auto sum_x = child_ts.state(GB_LAYER_NORM_SUM_X);
+  auto sum_x_sq = child_ts.state(GB_LAYER_NORM_SUM_X_SQ);
+  auto base_addr_v = child_ts.state(GB_LAYER_NORM_VECTOR_BASE_ADDR);
+
+  {
+    auto instr = child_b_sum.NewInstr("gb_layer_norm_byte_level_sum");
+    instr.SetDecode(counter_byte < GB_CORE_SCALAR);
+
+    // control states update
+    instr.SetUpdate(counter_byte, counter_byte + 1);
+
+    // data updates
+    auto addr = base_addr_v + counter_byte;
+    auto data = Load(mem, addr);
+    // TODO: implement the conversion from data to adpfloat type.
+    auto adpfloat_data = data;
+    // TODO: check the implementation of EMUL in the flexNLP code
+    auto adpfloat_data_sq = (adpfloat_data * adpfloat_data) >> K_ACT_NUM_FRAC;
+
+    instr.SetUpdate(sum_x, sum_x + adpfloat_data);
+    instr.SetUpdate(sum_x_sq, sum_x_sq + adpfloat_data_sq);
+
+    auto f_cond = (counter_v == num_vector - 1) & (counter_byte == GB_CORE_SCALAR - 1);
+    instr.SetUpdate(flag_sum, Ite(f_cond, 
+                                    BvConst(1, GB_LAYER_NORM_SUM_DONE_FLAG_WIDTH),
+                                    BvConst(0, GB_LAYER_NORM_SUM_DONE_FLAG_WIDTH)));
+  }
+  
+}
+
+// child that compute the mean, variance and inv_std of current timestep
+void AddChild_GB_LayerNorm_Timestep_Level_Mean(Ila& m) {
+  auto child_ts = m.child("GBLayerNorm_Timestep_Level");
+  auto child_ts_mean = child_ts.NewChild("GBLayerNorm_Timestep_Level_Mean");
+
+  auto counter_v = child_ts.state(GB_LAYER_NORM_CNTR_VECTOR);
+  auto flag_sum = child_ts.state(GB_LAYER_NORM_SUM_DONE_FLAG);
+  auto flag_mean = child_ts.state(GB_LAYER_NORM_MEAN_DONE_FLAG);
+
+  child_ts_mean.SetValid((flag_sum == 1) & (flag_mean == 0));
+  child_ts_mean.SetFetch(BvConst(1, 1));
+
+  auto mean_x = child_ts.state(GB_LAYER_NORM_MEAN);
+  auto var_x = child_ts.state(GB_LAYER_NORM_VAR);
+  auto inv_std_x = child_ts.state(GB_LAYER_NORM_INV_STD);
+
+  auto sum_x = child_ts.state(GB_LAYER_NORM_SUM_X);
+  auto sum_x_sq = child_ts.state(GB_LAYER_NORM_SUM_X_SQ);
+  auto num_vector = m.state(GB_LAYER_NORM_CONFIG_REG_NUM_VECTOR_1);
+
+  {
+    auto instr = child_ts_mean.NewInstr("gb_layer_norm_timestep_level_mean");
+    instr.SetDecode((flag_sum == 1) & (flag_mean == 0));
+
+    // control condition update
+    instr.SetUpdate(flag_mean, BvConst(1, GB_LAYER_NORM_MEAN_DONE_FLAG_WIDTH));
+    instr.SetUpdate(counter_v, BvConst(0, GB_LAYER_NORM_CNTR_VECTOR_WIDTH));
+
+    // calcuate the mean, variance and inverted standard variance
+    // E[X], E[X^2]
+    auto divisor = num_vector * GB_CORE_SCALAR;
+    auto mean_tmp = sum_x / divisor; 
+    auto sqmean_tmp = sum_x_sq / divisor;
+
+    // E[X]^2
+    // TODO: EMUL
+    auto mean_sq_tmp = (mean_tmp * mean_tmp) >> K_ACT_NUM_FRAC;
+    // Var[X] = E[X^2] - E[X]^2
+    auto var_tmp = sqmean_tmp - mean_sq_tmp;
+    // inv_std = 1/sqrt(VAR[X])
+    // TODO: implement the uninterpretted function sqaure root
+    auto inv_std_tmp = var_tmp;
+
+    // states updates
+    instr.SetUpdate(mean_x, mean_tmp);
+    instr.SetUpdate(var_x, var_tmp);
+    instr.SetUpdate(inv_std_x, inv_std_tmp);
 
   }
+}
+
+// child taht compute the norm of current timestep.
+void AddChild_GB_LayerNorm_Vector_Level_Norm(Ila& m) {
+  auto child_ts = m.child("GBLayerNorm_Timestep_Level");
+  auto child_v_norm = m.NewChild("GBLayerNorm_Vector_Level_Norm");
+
+  auto counter_v = child_ts.state(GB_LAYER_NORM_CNTR_VECTOR);
+  auto num_vector = m.state(GB_LAYER_NORM_CONFIG_REG_NUM_VECTOR_1);
+  auto flag_sum = child_ts.state(GB_LAYER_NORM_SUM_DONE_FLAG);
+  auto flag_mean = child_ts.state(GB_LAYER_NORM_MEAN_DONE_FLAG);
+
+  child_v_norm.SetValid(counter_v < num_vector & (flag_sum == 1) & (flag_mean == 1));
+  child_v_norm.SetFetch(BvConst(1,1));
+
+  auto mean_x = child_ts.state(GB_LAYER_NORM_MEAN);
+  auto var_x = child_ts.state(GB_LAYER_NORM_VAR);
+  auto inv_std_x = child_ts.state(GB_LAYER_NORM_INV_STD);
+
+  // states for Vector level model
+  child_v_norm.NewBvState(GB_LAYER_NORM_CNTR_BYTE, GB_LAYER_NORM_CNTR_BYTE_WIDTH);
+
+  // states for Vector level base addresses for gamma and beta in small buffer
+  child_v_norm.NewBvState(GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA,
+                            GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA_WIDTH);
+  child_v_norm.NewBvState(GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_BETA,
+                            GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDT_BETA_WIDTH);
+
+  auto counter_byte = child_v_norm.state(GB_LAYER_NORM_CNTR_BYTE);
+  auto base_addr_ts = child_ts.state(GB_LAYER_NORM_TIMESTEP_LEVEL_BASE_ADDR);
+  auto base_addr_v = child_ts.state(GB_LAYER_NORM_VECTOR_BASE_ADDR);
+  auto base_addr_gamma = child_v_norm.state(GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA);
+  auto base_addr_beta = child_v_norm.state(GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_BETA);
+
+  {
+    auto instr = child_v_norm.NewInstr("gb_layer_norm_vector_level_norm");
+    instr.SetDecode(counter_v < num_vector);
+
+    auto base_addr_v_tmp = base_addr_ts + counter_v * GB_CORE_SCALAR;
+    auto base_addr_gamma_tmp = m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_5) +    \
+                                counter_v * GB_CORE_SCALAR;
+    auto base_addr_beta_tmp = m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_6) +     \
+                                counter_v * GB_CORE_SCALAR;
+
+    instr.SetUpdate(counter_v, counter_v + 1);
+    instr.SetUpdate(counter_byte, BvConst(0, GB_LAYER_NORM_CNTR_BYTE_WIDTH));
+    instr.SetUpdate(base_addr_v, base_addr_v_tmp);
+    instr.SetUpdate(base_addr_gamma, base_addr_gamma_tmp);
+    instr.SetUpdate(base_addr_beta, base_addr_beta_tmp);
+
+    AddChild_GB_LayerNorm_Byte_Level_Norm(m);
+  }
+}
+
+void AddChild_GB_LayerNorm_Byte_Level_Norm(Ila& m){
+  auto child_ts = m.child("GBLayerNorm_Timestep_Level");
+  auto child_v_norm = m.child("GBLayerNorm_Vector_Level_Norm");
+  auto child_b_norm = m.NewChild("GBLayerNorm_Byte_Level_Norm");
+
+  auto counter_byte = child_v_norm.state(GB_LAYER_NORM_CNTR_BYTE);
+  
+  child_b_norm.SetValid(counter_byte < GB_CORE_SCALAR);
+  child_b_norm.SetFetch(BvConst(1,1));
+
+  // statistics
+  auto mean_x = child_ts.state(GB_LAYER_NORM_MEAN);
+  auto var_x = child_ts.state(GB_LAYER_NORM_VAR);
+  auto inv_std_x = child_ts.state(GB_LAYER_NORM_INV_STD);
+
+  // memory state
+  auto base_addr_v = child_ts.state(GB_LAYER_NORM_VECTOR_BASE_ADDR);
+  auto base_addr_gamma = child_v_norm.state(GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA);
+  auto base_addr_beta = child_v_norm.state(GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_BETA);
+  
+  auto large_buf = m.state(GB_CORE_LARGE_BUFFER);
+  auto small_buf = m.state(GB_CORE_SMALL_BUFFER);
+
+  {
+    auto instr = child_b_norm.NewInstr("gb_layer_norm_byte_level_norm");
+    instr.SetDecode(counter_byte < GB_CORE_SCALAR);
+
+    // control signals update
+    instr.SetUpdate(counter_byte, counter_byte + 1);
+    // computation
+    auto addr_d = base_addr_v + counter_byte;
+    auto addr_g = base_addr_gamma + counter_byte;
+    auto addr_b = base_addr_beta + counter_byte;
+
+    // TODO: implement adpfloat2fixed, both data, gamma, beta.
+    auto data = Load(large_buf, addr_d);
+    auto gamma = Load(small_buf, addr_g);
+    auto beta = Load(small_buf, addr_b);
+    // TODO: check the EMUL operations
+    auto tmp1 = ((data - mean_x) * inv_std_x) >> K_ACT_NUM_FRAC;
+    auto tmp2 = (tmp1 * gamma) >> K_ACT_NUM_FRAC;
+    auto result = tmp2 + beta;
+
+    instr.SetUpdate(large_buf, Store(large_buf, result, addr_d));
+  }
+
 
 }
 
