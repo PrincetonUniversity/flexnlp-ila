@@ -82,9 +82,11 @@ namespace ilang {
 //
 // update: change from 0x10000000 ~ 0x33000000
 
+// FIXME: The address is inconsistent with the specs.
+// The start address of GB buffer should be 0x33500000
 #define TOP_ADDR_BASE 0x33000000
 
-#define TOP_GB_ADDR_MIN (TOP_ADDR_BASE + 0x10000000)
+#define TOP_GB_ADDR_MIN (TOP_ADDR_BASE + 0x10000000) // 0x43000000
 #define TOP_GB_ADDR_MAX (TOP_ADDR_BASE + 0x10FFFFFF)
 
 #define TOP_PE0_ADDR_MIN (TOP_ADDR_BASE + 0x11000000)

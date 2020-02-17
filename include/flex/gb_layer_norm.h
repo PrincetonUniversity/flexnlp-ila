@@ -61,6 +61,94 @@ namespace ilang {
 #define GB_LAYER_NORM_CONFIG_REG_ADPBIAS_4 "gb_layer_norm_adpbias_4"
 #define GB_LAYER_NORM_CONFIG_REG_ADPBIAS_4_WIDTH 3
 
+#define GB_LAYER_NORM_CONFIG_GAMMA_INDEX 5
+#define GB_LAYER_NORM_CONFIG_BETA_INDEX 6
+
+/****** gb_layer_norm instructions internal states **********/
+// internal states for LayerNorm instruction
+#define GB_LAYER_NORM_ITERATIONS "gb_layer_norm_iterations"
+#define GB_LAYER_NORM_ITERATIONS_WIDTH GB_LAYER_NORM_CONFIG_REG_NUM_TIMESTEP_1_WIDTH
+
+// 2nd level model counter
+#define GB_LAYER_NORM_CNTR_TIMESTEP "gb_layer_norm_cntr_timestep"
+#define GB_LAYER_NORM_CNTR_TIMESTEP_WIDTH GB_LAYER_NORM_ITERATIONS_WIDTH
+
+// state register, memory block size
+#define GB_LAYER_NORM_MEM_BLOCK_SIZE "gb_layer_norm_mem_block_size"
+#define GB_LAYER_NORM_MEM_BLOCK_SIZE_WIDTH GB_CORE_STORE_LARGE_BITWIDTH
+
+// state register, memory block min address
+#define GB_LAYER_NORM_MEM_MIN_ADDR_OFFSET "gb_layer_norm_mem_min_addr_offset"
+#define GB_LAYER_NORM_MEM_MIN_ADDR_OFFSET_WIDTH GB_CORE_STORE_LARGE_BITWIDTH
+
+// timestep level state, timestep base address
+#define GB_LAYER_NORM_TIMESTEP_LEVEL_BASE_ADDR "gb_layer_norm_timestep_level_base_addr"
+#define GB_LAYER_NORM_TIMESTEP_LEVEL_BASE_ADDR_WIDTH GB_CORE_STORE_LARGE_BITWIDTH
+
+// timestep level state, vector base address (put at timestep level to be shared by both
+// vector level childs)
+#define GB_LAYER_NORM_VECTOR_BASE_ADDR "gb_layer_norm_vector_base_addr"
+#define GB_LAYER_NORM_VECTOR_BASE_ADDR_WIDTH GB_CORE_STORE_LARGE_BITWIDTH
+
+
+// timestep level state, counter for vector level instructions
+#define GB_LAYER_NORM_CNTR_VECTOR "gb_layer_norm_cntr_vector"
+#define GB_LAYER_NORM_CNTR_VECTOR_WIDTH GB_LAYER_NORM_CONFIG_REG_NUM_VECTOR_1_WIDTH
+
+// TODO: some specs for flexNLP, temporally put here
+#define GB_LAYER_NORM_SUM_TYPE_BITWIDTH 24
+#define K_ACT_WORD_WIDTH 20
+#define K_ACT_NUM_FRAC 14
+#define K_ADPFLOAT_WORD_WIDTH 8
+#define K_ADPFLOAT_EXP_WIDTH 3
+#define K_ADPFLOAT_MAN_WIDTH K_ADPFLOAT_WORD_WIDTH - K_ADPFLOAT_EXP_WIDTH - 1
+
+// timestep level flags, flags for three child models
+#define GB_LAYER_NORM_SUM_DONE_FLAG "gb_layer_norm_sum_done_flag"
+#define GB_LAYER_NORM_SUM_DONE_FLAG_WIDTH 1
+
+#define GB_LAYER_NORM_MEAN_DONE_FLAG "gb_layer_norm_mean_done_flag"
+#define GB_LAYER_NORM_MEAN_DONE_FLAG_WIDTH 1
+
+// timestep level state, sum for elements' values
+#define GB_LAYER_NORM_SUM_X "gb_layer_norm_sum_X"
+#define GB_LAYER_NORM_SUM_X_WIDTH GB_LAYER_NORM_SUM_TYPE_BITWIDTH
+
+// timestep level state, sum for elements' square values
+#define GB_LAYER_NORM_SUM_X_SQ "gb_layer_norm_sum_X_SQ"
+#define GB_LAYER_NORM_SUM_X_SQ_WIDTH GB_LAYER_NORM_SUM_TYPE_BITWIDTH
+
+// timestep level state, mean value of data in the timestep
+#define GB_LAYER_NORM_MEAN "gb_layer_norm_mean"
+#define GB_LAYER_NORM_MEAN_WIDTH K_ADPFLOAT_WORD_WIDTH
+
+// timestep level state, variance of the data in the timestep
+#define GB_LAYER_NORM_VAR "gb_layer_norm_var"
+#define GB_LAYER_NORM_VAR_WIDTH K_ACT_WORD_WIDTH
+
+// timestep level state, standard variance of the data in the timestep
+#define GB_LAYER_NORM_INV_STD "gb_layer_norm_inv_std"
+#define GB_LAYER_NORM_INV_STD_WIDTH K_ADPFLOAT_WORD_WIDTH
+
+// vector level state, counter for byte level sum in the current vector
+#define GB_LAYER_NORM_CNTR_BYTE "gb_layer_norm_cntr_byte"
+#define GB_LAYER_NORM_CNTR_BYTE_WIDTH (GB_CORE_SCALAR_BITWIDTH + 1)
+
+// vector level state, base address for gamma and beta in the small buffer
+#define GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA                          \
+  "gb_layer_norm_vector_level_base_addr_gamma"
+#define GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA_WIDTH                    \
+  GB_CORE_STORE_SMALL_BITWIDTH
+
+#define GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_BETA                           \
+  "gb_layer_norm_vector_level_base_addr_beta"
+#define GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDT_BETA_WIDTH                     \
+  GB_CORE_STORE_SMALL_BITWIDTH
+
+
+
+
+// timestep level state, 
 }; // namespace ilang
 
 #endif // FLEX_GB_LAYER_NORM_H__

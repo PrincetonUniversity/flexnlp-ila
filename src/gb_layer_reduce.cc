@@ -27,9 +27,8 @@
 #include <flex/flex.h>
 
 namespace ilang {
-
 void AddChild_gb_lr_ts(Ila& m);
-void AddChild_gb_lr_v(Ila& m, Ila& child_ts);
+void AddChild_gb_lr_v(Ila& m);
 
 void DefineStartGBLayerReduce(Ila& m) {
   auto instr = m.NewInstr("Start_GBLayer_Reduce");
@@ -57,19 +56,27 @@ void DefineStartGBLayerReduce(Ila& m) {
                   Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_2), BvConst(0, 4)),
                   Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3), BvConst(0, 4)))));
 
+// FIXME: uncertain about the max addr offset for some memory managing instructions
   auto memory_max_addr_offset =
       Ite((memory_index == 0),
-          Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_1) - 16, BvConst(0, 4)),
+          Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_1), BvConst(0, 4)) - 16,
           Ite((memory_index == 1),
-              Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_2) - 16, BvConst(0, 4)),
+              Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_2), BvConst(0, 4)) - 16,
               Ite((memory_index == 2),
-                  Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3) - 16, BvConst(0, 4)),
+                  Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3), BvConst(0, 4)) - 16,
                   BvConst(GB_CORE_STORE_LARGE_SIZE, GB_CORE_STORE_LARGE_BITWIDTH))));
-  // FIXME: use GB_CORE_STORE_LARGE_ADDR_MAX/MIN instead of concrete number
-  // same as bit-width (done)
+
+// the size of the targeted memory block
+  // FIXME: for now, I assume memory manager will not skip memory index, if max_addr_offset == 0, assume the 
+  // max addr for the block is the largest address.
+  auto block_size = 
+    Ite((memory_max_addr_offset == 0),
+        BvConst(GB_CORE_STORE_LARGE_SIZE, GB_CORE_STORE_LARGE_BITWIDTH) - memory_min_addr_offset,
+        memory_max_addr_offset - memory_min_addr_offset);
+  //   auto block_size =
+  //       memory_max_addr_offset - memory_min_addr_offset;                   
 
   // Parameter preprocessing, translating parameters used in ILA model
-  
   // how many iterations should the layer reduce performs in pairs
   auto pair_num = Ite((SelectBit(num_timestep, 0) == 0), 
                     num_timestep / BvConst(2, GB_LAYER_REDUCE_CONFIG_REG_NUM_TIMESTEP_1_WIDTH),
@@ -77,9 +84,6 @@ void DefineStartGBLayerReduce(Ila& m) {
 
   auto timestep_size = num_vector * 16;
 
-  // the size of the targeted memory block
-  auto block_size =
-      memory_max_addr_offset - memory_min_addr_offset; 
 
 // The over_flow should be detected elsewhere?
 // the overwrite situation happens when num_of_timestep is larger than given.
@@ -122,7 +126,7 @@ void DefineStartGBLayerReduce(Ila& m) {
 // TODO: complete the time_step layer loop
 void AddChild_gb_lr_ts(Ila& m){
 
-    auto child_ts = m.NewChild("GB_LAYER_REDUCE_TIMESTEP_LEVEL");
+    auto child_ts = m.NewChild("GBLayerReduce_Timestep_Level");
 
     auto counter = m.state(GB_LAYER_REDUCE_TIME_STEP_OP_CNTR); //16
     
@@ -176,13 +180,14 @@ void AddChild_gb_lr_ts(Ila& m){
                                         BvConst(0, GB_LAYER_REDUCE_VECTOR_LEVEL_OP_CNTR_WIDTH));
         
         // TODO: implement the child instruction for the inner loop
-        AddChild_gb_lr_v(m, child_ts);
+        AddChild_gb_lr_v(m);
     }
 }
 
-void AddChild_gb_lr_v(Ila& m, Ila& child_ts) {
+void AddChild_gb_lr_v(Ila& m) {
 
-    auto child_v = child_ts.NewChild("GB_LAYER_REDUCE_VECTOR_LEVEL");
+    auto child_ts = m.child("GBLayerReduce_Timestep_Level");
+    auto child_v = child_ts.NewChild("GBLayerReduce_Vector_Level");
 
     auto counter = child_ts.state(GB_LAYER_REDUCE_VECTOR_LEVEL_OP_CNTR); //16
     auto timestep_size = m.state(GB_LAYER_REDUCE_TIMESTEP_SIZE); //16

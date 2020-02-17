@@ -70,6 +70,7 @@ Ila GetFlexIla(const std::string& model_name) {
   DefinePEConfigInstr(m, 3, TOP_PE3_ADDR_MIN);
 
   // store instructions
+  // This instruction have conflicts with other buffer write instructions.
   DefineGBCoreStore(m);
 
   DefinePECoreStore(m, 0, TOP_PE0_ADDR_MIN);
