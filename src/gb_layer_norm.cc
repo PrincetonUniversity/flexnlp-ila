@@ -293,7 +293,7 @@ void AddChild_GB_LayerNorm_Timestep_Level_Mean(Ila& m) {
 // child taht compute the norm of current timestep.
 void AddChild_GB_LayerNorm_Vector_Level_Norm(Ila& m) {
   auto child_ts = m.child("GBLayerNorm_Timestep_Level");
-  auto child_v_norm = m.NewChild("GBLayerNorm_Vector_Level_Norm");
+  auto child_v_norm = child_ts.NewChild("GBLayerNorm_Vector_Level_Norm");
 
   auto counter_v = child_ts.state(GB_LAYER_NORM_CNTR_VECTOR);
   auto num_vector = m.state(GB_LAYER_NORM_CONFIG_REG_NUM_VECTOR_1);
@@ -347,8 +347,8 @@ void AddChild_GB_LayerNorm_Vector_Level_Norm(Ila& m) {
 
 void AddChild_GB_LayerNorm_Byte_Level_Norm(Ila& m){
   auto child_ts = m.child("GBLayerNorm_Timestep_Level");
-  auto child_v_norm = m.child("GBLayerNorm_Vector_Level_Norm");
-  auto child_b_norm = m.NewChild("GBLayerNorm_Byte_Level_Norm");
+  auto child_v_norm = child_ts.child("GBLayerNorm_Vector_Level_Norm");
+  auto child_b_norm = child_v_norm.NewChild("GBLayerNorm_Byte_Level_Norm");
 
   auto counter_byte = child_v_norm.state(GB_LAYER_NORM_CNTR_BYTE);
   
