@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
 
   // get the ILA model
 
-  auto flex = GetFlexIla("flex-sim");
+  auto flex = GetFlexIla("flex_sim");
 
 
   ILA_INFO << "#input: " << flex.input_num();
