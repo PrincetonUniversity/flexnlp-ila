@@ -33,6 +33,13 @@ namespace ilang {
 void DefineGBInternalStates(Ila& m) {
   
   /******** GBLayerReduce internal architectural states ********/
+  // state for total grouping number
+  m.NewBvState(GB_LAYER_REDUCE_GROUPING_NUM, GB_LAYER_REDUCE_GROUPING_NUM_WIDTH);
+  // state for current grouping index
+  m.NewBvState(GB_LAYER_REDUCE_GROUPING_INDEX, GB_LAYER_REDUCE_GROUPING_INDEX_WIDTH);
+  // state for recording the remaining timestep counts at the last grouping
+  m.NewBvState(GB_LAYER_REDUCE_GROUPING_REM, GB_LAYER_REDUCE_GROUPING_REM_WIDTH);
+  
   // states for iterations, iterations = num_timestep/2
   m.NewBvState(GB_LAYER_REDUCE_ITERATIONS, GB_LAYER_REDUCE_ITERATIONS_WIDTH);
   // states for holding the minimun address of the in the large buffer
@@ -50,7 +57,8 @@ void DefineGBInternalStates(Ila& m) {
   m.NewBvState(GB_LAYER_REDUCE_TIME_STEP_OP_CNTR,
               GB_LAYER_REDUCE_TIME_STEP_OP_CNTR_WIDTH);
 
-  /******** GBLayerReduce internal states ********/
+  /******** GBLayerNorm internal states ********/
+
   // state for iterations, iterations = num_timestep
   m.NewBvState(GB_LAYER_NORM_ITERATIONS, GB_LAYER_NORM_ITERATIONS_WIDTH);
   // state for 2nd level instructions coutner
