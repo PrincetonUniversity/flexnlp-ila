@@ -130,14 +130,14 @@ void DefineStartGBLayerReduce(Ila& m) {
 	AddChild_Group_Level(m);									
 
 	/************ old model parameter ***********/
-  instr.SetUpdate(m.state(GB_LAYER_REDUCE_ITERATIONS), iterations);
+  // instr.SetUpdate(m.state(GB_LAYER_REDUCE_ITERATIONS), iterations);
   
-  instr.SetUpdate(m.state(GB_LAYER_REDUCE_TIMESTEP_SIZE), timestep_size);   
-  instr.SetUpdate(m.state(GB_LAYER_REDUCE_TIME_STEP_OP_CNTR), 
-                    BvConst(0, GB_LAYER_REDUCE_TIME_STEP_OP_CNTR_WIDTH));
+  // instr.SetUpdate(m.state(GB_LAYER_REDUCE_TIMESTEP_SIZE), timestep_size);   
+  // instr.SetUpdate(m.state(GB_LAYER_REDUCE_TIME_STEP_OP_CNTR), 
+  //                   BvConst(0, GB_LAYER_REDUCE_TIME_STEP_OP_CNTR_WIDTH));
 
 
-  AddChild_gb_lr_ts(m);
+  // AddChild_gb_lr_ts(m);
 }
 
 // Child model that set grouping level parameters
@@ -173,7 +173,9 @@ void AddChild_Group_Level(Ila& m) {
 		auto num_vector_16 = Concat(BvConst(0, 8), num_vector); 
 		auto group_size = g_scalar * num_vector_16 * v_scalar;
 
-		auto base_addr_offset = group_size * group_index;
+		auto base_addr_offset = group_size * group_index;//16
+		auto base_addr_offset_20 = Concat(BvConst(0,4), base_addr_offset);//20
+
 		auto const_2 = BvConst(2, GB_LAYER_REDUCE_GROUPING_INDEX_WIDTH);
 		auto half_row_size = (GROUPING_SCALAR / 2) + GB_CORE_SCALAR;
 		auto out_addr_offset = Ite((URem(group_index, const_2) > 0),
@@ -181,12 +183,12 @@ void AddChild_Group_Level(Ila& m) {
 																	group_size * (group_index / const_2));
 
 		// deal with overflow situation
-		auto base_addr_fixed = Ite((base_addr_offset < block_size), 
-																	base_addr_offset, base_addr_offset - block_size);
+		auto base_addr_fixed = Ite((base_addr_offset_20 < block_size), 
+																	base_addr_offset_20, base_addr_offset_20 - block_size);
 		auto base_addr_final = base_addr_fixed + mem_min_addr;
 
-		auto out_addr_fixed = Ite((out_addr_offset < block_size),
-																out_addr_offset, out_addr_offset - block_size);
+		auto out_addr_fixed = Ite((base_addr_offset_20 < block_size),
+																base_addr_offset_20, base_addr_offset_20 - block_size);
 		auto out_addr_final = out_addr_fixed + mem_min_addr;																
 
 		// state updates
@@ -206,7 +208,7 @@ void AddChild_Timestep_Level(Ila& m) {
 	auto child_group = m.child("GBLayerReduce_Group_Level");
 	auto child_timestep = child_group.NewChild("GBLayerReduce_Timestep_Level");
 	
-	auto ts_cntr = child_group.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_CNTR);
+	auto ts_cntr = child_group.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_CNTR); // 5-bit
 	child_timestep.SetValid(ts_cntr < GROUPING_SCALAR);
 	child_timestep.SetFetch(BvConst(1,1));
 
@@ -228,10 +230,13 @@ void AddChild_Timestep_Level(Ila& m) {
 	{
 		auto instr = child_timestep.NewInstr("gb_layer_timestep_level_op");
 		instr.SetDecode(ts_cntr < GROUPING_SCALAR);
+		
+		auto ts_cntr_20 = Concat(BvConst(0, 15), ts_cntr); // 20
+		auto const_2_cntr = BvConst(2, GB_CORE_STORE_LARGE_BITWIDTH); // 20 
 
-		auto ts_base_addr_0 = group_base_addr + ts_cntr * GB_CORE_SCALAR;
-		auto ts_base_addr_1 = group_base_addr + (ts_cntr + 1) * GB_CORE_SCALAR;
-		auto ts_base_addr_out = group_out_addr + (ts_cntr / 2) * GB_CORE_SCALAR;
+		auto ts_base_addr_0 = group_base_addr + ts_cntr_20 * GB_CORE_SCALAR;
+		auto ts_base_addr_1 = group_base_addr + (ts_cntr_20 + 1) * GB_CORE_SCALAR;
+		auto ts_base_addr_out = group_out_addr + (ts_cntr_20 / const_2_cntr) * GB_CORE_SCALAR;
 
 		// state upates
 		instr.SetUpdate(ts_cntr, ts_cntr + 2);
@@ -251,7 +256,7 @@ void AddChild_Vector_Level(Ila& m) {
 	auto child_vector = child_timestep.NewChild("GBLayerReduce_Vector_Level");
 
 	auto num_vector = m.state(GB_LAYER_NORM_CONFIG_REG_NUM_TIMESTEP_1);
-	auto vector_cntr = child_timestep.state(GB_LAYER_REDUCE_VECTOR_LEVEL_OP_CNTR);
+	auto vector_cntr = child_timestep.state(GB_LAYER_REDUCE_VECTOR_LEVEL_OP_CNTR); // 16
 
 	child_vector.SetValid(vector_cntr < num_vector);
 	child_vector.SetFetch(BvConst(1,1));
@@ -277,10 +282,12 @@ void AddChild_Vector_Level(Ila& m) {
 		auto instr = child_vector.NewInstr("gb_layer_vector_level_op");
 		instr.SetDecode(vector_cntr < num_vector);
 
-		auto v_addr_offset = vector_cntr * GROUPING_SCALAR * GB_CORE_SCALAR;
-		auto v_addr_0 = vector_base_0 + v_addr_offset;
-		auto v_addr_1 = vector_base_1 + v_addr_offset;
-		auto v_addr_out = vector_base_out + v_addr_offset;
+		auto v_addr_offset = vector_cntr * GROUPING_SCALAR * GB_CORE_SCALAR; // 16
+		auto v_addr_offset_20 = Concat(BvConst(0, 4), v_addr_offset); // 20
+
+		auto v_addr_0 = vector_base_0 + v_addr_offset_20;
+		auto v_addr_1 = vector_base_1 + v_addr_offset_20;
+		auto v_addr_out = vector_base_out + v_addr_offset_20;
 
 		instr.SetUpdate(vector_cntr, vector_cntr + 1);
 		instr.SetUpdate(vector_base_0, v_addr_0);
@@ -316,9 +323,11 @@ void AddChild_Byte_Level(Ila& m) {
 		auto instr = child_byte.NewInstr("gb_layer_byte_level_op");
 		instr.SetDecode(byte_cntr < GB_CORE_SCALAR);
 
-		auto addr_0 = vector_base_0 + byte_cntr;
-		auto addr_1 = vector_base_1 + byte_cntr;
-		auto addr_out = vector_base_out + byte_cntr;
+		auto byte_cntr_20 = Concat(BvConst(0, 15), byte_cntr); // 20
+
+		auto addr_0 = vector_base_0 + byte_cntr_20;
+		auto addr_1 = vector_base_1 + byte_cntr_20;
+		auto addr_out = vector_base_out + byte_cntr_20;
 
 		auto addr_0_32 = Concat(BvConst(0, 12), addr_0);
 		auto addr_1_32 = Concat(BvConst(0, 12), addr_1);
