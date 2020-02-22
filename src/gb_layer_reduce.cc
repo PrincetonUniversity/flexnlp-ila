@@ -100,15 +100,6 @@ void DefineStartGBLayerReduce(Ila& m) {
 //           0); // check whether the data has exceeded the block size
  
   auto iterations = pair_num;
-  // layer reduce operations
-  // memory layout in ILA, fixed 128bit length for a vector, modeled using 8
-  // bit, 16 entries per vector.
-
-  // operations, 2 layers of loops
-  // 1. loop of iterations: block level
-  // 2. loop of vector_entries: vector level
-  // operations are implemented by 3 level of ILA model
-  // "start_gb_reduce" -> "gb_layer_reduce_timestep_level" -> "gb_layer_reduce_vector_level"
 
   // Update: data are organized as grouping in the large buffer.
   auto g_scalar = BvConst(GROUPING_SCALAR, GB_LAYER_REDUCE_GROUPING_NUM_WIDTH);
@@ -157,11 +148,15 @@ void AddChild_Group_Level(Ila& m) {
 	auto ts_cntr = child_group.NewBvState(GB_LAYER_REDUCE_TIMESTEP_LEVEL_CNTR,
 																					GB_LAYER_REDUCE_TIMESTEP_LEVEL_CNTR_WIDTH);																						
 
-
 	// parent level parameters
 	auto num_vector = m.state(GB_LAYER_REDUCE_CONFIG_REG_NUM_VECTOR_1);
 	auto block_size = m.state(GB_LAYER_REDUCE_MEMORY_BLOCK_SIZE);
 	auto mem_min_addr = m.state(GB_LAYER_REDUCE_MEMORY_MIN_ADDR_OFFSET);
+
+	// here we consider the last grouping, which may not be a factor of 16
+	auto group_rem = m.state(GB_LAYER_REDUCE_GROUPING_REM);
+	auto ts_num_group = child_group.NewBvState(GB_LAYER_REDUCE_GROUP_LEVEL_TS_NUM,
+																							GB_LAYER_REDUCE_GROUP_LEVEL_TS_NUM_WIDTH);
 
 	// instruction
 	{
@@ -197,6 +192,11 @@ void AddChild_Group_Level(Ila& m) {
 		instr.SetUpdate(g_out_addr, out_addr_final);
 
 		instr.SetUpdate(ts_cntr, BvConst(0, GB_LAYER_REDUCE_TIMESTEP_LEVEL_CNTR_WIDTH));
+		// update the number of timesteps remaining in the current group
+		instr.SetUpdate(ts_num_group, 
+											Ite((group_index == group_num - 1),
+														BvConst(GROUPING_SCALAR, GB_LAYER_REDUCE_GROUP_LEVEL_TS_NUM_WIDTH),
+														Extract(group_rem, 4, 0)));
 
 		// Add child to set timestep level parameters in the current group
 		AddChild_Timestep_Level(m);
@@ -225,11 +225,12 @@ void AddChild_Timestep_Level(Ila& m) {
 	// paraent states
 	auto group_base_addr = child_group.state(GB_LAYER_REDUCE_GROUP_LEVEL_BASE_ADDR);
 	auto group_out_addr = child_group.state(GB_LAYER_REDUCE_GROUP_LEVEL_OUT_ADDR);
+	auto ts_num = child_group.state(GB_LAYER_REDUCE_GROUP_LEVEL_TS_NUM);
 
 	// instruction
 	{
 		auto instr = child_timestep.NewInstr("gb_layer_timestep_level_op");
-		instr.SetDecode(ts_cntr < GROUPING_SCALAR);
+		instr.SetDecode(ts_cntr < ts_num);
 		
 		auto ts_cntr_20 = Concat(BvConst(0, 15), ts_cntr); // 20
 		auto const_2_cntr = BvConst(2, GB_CORE_STORE_LARGE_BITWIDTH); // 20 
