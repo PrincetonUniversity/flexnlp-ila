@@ -39,6 +39,7 @@ SC_MODULE(Source) {
     std::string data_format;
     std::string temp;
     std::string hex_hdr = "0x";
+    fin.open("../../axi_commands_for_maxpool.csv", ios::in);
 
     while(std::getline(fin, temp, ',')) {
       std::getline(fin, mode, ',');
@@ -135,14 +136,10 @@ SC_MODULE(testbench) {
     std::cout << "@" << sc_time_stamp() << "sc_stop" << std::endl;
     sc_stop();
   }
-  
-  ~testbench() {
-    delete &flex;
-    delete &src;
-  }
 };
 
 int sc_main(int argc, char *argv[]) {
+  cout << "test started" << endl;
   testbench tb("tb");
   sc_start();
   return 0;
