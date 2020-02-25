@@ -1,4 +1,4 @@
-#include <systemc.h>
+#include <systemc>
 #include <iostream>
 #include <string>
 
@@ -7,23 +7,23 @@
 // source module of the testbench
 // creating signals for flex_sim model
 SC_MODULE(Source) {
-  sc_in<bool> clk;
-  sc_in<bool> rst;
+  sc_in<bool> clk{"clk"};
+  //sc_in<bool> rst;
   
   sc_out<sc_biguint<1>> flex_wr_in;
   sc_out<sc_biguint<1>> flex_rd_in;
   sc_out<sc_biguint<32>> flex_addr_in;
   sc_out<sc_biguint<8>> flex_data_in[16];
 
-  void source_input();
+//  void source_input();
 
   SC_CTOR(Source) {
     SC_THREAD(source_input);
     sensitive << clk.pos();
-    reset_signal_is(rst, true);
+    //reset_signal_is(rst, true);
   }
 
-  void source_intput() {
+  void source_input() {
     // reset
     flex_wr_in = 0;
     flex_rd_in = 0;
@@ -71,6 +71,8 @@ SC_MODULE(Source) {
 
       wait(10);
     }
+
+    cout << "source created for testbench" << endl;
   }
 };
 
