@@ -21,3 +21,6 @@ This is the ILA model of the [FlexNLP](https://github.com/ttambe/FlexNLP) accele
     -   `util.cc` contains some helper functions
 
 -   `app` contains the `main.cc` for applications using the ILA model
+
+## systemc simulation command
+run systemc simulation under systemc 2.3.1 with command " g++ -I $HOME/local/include -L $HOME/local/lib-linux64 -Wl,-rpath=$HOME/local/lib-linux64 -std=c++11 -o sim_main.o sim_main.cc *.o -lsystemc" 

@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
   // simulation generation
   IlaSim simulator_generator;
   std::string sim_gen_dir = "./sim_model/";
-  std::string systemc_path = "/usr/local/Cellar/systemc/2.3.2";
+  std::string systemc_path = "/u/yl29/local";
   bool cpp_gen = false;
   // ILA_INFO << "test";
   simulator_generator.set_instr_lvl_abs(model);

@@ -2,7 +2,7 @@
 #include <iostream>
 #include <string>
 
-#include "../build/sim_model/flex_sim.h"
+#include "flex_sim.h"
 
 // source module of the testbench
 // creating signals for flex_sim model
@@ -130,6 +130,6 @@ SC_MODULE(testbench) {
 int sc_main(int argc, char *argv[]) {
   testbench tb("tb");
   sc_start();
-  return;
+  return 0;
 }
 
