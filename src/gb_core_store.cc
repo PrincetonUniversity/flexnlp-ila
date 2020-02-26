@@ -45,22 +45,22 @@ void DefineGBCoreStore(Ila& m) {
     auto base_addr = m.input(TOP_ADDR_IN) - TOP_ADDR_BASE - GB_CORE_STORE_LARGE_ADDR_MIN;
     auto mem = m.state(GB_CORE_LARGE_BUFFER);
 
-    Store(mem, (base_addr + 0), m.input(TOP_DATA_IN_0));
-    Store(mem, (base_addr + 1), m.input(TOP_DATA_IN_1));
-    Store(mem, (base_addr + 2), m.input(TOP_DATA_IN_2));
-    Store(mem, (base_addr + 3), m.input(TOP_DATA_IN_3));
-    Store(mem, (base_addr + 4), m.input(TOP_DATA_IN_4));
-    Store(mem, (base_addr + 5), m.input(TOP_DATA_IN_5));
-    Store(mem, (base_addr + 6), m.input(TOP_DATA_IN_6));
-    Store(mem, (base_addr + 7), m.input(TOP_DATA_IN_7));
-    Store(mem, (base_addr + 8), m.input(TOP_DATA_IN_8));
-    Store(mem, (base_addr + 9), m.input(TOP_DATA_IN_9));
-    Store(mem, (base_addr + 10), m.input(TOP_DATA_IN_10));
-    Store(mem, (base_addr + 11), m.input(TOP_DATA_IN_11));
-    Store(mem, (base_addr + 12), m.input(TOP_DATA_IN_12));
-    Store(mem, (base_addr + 13), m.input(TOP_DATA_IN_13));
-    Store(mem, (base_addr + 14), m.input(TOP_DATA_IN_14));
-    instr.SetUpdate(mem, Store(mem, (base_addr + 15), m.input(TOP_DATA_IN_15)));
+    auto mem_next = Store(mem, (base_addr + 0), m.input(TOP_DATA_IN_0));
+    mem_next = Store(mem_next, (base_addr + 1), m.input(TOP_DATA_IN_1));
+    mem_next = Store(mem_next, (base_addr + 2), m.input(TOP_DATA_IN_2));
+    mem_next = Store(mem_next, (base_addr + 3), m.input(TOP_DATA_IN_3));
+    mem_next = Store(mem_next, (base_addr + 4), m.input(TOP_DATA_IN_4));
+    mem_next = Store(mem_next, (base_addr + 5), m.input(TOP_DATA_IN_5));
+    mem_next = Store(mem_next, (base_addr + 6), m.input(TOP_DATA_IN_6));
+    mem_next = Store(mem_next, (base_addr + 7), m.input(TOP_DATA_IN_7));
+    mem_next = Store(mem_next, (base_addr + 8), m.input(TOP_DATA_IN_8));
+    mem_next = Store(mem_next, (base_addr + 9), m.input(TOP_DATA_IN_9));
+    mem_next = Store(mem_next, (base_addr + 10), m.input(TOP_DATA_IN_10));
+    mem_next = Store(mem_next, (base_addr + 11), m.input(TOP_DATA_IN_11));
+    mem_next = Store(mem_next, (base_addr + 12), m.input(TOP_DATA_IN_12));
+    mem_next = Store(mem_next, (base_addr + 13), m.input(TOP_DATA_IN_13));
+    mem_next = Store(mem_next, (base_addr + 14), m.input(TOP_DATA_IN_14));
+    instr.SetUpdate(mem, Store(mem_next, (base_addr + 15), m.input(TOP_DATA_IN_15)));
   }
 
   // Instructions for storing data into the GB small buffer
@@ -77,22 +77,22 @@ void DefineGBCoreStore(Ila& m) {
     auto base_addr = m.input(TOP_ADDR_IN) - TOP_ADDR_BASE - GB_CORE_STORE_SMALL_ADDR_MIN;
     auto mem = m.state(GB_CORE_SMALL_BUFFER);
 
-    Store(mem, (base_addr + 0), m.input(TOP_DATA_IN_0));
-    Store(mem, (base_addr + 1), m.input(TOP_DATA_IN_1));
-    Store(mem, (base_addr + 2), m.input(TOP_DATA_IN_2));
-    Store(mem, (base_addr + 3), m.input(TOP_DATA_IN_3));
-    Store(mem, (base_addr + 4), m.input(TOP_DATA_IN_4));
-    Store(mem, (base_addr + 5), m.input(TOP_DATA_IN_5));
-    Store(mem, (base_addr + 6), m.input(TOP_DATA_IN_6));
-    Store(mem, (base_addr + 7), m.input(TOP_DATA_IN_7));
-    Store(mem, (base_addr + 8), m.input(TOP_DATA_IN_8));
-    Store(mem, (base_addr + 9), m.input(TOP_DATA_IN_9));
-    Store(mem, (base_addr + 10), m.input(TOP_DATA_IN_10));
-    Store(mem, (base_addr + 11), m.input(TOP_DATA_IN_11));
-    Store(mem, (base_addr + 12), m.input(TOP_DATA_IN_12));
-    Store(mem, (base_addr + 13), m.input(TOP_DATA_IN_13));
-    Store(mem, (base_addr + 14), m.input(TOP_DATA_IN_14));
-    instr.SetUpdate(mem, Store(mem, (base_addr + 15), m.input(TOP_DATA_IN_15)));
+    auto mem_next = Store(mem, (base_addr + 0), m.input(TOP_DATA_IN_0));
+    mem_next = Store(mem_next, (base_addr + 1), m.input(TOP_DATA_IN_1));
+    mem_next = Store(mem_next, (base_addr + 2), m.input(TOP_DATA_IN_2));
+    mem_next = Store(mem_next, (base_addr + 3), m.input(TOP_DATA_IN_3));
+    mem_next = Store(mem_next, (base_addr + 4), m.input(TOP_DATA_IN_4));
+    mem_next = Store(mem_next, (base_addr + 5), m.input(TOP_DATA_IN_5));
+    mem_next = Store(mem_next, (base_addr + 6), m.input(TOP_DATA_IN_6));
+    mem_next = Store(mem_next, (base_addr + 7), m.input(TOP_DATA_IN_7));
+    mem_next = Store(mem_next, (base_addr + 8), m.input(TOP_DATA_IN_8));
+    mem_next = Store(mem_next, (base_addr + 9), m.input(TOP_DATA_IN_9));
+    mem_next = Store(mem_next, (base_addr + 10), m.input(TOP_DATA_IN_10));
+    mem_next = Store(mem_next, (base_addr + 11), m.input(TOP_DATA_IN_11));
+    mem_next = Store(mem_next, (base_addr + 12), m.input(TOP_DATA_IN_12));
+    mem_next = Store(mem_next, (base_addr + 13), m.input(TOP_DATA_IN_13));
+    mem_next = Store(mem_next, (base_addr + 14), m.input(TOP_DATA_IN_14));
+    instr.SetUpdate(mem, Store(mem_next, (base_addr + 15), m.input(TOP_DATA_IN_15)));
   }
 }
 
