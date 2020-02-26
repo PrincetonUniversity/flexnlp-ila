@@ -108,6 +108,11 @@ void DefineStartGBLayerReduce(Ila& m) {
   auto grouping_num = Ite((grouping_rem > 0), num_timestep / g_scalar + 1,
                                 								num_timestep / g_scalar);
 
+	// flag variables
+	auto flag_group = m.state(GB_LAYER_REDUCE_GROUP_LEVEL_FLAG);
+	auto flag_timestep = m.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_FLAG);
+	auto flag_vector = m.state(GB_LAYER_REDUCE_VECTOR_LEVEL_FLAG);
+	auto flag_byte = m.state(GB_LAYER_REDUCE_BYTE_LEVEL_FLAG);																		
 	
 	// memory boundary states
 	instr.SetUpdate(m.state(GB_LAYER_REDUCE_MEMORY_MIN_ADDR_OFFSET), memory_min_addr_offset);
@@ -117,6 +122,12 @@ void DefineStartGBLayerReduce(Ila& m) {
 	instr.SetUpdate(m.state(GB_LAYER_REDUCE_GROUPING_REM), grouping_rem);
 	instr.SetUpdate(m.state(GB_LAYER_REDUCE_GROUPING_INDEX), 
 										BvConst(0, GB_LAYER_REDUCE_GROUPING_INDEX_WIDTH));
+
+	// flag variables updates
+	instr.SetUpdate(flag_group, BvConst(UNDONE, FLAG_BITWIDTH)); // top child should be undone
+	instr.SetUpdate(flag_timestep, BvConst(DONE, FLAG_BITWIDTH));
+	instr.SetUpdate(flag_vector, BvConst(DONE, FLAG_BITWIDTH));
+	instr.SetUpdate(flag_byte, BvConst(DONE, FLAG_BITWIDTH));
 
 	AddChild_Group_Level(m);									
 
@@ -158,10 +169,16 @@ void AddChild_Group_Level(Ila& m) {
 	auto ts_num_group = child_group.NewBvState(GB_LAYER_REDUCE_GROUP_LEVEL_TS_NUM,
 																							GB_LAYER_REDUCE_GROUP_LEVEL_TS_NUM_WIDTH);
 
+	// flags 
+	auto flag_group = m.state(GB_LAYER_REDUCE_GROUP_LEVEL_FLAG);
+	auto flag_timestep = m.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_FLAG);
+
 	// instruction
 	{
 		auto instr = child_group.NewInstr("gb_layer_reduce_group_level_op");
-		instr.SetDecode(group_index < group_num);
+		auto flag_cond = (flag_group == UNDONE) & (flag_timestep == DONE);
+		
+		instr.SetDecode((group_index < group_num) & flag_cond);
 
 		auto g_scalar = BvConst(GROUPING_SCALAR, GB_LAYER_REDUCE_GROUPING_NUM_WIDTH);
 		auto v_scalar = BvConst(GB_CORE_SCALAR, GB_LAYER_REDUCE_GROUPING_NUM_WIDTH);
@@ -197,6 +214,11 @@ void AddChild_Group_Level(Ila& m) {
 											Ite((group_index == group_num - 1),
 														BvConst(GROUPING_SCALAR, GB_LAYER_REDUCE_GROUP_LEVEL_TS_NUM_WIDTH),
 														Extract(group_rem, 4, 0)));
+		// flags update
+		instr.SetUpdate(flag_timestep, BvConst(UNDONE, FLAG_BITWIDTH));
+		instr.SetUpdate(flag_group, Ite(group_index < group_num,
+																			BvConst(UNDONE, FLAG_BITWIDTH),
+																			BvConst(DONE, FLAG_BITWIDTH)));
 
 		// Add child to set timestep level parameters in the current group
 		AddChild_Timestep_Level(m);
@@ -227,10 +249,16 @@ void AddChild_Timestep_Level(Ila& m) {
 	auto group_out_addr = child_group.state(GB_LAYER_REDUCE_GROUP_LEVEL_OUT_ADDR);
 	auto ts_num = child_group.state(GB_LAYER_REDUCE_GROUP_LEVEL_TS_NUM);
 
+	// flags states
+	auto flag_timestep = m.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_FLAG);
+	auto flag_vector = m.state(GB_LAYER_REDUCE_VECTOR_LEVEL_FLAG);
+
 	// instruction
 	{
 		auto instr = child_timestep.NewInstr("gb_layer_timestep_level_op");
-		instr.SetDecode(ts_cntr < ts_num);
+		auto flag_cond = (flag_timestep == UNDONE) & (flag_vector == DONE);
+
+		instr.SetDecode((ts_cntr < ts_num) & flag_cond);
 		
 		auto ts_cntr_20 = Concat(BvConst(0, 15), ts_cntr); // 20
 		auto const_2_cntr = BvConst(2, GB_CORE_STORE_LARGE_BITWIDTH); // 20 
@@ -245,6 +273,12 @@ void AddChild_Timestep_Level(Ila& m) {
 		instr.SetUpdate(timestep_base_addr_1, ts_base_addr_1);
 		instr.SetUpdate(timestep_base_addr_out, ts_base_addr_out);
 		instr.SetUpdate(vector_cntr, BvConst(0, GB_LAYER_REDUCE_VECTOR_LEVEL_OP_CNTR_WIDTH));
+
+		// flag updates
+		instr.SetUpdate(flag_timestep, Ite((ts_cntr < ts_num),
+																					BvConst(UNDONE, FLAG_BITWIDTH), 
+																					BvConst(DONE, FLAG_BITWIDTH)));
+		instr.SetUpdate(flag_vector, BvConst(UNDONE, FLAG_BITWIDTH));
 
 		// add child to set the vector level parameters
 		AddChild_Vector_Level(m);
@@ -278,10 +312,16 @@ void AddChild_Vector_Level(Ila& m) {
 	auto timestep_base_addr_out = 
 					child_timestep.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_RESULT);
 	
+	// flag states
+	auto flag_vector = m.state(GB_LAYER_REDUCE_VECTOR_LEVEL_FLAG);
+	auto flag_byte = m.state(GB_LAYER_REDUCE_BYTE_LEVEL_FLAG);	
+	
 	// instruction
 	{
 		auto instr = child_vector.NewInstr("gb_layer_vector_level_op");
-		instr.SetDecode(vector_cntr < num_vector);
+		auto flag_cond = (flag_vector == UNDONE) & (flag_byte == DONE);
+
+		instr.SetDecode((vector_cntr < num_vector) & flag_cond);
 
 		auto v_addr_offset = vector_cntr * GROUPING_SCALAR * GB_CORE_SCALAR; // 16
 		auto v_addr_offset_20 = Concat(BvConst(0, 4), v_addr_offset); // 20
@@ -295,6 +335,13 @@ void AddChild_Vector_Level(Ila& m) {
 		instr.SetUpdate(vector_base_1, v_addr_1);
 		instr.SetUpdate(vector_base_out, v_addr_out);
 		instr.SetUpdate(byte_cntr, BvConst(0, GB_LAYER_REDUCE_BYTE_LEVEL_CNTR_WIDTH));
+
+		// flag updates
+		instr.SetUpdate(flag_vector, Ite((vector_cntr < num_vector),
+																			BvConst(UNDONE, FLAG_BITWIDTH), 
+																			BvConst(DONE, FLAG_BITWIDTH)));
+
+		instr.SetUpdate(flag_byte, BvConst(UNDONE, FLAG_BITWIDTH));
 
 		// add child to do the pooling
 		AddChild_Byte_Level(m);
@@ -319,9 +366,14 @@ void AddChild_Byte_Level(Ila& m) {
 	auto mem = m.state(GB_CORE_LARGE_BUFFER);
 	auto op_mode = m.state(GB_LAYER_REDUCE_CONFIG_REG_MODE);
 
+	// flag state
+	auto flag_byte = m.state(GB_LAYER_REDUCE_BYTE_LEVEL_FLAG);																		
+
 	// instruction
 	{
 		auto instr = child_byte.NewInstr("gb_layer_byte_level_op");
+		auto flag_cond = (flag_byte == UNDONE);
+
 		instr.SetDecode(byte_cntr < GB_CORE_SCALAR);
 
 		auto byte_cntr_20 = Concat(BvConst(0, 15), byte_cntr); // 20
@@ -345,8 +397,12 @@ void AddChild_Byte_Level(Ila& m) {
 																data_0 + data_1)); 
 
 		instr.SetUpdate(byte_cntr, byte_cntr + 1);
-		instr.SetUpdate(mem, Store(mem, addr_out_32, result));																
-
+		instr.SetUpdate(mem, Store(mem, addr_out_32, result));	
+		// flag update
+		instr.SetUpdate(flag_byte, Ite(byte_cntr < GB_CORE_SCALAR,
+																		BvConst(UNDONE, FLAG_BITWIDTH),
+																		BvConst(DONE, FLAG_BITWIDTH)));
+																												
 	}
 
 }
