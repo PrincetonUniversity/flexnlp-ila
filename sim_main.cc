@@ -63,7 +63,7 @@ SC_MODULE(Source) {
         flex_rd_in = 1;
       }
       // extract the address
-      addr = addr.substr(addr.length() - 6, addr.length());
+      addr = addr.substr(2);
       addr_format = "0x00" + addr;
       addr_c = addr_format.c_str();
       flex_addr_in = addr_c;
@@ -81,23 +81,23 @@ SC_MODULE(Source) {
       for (int i = 0; i<16; i++) {
         data_byte = data_format.substr(30-2*i, 2);
         data_byte_c = ("0x" + data_byte).c_str();
-        cout << data_byte << ' ';
+ //       cout << data_byte << ' ';
         flex_data_in[i] = data_byte_c;
       }
-      cout << endl;
+//      cout << endl;
       
       cout << "@" << sc_time_stamp() << " :" << '\t' 
            << "mode:" << mode << '\t'
-           << "addr:" << addr_c << '\t';
-//           << "data:" << data_format << '\t';
-      cout << "sc_addr" << '\t'
-           << hex << flex_addr_in << '\t'; 
+           << "addr:" << addr_c << '\t'
+           << "data:" << data_format << '\t';
+//      cout << "sc_addr" << '\t'
+//           << hex << flex_addr_in << '\t'; 
 //           << "sc_mode" << '\t'
 //           << flex_wr_in << '\t'
 //           << flex_rd_in << endl;
-      for (int j = 0; j < 16; j++) {
-          cout << hex << flex_data_in[15-j] << ' ';
-      }
+//      for (int j = 0; j < 16; j++) {
+//          cout << hex << flex_data_in[15-j] << ' ';
+//      }
       cout << endl;
 
 
@@ -161,7 +161,8 @@ SC_MODULE(testbench) {
   void run() {
     wait(2, SC_NS);
     std::cout << "@" << sc_time_stamp() << " ********* simulation start *********" << std::endl;
-    wait(100000, SC_NS);
+    wait(1000000, SC_NS);
+    cout << "test for accessing flex:  " << hex << flex.flex_sim_gb_core_large_buffer[12] << endl;
     std::cout << "@" << sc_time_stamp() << " *********     sc_stop      *********" << std::endl;
     sc_stop();
   }
