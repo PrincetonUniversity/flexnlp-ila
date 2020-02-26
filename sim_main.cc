@@ -32,7 +32,7 @@ SC_MODULE(Source) {
       flex_data_in[i] = "0x0";
     }
 
-    wait(10);
+    wait(10, SC_NS);
 
     std::ifstream fin;
     std::string mode, addr, data;
@@ -44,7 +44,7 @@ SC_MODULE(Source) {
     const char *addr_c;
     const char *data_byte_c;
 
-    wait(10);
+    wait(10, SC_NS);
 
     fin.open("/u/yl29/3LA/test_input.csv", ios::in);
 
@@ -86,25 +86,25 @@ SC_MODULE(Source) {
       }
 //      cout << endl;
       
-      cout << "@" << sc_time_stamp() << " :" << '\t' 
-           << "mode:" << mode << '\t'
-           << "addr:" << addr_c << '\t'
-           << "data:" << data_format << '\t';
-//      cout << "sc_addr" << '\t'
-//           << hex << flex_addr_in << '\t'; 
-//           << "sc_mode" << '\t'
-//           << flex_wr_in << '\t'
-//           << flex_rd_in << endl;
-//      for (int j = 0; j < 16; j++) {
-//          cout << hex << flex_data_in[15-j] << ' ';
-//      }
-      cout << endl;
+//       cout << "@" << sc_time_stamp() << " :" << '\t' 
+//            << "mode:" << mode << '\t'
+//            << "addr:" << addr_c << '\t'
+//            << "data:" << data_format << '\t';
+// //      cout << "sc_addr" << '\t'
+// //           << hex << flex_addr_in << '\t'; 
+// //           << "sc_mode" << '\t'
+// //           << flex_wr_in << '\t'
+// //           << flex_rd_in << endl;
+// //      for (int j = 0; j < 16; j++) {
+// //          cout << hex << flex_data_in[15-j] << ' ';
+// //      }
+//       cout << endl;
 
 
-      wait(10);
+      wait(10, SC_NS);
     }
 
-    cout << "source created for testbench" << endl;
+    // cout << "source created for testbench" << endl;
   }
 };
 
@@ -159,8 +159,28 @@ SC_MODULE(testbench) {
   }
 
   void run() {
-    wait(2, SC_NS);
+    int i = 0;
+    
+    wait(10, SC_NS);
     std::cout << "@" << sc_time_stamp() << " ********* simulation start *********" << std::endl;
+    wait(10, SC_NS);
+
+    while (i < 3000) {
+      i++;
+      cout << "@ " << sc_time_stamp() << '\t';
+      cout << "is write? :" << '\t' << flex.flex_sim_if_axi_wr_in << '\t';
+      cout << "addr in:" << '\t' << hex << flex.flex_sim_addr_in << '\t';
+      cout << "data in:" << '\t';
+      for (int k=0; k < 16; k++) {
+        cout << hex << flex_data_signal[15-i] << ' ';
+      }
+      cout << endl;
+      cout << "flex status:" << '\t';
+      cout << "reduce valid: " << '\t' << flex.flex_sim_gb_layer_reduce_is_valid << '\t';
+      cout << "grouping num: " << '\t' << flex.flex_sim_gb_layer_reduce_grouping_num << endl;
+    }
+    
+
     wait(1000000, SC_NS);
     cout << "test for accessing flex:  " << hex << flex.flex_sim_gb_core_large_buffer[12] << endl;
     std::cout << "@" << sc_time_stamp() << " *********     sc_stop      *********" << std::endl;
