@@ -36,7 +36,7 @@ void DefineGBCoreStore(Ila& m) {
     auto instr = m.NewInstr("GBCore_Store_Large");
     // decode condition
     auto is_write = m.input(TOP_IF_WR) & ~m.input(TOP_IF_RD);
-    auto valid_addr = (m.input(TOP_ADDR_IN) >= (TOP_ADDR_BASE + GB_CORE_STORE_LARGE_ADDR_MIN)) |
+    auto valid_addr = (m.input(TOP_ADDR_IN) >= (TOP_ADDR_BASE + GB_CORE_STORE_LARGE_ADDR_MIN)) &
                         (m.input(TOP_ADDR_IN) <= (TOP_ADDR_BASE + GB_CORE_STORE_LARGE_ADDR_MAX));
     instr.SetDecode(is_write & valid_addr);
 
@@ -68,7 +68,7 @@ void DefineGBCoreStore(Ila& m) {
     auto instr = m.NewInstr("GBCore_Store_Small");
     // decode condition
     auto is_write = m.input(TOP_IF_WR) & ~m.input(TOP_IF_RD);
-    auto valid_addr = (m.input(TOP_ADDR_IN) >= (TOP_ADDR_BASE + GB_CORE_STORE_SMALL_ADDR_MIN)) |
+    auto valid_addr = (m.input(TOP_ADDR_IN) >= (TOP_ADDR_BASE + GB_CORE_STORE_SMALL_ADDR_MIN)) &
                         (m.input(TOP_ADDR_IN) <= (TOP_ADDR_BASE + GB_CORE_STORE_SMALL_ADDR_MAX));
     instr.SetDecode(is_write & valid_addr);
 
