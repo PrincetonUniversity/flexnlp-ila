@@ -160,6 +160,28 @@ namespace ilang {
 #define GB_LAYER_REDUCE_BYTE_LEVEL_CNTR_WIDTH                                 \
   GB_CORE_SCALAR_BITWIDTH + 1
 
+
+// flag variables for deciding child sequences
+#define DONE 1
+#define UNDONE 0
+#define FLAG_BITWIDTH 1
+
+#define GB_LAYER_REDUCE_GROUP_LEVEL_FLAG                                      \
+  "gb_layer_reduce_group_level_flag"
+#define GB_LAYER_REDUCE_GROUP_LEVEL_FLAG_WIDTH  FLAG_BITWIDTH
+
+#define GB_LAYER_REDUCE_TIMESTEP_LEVEL_FLAG                                   \
+  "gb_layer_reduce_timestep_level_flag"
+#define GB_LAYER_REDUCE_TIMESTEP_LEVEL_FLAG_WIDTH  FLAG_BITWIDTH
+
+#define GB_LAYER_REDUCE_VECTOR_LEVEL_FLAG                                     \
+  "gb_layer_reduce_vector_level_flag"
+#define GB_LAYER_REDUCE_VECTOR_LEVEL_FLAG_WIDTH  FLAG_BITWIDTH
+
+#define GB_LAYER_REDUCE_BYTE_LEVEL_FLAG                                       \
+  "gb_layer_reduce_byte_level_flag"
+#define GB_LAYER_REDUCE_BYTE_LEVEL_FLAG_WIDTH  FLAG_BITWIDTH
+
 }; // namespace ilang
 
 #endif // FLEX_GB_LAYER_REDUCE_H__

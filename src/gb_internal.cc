@@ -56,6 +56,18 @@ void DefineGBInternalStates(Ila& m) {
   // state for time_step level pooling counter
   m.NewBvState(GB_LAYER_REDUCE_TIME_STEP_OP_CNTR,
               GB_LAYER_REDUCE_TIME_STEP_OP_CNTR_WIDTH);
+  
+  // states for flags controlling child sequence
+  m.NewBvState(GB_LAYER_REDUCE_GROUP_LEVEL_FLAG,
+                GB_LAYER_REDUCE_GROUP_LEVEL_FLAG_WIDTH);
+  m.NewBvState(GB_LAYER_REDUCE_TIMESTEP_LEVEL_FLAG,
+                GB_LAYER_REDUCE_TIMESTEP_LEVEL_FLAG_WIDTH);
+  m.NewBvState(GB_LAYER_REDUCE_VECTOR_LEVEL_FLAG,
+                GB_LAYER_REDUCE_VECTOR_LEVEL_FLAG_WIDTH);
+  m.NewBvState(GB_LAYER_REDUCE_BYTE_LEVEL_FLAG,
+                GB_LAYER_REDUCE_BYTE_LEVEL_FLAG_WIDTH);                                
+  
+  
 
   /******** GBLayerNorm internal states ********/
 
