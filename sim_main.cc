@@ -39,14 +39,23 @@ SC_MODULE(Source) {
     std::string data_format;
     std::string temp;
     std::string hex_hdr = "0x";
-    fin.open("../../axi_commands_for_maxpool.csv", ios::in);
+    std::string addr_format;
+    
+    const char *addr_c;
+    const char *data_byte_c;
+
+    wait(10);
+
+    fin.open("/u/yl29/3LA/test_input.csv", ios::in);
 
     while(std::getline(fin, temp, ',')) {
       std::getline(fin, mode, ',');
       std::getline(fin, addr, ',');
       std::getline(fin, data, '\n');
+
+      cout << mode << '\t' << addr << '\t' << data << endl;
       // set the WR/RD mode
-      if (mode.compare("W")) {
+      if (mode.compare("W") == 0) {
         flex_wr_in = 1;
         flex_rd_in = 0;
       } else {
@@ -55,20 +64,42 @@ SC_MODULE(Source) {
       }
       // extract the address
       addr = addr.substr(addr.length() - 6, addr.length());
-      const char *addr_c = ("0x" + addr).c_str();
+      addr_format = "0x00" + addr;
+      addr_c = addr_format.c_str();
       flex_addr_in = addr_c;
 
       // extract the data
       data_format.clear();
-      data_format.append(34 - data.length(), '0');
-      data_format.append(data.substr(2));
+      if (data.length() <= 34) {
+        data_format.append(34 - data.length(), '0');
+        data_format.append(data.substr(2));
+      } else {
+        data_format.append(data.substr(data.length()-32));
+      }
+
       std::string data_byte;
-      const char *data_byte_c;
       for (int i = 0; i<16; i++) {
-        data_byte = data_format.substr(30-2*i, 32-2*i);
+        data_byte = data_format.substr(30-2*i, 2);
         data_byte_c = ("0x" + data_byte).c_str();
+        cout << data_byte << ' ';
         flex_data_in[i] = data_byte_c;
       }
+      cout << endl;
+      
+      cout << "@" << sc_time_stamp() << " :" << '\t' 
+           << "mode:" << mode << '\t'
+           << "addr:" << addr_c << '\t';
+//           << "data:" << data_format << '\t';
+      cout << "sc_addr" << '\t'
+           << hex << flex_addr_in << '\t'; 
+//           << "sc_mode" << '\t'
+//           << flex_wr_in << '\t'
+//           << flex_rd_in << endl;
+      for (int j = 0; j < 16; j++) {
+          cout << hex << flex_data_in[15-j] << ' ';
+      }
+      cout << endl;
+
 
       wait(10);
     }
@@ -129,11 +160,9 @@ SC_MODULE(testbench) {
 
   void run() {
     wait(2, SC_NS);
-    std::cout << "@" << sc_time_stamp() << "simulation start" << std::endl;
-    wait(8, SC_NS);
-    std::cout << "@" << sc_time_stamp() << "start input" << std::endl;
+    std::cout << "@" << sc_time_stamp() << " ********* simulation start *********" << std::endl;
     wait(100000, SC_NS);
-    std::cout << "@" << sc_time_stamp() << "sc_stop" << std::endl;
+    std::cout << "@" << sc_time_stamp() << " *********     sc_stop      *********" << std::endl;
     sc_stop();
   }
 };
