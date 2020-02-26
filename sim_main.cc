@@ -53,7 +53,7 @@ SC_MODULE(Source) {
       std::getline(fin, addr, ',');
       std::getline(fin, data, '\n');
 
-      cout << mode << '\t' << addr << '\t' << data << endl;
+      // cout << mode << '\t' << addr << '\t' << data << endl;
       // set the WR/RD mode
       if (mode.compare("W") == 0) {
         flex_wr_in = 1;
@@ -160,28 +160,50 @@ SC_MODULE(testbench) {
 
   void run() {
     int i = 0;
+    bool undone = true;
+    int stop_addr = 0xdead;
     
     wait(10, SC_NS);
     std::cout << "@" << sc_time_stamp() << " ********* simulation start *********" << std::endl;
     wait(10, SC_NS);
 
-    while (i < 3000) {
-      i++;
+    while (undone) {
+      if (flex.flex_sim_addr_in.to_int() == stop_addr) {
+          undone = false;
+      }
+
       cout << "@ " << sc_time_stamp() << '\t';
       cout << "is write? :" << '\t' << flex.flex_sim_if_axi_wr_in << '\t';
       cout << "addr in:" << '\t' << hex << flex.flex_sim_addr_in << '\t';
       cout << "data in:" << '\t';
       for (int k=0; k < 16; k++) {
-        cout << hex << flex_data_signal[15-i] << ' ';
+        cout << hex << flex_data_signal[15-k] << ' ';
       }
       cout << endl;
       cout << "flex status:" << '\t';
       cout << "reduce valid: " << '\t' << flex.flex_sim_gb_layer_reduce_is_valid << '\t';
-      cout << "grouping num: " << '\t' << flex.flex_sim_gb_layer_reduce_grouping_num << endl;
+      cout << "grouping num: " << '\t' << flex.flex_sim_gb_layer_reduce_grouping_num << '\n' << endl;
+      wait(10, SC_NS);
     }
-    
 
-    wait(1000000, SC_NS);
+    wait(10000, SC_NS);
+    cout << "********* output for large buffer ***********" << endl;
+    
+    int entry_addr;
+    int index;
+    for (int j = 0; j < 0xB00; j++) {
+        entry_addr = 16*j;
+        cout << "large buffer @ addr:" << '\t';
+        cout << hex << entry_addr << '\t';
+        cout << "data:" << '\t';
+        for (int k = 0; k < 16; k++) {
+            index = 16*j + 15 - k;
+            cout << hex << flex.flex_sim_gb_core_large_buffer[index] << ' ';
+        }
+        cout << endl;
+    }
+
+    wait(1000, SC_NS);
     cout << "test for accessing flex:  " << hex << flex.flex_sim_gb_core_large_buffer[12] << endl;
     std::cout << "@" << sc_time_stamp() << " *********     sc_stop      *********" << std::endl;
     sc_stop();
