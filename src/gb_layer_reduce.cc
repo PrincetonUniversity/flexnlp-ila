@@ -27,13 +27,16 @@
 #include <flex/flex.h>
 
 namespace ilang {
-void AddChild_gb_lr_ts(Ila& m);
-void AddChild_gb_lr_v(Ila& m);
+// void AddChild_gb_lr_ts(Ila& m);
+// void AddChild_gb_lr_v(Ila& m);
+
+void AddChild_Turnoff_Flag(Ila& m);
 
 void AddChild_Group_Level(Ila& m);
 void AddChild_Timestep_Level(Ila& m);
 void AddChild_Vector_Level(Ila& m);
 void AddChild_Byte_Level(Ila& m);
+
 
 void DefineStartGBLayerReduce(Ila& m) {
   auto instr = m.NewInstr("Start_GBLayer_Reduce");
@@ -109,6 +112,7 @@ void DefineStartGBLayerReduce(Ila& m) {
                                 								num_timestep / g_scalar);
 
 	// flag variables
+	auto flag_start = m.state(GB_LAYER_REDUCE_START_FLAG);
 	auto flag_group = m.state(GB_LAYER_REDUCE_GROUP_LEVEL_FLAG);
 	auto flag_timestep = m.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_FLAG);
 	auto flag_vector = m.state(GB_LAYER_REDUCE_VECTOR_LEVEL_FLAG);
@@ -124,12 +128,14 @@ void DefineStartGBLayerReduce(Ila& m) {
 										BvConst(0, GB_LAYER_REDUCE_GROUPING_INDEX_WIDTH));
 
 	// flag variables updates
+	instr.SetUpdate(flag_start, BvConst(ON, FLAG_BITWIDTH));
 	instr.SetUpdate(flag_group, BvConst(UNDONE, FLAG_BITWIDTH)); // top child should be undone
 	instr.SetUpdate(flag_timestep, BvConst(DONE, FLAG_BITWIDTH));
 	instr.SetUpdate(flag_vector, BvConst(DONE, FLAG_BITWIDTH));
 	instr.SetUpdate(flag_byte, BvConst(DONE, FLAG_BITWIDTH));
 
-	AddChild_Group_Level(m);									
+	AddChild_Group_Level(m);
+	AddChild_Turnoff_Flag(m);									
 
 	/************ old model parameter ***********/
   // instr.SetUpdate(m.state(GB_LAYER_REDUCE_ITERATIONS), iterations);
@@ -142,13 +148,42 @@ void DefineStartGBLayerReduce(Ila& m) {
   // AddChild_gb_lr_ts(m);
 }
 
+void AddChild_Turnoff_Flag(Ila& m) {
+	auto flag_start = m.state(GB_LAYER_REDUCE_START_FLAG);
+	auto flag_group = m.state(GB_LAYER_REDUCE_GROUP_LEVEL_FLAG);
+	auto flag_timestep = m.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_FLAG);
+	auto flag_vector = m.state(GB_LAYER_REDUCE_VECTOR_LEVEL_FLAG);
+	auto flag_byte = m.state(GB_LAYER_REDUCE_BYTE_LEVEL_FLAG);	
+
+	auto cond = (flag_start == 1) & (flag_group == 1) & (flag_timestep == 1) & 
+							(flag_vector == 1) & (flag_byte == 1);
+
+	auto child_done = m.NewChild("GBLayerReduce_Done_Flag");
+
+	child_done.SetValid(cond);
+	child_done.SetFetch(BvConst(1,1));
+
+	{
+		auto instr = child_done.NewInstr("gb_layer_reduce_done!");
+		instr.SetDecode(cond);
+
+		instr.SetUpdate(flag_start, BvConst(OFF, GB_LAYER_REDUCE_START_FLAG_WIDTH));
+	}
+}
+
 // Child model that set grouping level parameters
 void AddChild_Group_Level(Ila& m) {
 	auto child_group = m.NewChild("GBLayerReduce_Group_Level");
 	auto group_index = m.state(GB_LAYER_REDUCE_GROUPING_INDEX);
 	auto group_num = m.state(GB_LAYER_REDUCE_GROUPING_NUM);
 
-	child_group.SetValid(group_index < group_num);
+	// flags 
+	auto flag_start = m.state(GB_LAYER_REDUCE_START_FLAG);
+	auto flag_group = m.state(GB_LAYER_REDUCE_GROUP_LEVEL_FLAG);
+	auto flag_timestep = m.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_FLAG);
+	auto flag_cond = (flag_group == UNDONE) & (flag_timestep == DONE) & (flag_start == ON);
+
+	child_group.SetValid((group_index < group_num) & flag_cond);
 	child_group.SetFetch(BvConst(1,1));
 
 	// grouping level parameters
@@ -169,15 +204,10 @@ void AddChild_Group_Level(Ila& m) {
 	auto ts_num_group = child_group.NewBvState(GB_LAYER_REDUCE_GROUP_LEVEL_TS_NUM,
 																							GB_LAYER_REDUCE_GROUP_LEVEL_TS_NUM_WIDTH);
 
-	// flags 
-	auto flag_group = m.state(GB_LAYER_REDUCE_GROUP_LEVEL_FLAG);
-	auto flag_timestep = m.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_FLAG);
-
 	// instruction
 	{
 		auto instr = child_group.NewInstr("gb_layer_reduce_group_level_op");
-		auto flag_cond = (flag_group == UNDONE) & (flag_timestep == DONE);
-		
+
 		instr.SetDecode((group_index < group_num) & flag_cond);
 
 		auto g_scalar = BvConst(GROUPING_SCALAR, GB_LAYER_REDUCE_GROUPING_NUM_WIDTH);
@@ -231,7 +261,16 @@ void AddChild_Timestep_Level(Ila& m) {
 	auto child_timestep = child_group.NewChild("GBLayerReduce_Timestep_Level");
 	
 	auto ts_cntr = child_group.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_CNTR); // 5-bit
-	child_timestep.SetValid(ts_cntr < GROUPING_SCALAR);
+	auto ts_num = child_group.state(GB_LAYER_REDUCE_GROUP_LEVEL_TS_NUM);
+
+	// flags states
+	auto flag_start = m.state(GB_LAYER_REDUCE_START_FLAG);
+	auto flag_timestep = m.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_FLAG);
+	auto flag_vector = m.state(GB_LAYER_REDUCE_VECTOR_LEVEL_FLAG);
+
+	auto flag_cond = (flag_timestep == UNDONE) & (flag_vector == DONE) & (flag_start == ON);
+	
+	child_timestep.SetValid((ts_cntr < ts_num) & flag_cond);
 	child_timestep.SetFetch(BvConst(1,1));
 
 	// timestep level parameters
@@ -247,17 +286,12 @@ void AddChild_Timestep_Level(Ila& m) {
 	// paraent states
 	auto group_base_addr = child_group.state(GB_LAYER_REDUCE_GROUP_LEVEL_BASE_ADDR);
 	auto group_out_addr = child_group.state(GB_LAYER_REDUCE_GROUP_LEVEL_OUT_ADDR);
-	auto ts_num = child_group.state(GB_LAYER_REDUCE_GROUP_LEVEL_TS_NUM);
 
-	// flags states
-	auto flag_timestep = m.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_FLAG);
-	auto flag_vector = m.state(GB_LAYER_REDUCE_VECTOR_LEVEL_FLAG);
 
 	// instruction
 	{
 		auto instr = child_timestep.NewInstr("gb_layer_timestep_level_op");
-		auto flag_cond = (flag_timestep == UNDONE) & (flag_vector == DONE);
-
+		
 		instr.SetDecode((ts_cntr < ts_num) & flag_cond);
 		
 		auto ts_cntr_20 = Concat(BvConst(0, 15), ts_cntr); // 20
@@ -293,7 +327,13 @@ void AddChild_Vector_Level(Ila& m) {
 	auto num_vector = m.state(GB_LAYER_REDUCE_CONFIG_REG_NUM_TIMESTEP_1);
 	auto vector_cntr = child_timestep.state(GB_LAYER_REDUCE_VECTOR_LEVEL_OP_CNTR); // 16
 
-	child_vector.SetValid(vector_cntr < num_vector);
+	// flag states
+	auto flag_start = m.state(GB_LAYER_REDUCE_START_FLAG);
+	auto flag_vector = m.state(GB_LAYER_REDUCE_VECTOR_LEVEL_FLAG);
+	auto flag_byte = m.state(GB_LAYER_REDUCE_BYTE_LEVEL_FLAG);
+	auto flag_cond = (flag_vector == UNDONE) & (flag_byte == DONE) & (flag_start == ON);
+
+	child_vector.SetValid((vector_cntr < num_vector) & flag_cond);
 	child_vector.SetFetch(BvConst(1,1));
 
 	// vector level parameters
@@ -312,15 +352,10 @@ void AddChild_Vector_Level(Ila& m) {
 	auto timestep_base_addr_out = 
 					child_timestep.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_RESULT);
 	
-	// flag states
-	auto flag_vector = m.state(GB_LAYER_REDUCE_VECTOR_LEVEL_FLAG);
-	auto flag_byte = m.state(GB_LAYER_REDUCE_BYTE_LEVEL_FLAG);	
-	
 	// instruction
 	{
 		auto instr = child_vector.NewInstr("gb_layer_vector_level_op");
-		auto flag_cond = (flag_vector == UNDONE) & (flag_byte == DONE);
-
+		
 		instr.SetDecode((vector_cntr < num_vector) & flag_cond);
 
 		auto v_addr_offset = vector_cntr * GROUPING_SCALAR * GB_CORE_SCALAR; // 16
@@ -356,7 +391,12 @@ void AddChild_Byte_Level(Ila& m) {
 	auto child_byte = child_vector.NewChild("GBLayerReduce_Byte_Level");
 
 	auto byte_cntr = child_vector.state(GB_LAYER_REDUCE_BYTE_LEVEL_CNTR);
-	child_byte.SetValid(byte_cntr < GB_CORE_SCALAR);
+	// flag state
+	auto flag_byte = m.state(GB_LAYER_REDUCE_BYTE_LEVEL_FLAG);	
+	auto flag_start = m.state(GB_LAYER_REDUCE_START_FLAG);
+	auto flag_cond = (flag_byte == UNDONE) & (flag_start == ON);
+
+	child_byte.SetValid((byte_cntr < GB_CORE_SCALAR) & flag_cond);
 
 	// parent states
 	auto vector_base_0 = child_vector.state(GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_0);
@@ -366,15 +406,10 @@ void AddChild_Byte_Level(Ila& m) {
 	auto mem = m.state(GB_CORE_LARGE_BUFFER);
 	auto op_mode = m.state(GB_LAYER_REDUCE_CONFIG_REG_MODE);
 
-	// flag state
-	auto flag_byte = m.state(GB_LAYER_REDUCE_BYTE_LEVEL_FLAG);																		
-
 	// instruction
 	{
 		auto instr = child_byte.NewInstr("gb_layer_byte_level_op");
-		auto flag_cond = (flag_byte == UNDONE);
-
-		instr.SetDecode(byte_cntr < GB_CORE_SCALAR);
+		instr.SetDecode((byte_cntr < GB_CORE_SCALAR) & flag_cond);
 
 		auto byte_cntr_20 = Concat(BvConst(0, 15), byte_cntr); // 20
 

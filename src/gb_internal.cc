@@ -58,6 +58,8 @@ void DefineGBInternalStates(Ila& m) {
               GB_LAYER_REDUCE_TIME_STEP_OP_CNTR_WIDTH);
   
   // states for flags controlling child sequence
+  m.NewBvState(GB_LAYER_REDUCE_START_FLAG,
+                GB_LAYER_REDUCE_START_FLAG_WIDTH);
   m.NewBvState(GB_LAYER_REDUCE_GROUP_LEVEL_FLAG,
                 GB_LAYER_REDUCE_GROUP_LEVEL_FLAG_WIDTH);
   m.NewBvState(GB_LAYER_REDUCE_TIMESTEP_LEVEL_FLAG,

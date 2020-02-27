@@ -35,6 +35,7 @@ add_executable(${MyTarget}
   src/config_state_gb.cc
   src/config_state_pe.cc
   src/flex.cc
+  src/init_conditions.cc
   src/gb_attention.cc
   src/gb_control.cc
   src/gb_core_store.cc
