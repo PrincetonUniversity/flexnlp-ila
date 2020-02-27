@@ -290,7 +290,7 @@ void AddChild_Vector_Level(Ila& m) {
 	auto child_timestep = child_group.child("GBLayerReduce_Timestep_Level");
 	auto child_vector = child_timestep.NewChild("GBLayerReduce_Vector_Level");
 
-	auto num_vector = m.state(GB_LAYER_NORM_CONFIG_REG_NUM_TIMESTEP_1);
+	auto num_vector = m.state(GB_LAYER_REDUCE_CONFIG_REG_NUM_TIMESTEP_1);
 	auto vector_cntr = child_timestep.state(GB_LAYER_REDUCE_VECTOR_LEVEL_OP_CNTR); // 16
 
 	child_vector.SetValid(vector_cntr < num_vector);
