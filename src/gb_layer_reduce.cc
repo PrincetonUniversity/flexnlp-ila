@@ -223,14 +223,15 @@ void AddChild_Group_Level(Ila& m) {
 		auto out_addr_offset = Ite((URem(group_index, const_2) > 0),
 																	group_size * (group_index / const_2) + half_row_size,
 																	group_size * (group_index / const_2));
+		auto out_addr_offset_20 = Concat(BvConst(0,4), out_addr_offset);
 
 		// deal with overflow situation
 		auto base_addr_fixed = Ite((base_addr_offset_20 < block_size), 
 																	base_addr_offset_20, base_addr_offset_20 - block_size);
 		auto base_addr_final = base_addr_fixed + mem_min_addr;
 
-		auto out_addr_fixed = Ite((base_addr_offset_20 < block_size),
-																base_addr_offset_20, base_addr_offset_20 - block_size);
+		auto out_addr_fixed = Ite((out_addr_offset_20 < block_size),
+																out_addr_offset_20, out_addr_offset_20 - block_size);
 		auto out_addr_final = out_addr_fixed + mem_min_addr;																
 
 		// state updates
@@ -361,9 +362,9 @@ void AddChild_Vector_Level(Ila& m) {
 		auto v_addr_offset = vector_cntr * GROUPING_SCALAR * GB_CORE_SCALAR; // 16
 		auto v_addr_offset_20 = Concat(BvConst(0, 4), v_addr_offset); // 20
 
-		auto v_addr_0 = vector_base_0 + v_addr_offset_20;
-		auto v_addr_1 = vector_base_1 + v_addr_offset_20;
-		auto v_addr_out = vector_base_out + v_addr_offset_20;
+		auto v_addr_0 = timestep_base_addr_0 + v_addr_offset_20;
+		auto v_addr_1 = timestep_base_addr_1 + v_addr_offset_20;
+		auto v_addr_out = timestep_base_addr_out + v_addr_offset_20;
 
 		instr.SetUpdate(vector_cntr, vector_cntr + 1);
 		instr.SetUpdate(vector_base_0, v_addr_0);
