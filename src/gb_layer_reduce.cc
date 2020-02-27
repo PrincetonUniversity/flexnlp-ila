@@ -164,7 +164,7 @@ void AddChild_Turnoff_Flag(Ila& m) {
 	child_done.SetFetch(BvConst(1,1));
 
 	{
-		auto instr = child_done.NewInstr("gb_layer_reduce_done!");
+		auto instr = child_done.NewInstr("gb_layer_reduce_done");
 		instr.SetDecode(cond);
 
 		instr.SetUpdate(flag_start, BvConst(OFF, GB_LAYER_REDUCE_START_FLAG_WIDTH));
