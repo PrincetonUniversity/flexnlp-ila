@@ -309,7 +309,7 @@ void AddChild_Timestep_Level(Ila& m) {
 		instr.SetUpdate(vector_cntr, BvConst(0, GB_LAYER_REDUCE_VECTOR_LEVEL_OP_CNTR_WIDTH));
 
 		// flag updates
-		instr.SetUpdate(flag_timestep, Ite((ts_cntr < (ts_num - 1)),
+		instr.SetUpdate(flag_timestep, Ite((ts_cntr < (ts_num - 2)),
 																					BvConst(UNDONE, FLAG_BITWIDTH), 
 																					BvConst(DONE, FLAG_BITWIDTH)));
 		instr.SetUpdate(flag_vector, BvConst(UNDONE, FLAG_BITWIDTH));
