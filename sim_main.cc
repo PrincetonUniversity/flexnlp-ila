@@ -1,6 +1,7 @@
 #include <systemc>
 #include <iostream>
 #include <string>
+#include <fstream>
 
 #include "flex_sim.h"
 
@@ -162,6 +163,8 @@ SC_MODULE(testbench) {
     int i = 0;
     bool undone = true;
     int stop_addr = 0xdead;
+    std::ofstream fout;
+    fout.open("./test_output.txt", ofstream::out | ofstream::trunc);
     
     wait(10, SC_NS);
     std::cout << "@" << sc_time_stamp() << " ********* simulation start *********" << std::endl;
@@ -172,35 +175,35 @@ SC_MODULE(testbench) {
           undone = false;
       }
 
-      cout << "@ " << sc_time_stamp() << '\t';
-      cout << "is write? :" << '\t' << flex.flex_sim_if_axi_wr_in << '\t';
-      cout << "addr in:" << '\t' << hex << flex.flex_sim_addr_in << '\t';
-      cout << "data in:" << '\t';
+      fout << "@ " << sc_time_stamp() << '\t';
+      fout << "is write? :" << '\t' << flex.flex_sim_if_axi_wr_in << '\t';
+      fout << "addr in:" << '\t' << hex << flex.flex_sim_addr_in << '\t';
+      fout << "data in:" << '\t';
       for (int k=0; k < 16; k++) {
-        cout << hex << flex_data_signal[15-k] << ' ';
+        fout << hex << flex_data_signal[15-k] << ' ';
       }
-      cout << endl;
-      cout << "flex status:" << '\t';
-      cout << "reduce valid: " << '\t' << flex.flex_sim_gb_layer_reduce_is_valid << '\t';
-      cout << "grouping num: " << '\t' << flex.flex_sim_gb_layer_reduce_grouping_num << '\n' << endl;
+      fout << endl;
+      fout << "flex status:" << '\t';
+      fout << "reduce valid: " << '\t' << flex.flex_sim_gb_layer_reduce_is_valid << '\t';
+      fout << "grouping num: " << '\t' << flex.flex_sim_gb_layer_reduce_grouping_num << '\n' << endl;
       wait(10, SC_NS);
     }
 
     wait(10000, SC_NS);
-    cout << "********* output for large buffer ***********" << endl;
+    fout << "********* output for large buffer ***********" << endl;
     
     int entry_addr;
     int index;
     for (int j = 0; j < 0xB00; j++) {
         entry_addr = 16*j;
-        cout << "large buffer @ addr:" << '\t';
-        cout << hex << entry_addr << '\t';
-        cout << "data:" << '\t';
+        fout << "large buffer @ addr:" << '\t';
+        fout << hex << entry_addr << '\t';
+        fout << "data:" << '\t';
         for (int k = 0; k < 16; k++) {
             index = 16*j + 15 - k;
-            cout << hex << flex.flex_sim_gb_core_large_buffer[index] << ' ';
+            fout << hex << flex.flex_sim_gb_core_large_buffer[index] << ' ';
         }
-        cout << endl;
+        fout << endl;
     }
 
     wait(1000, SC_NS);

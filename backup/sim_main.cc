@@ -1,7 +1,7 @@
 #include <systemc>
 #include <iostream>
-#include <fstream>
 #include <string>
+#include <fstream>
 
 #include "flex_sim.h"
 
@@ -163,10 +163,11 @@ SC_MODULE(testbench) {
     int i = 0;
     bool undone = true;
     int stop_addr = 0xdead;
-    std::ofstream fout("./sim_out.txt");
+    std::ofstream fout;
+    fout.open("./test_output.txt", ofstream::out | ofstream::trunc);
     
     wait(10, SC_NS);
-    fout << "@" << sc_time_stamp() << " ********* simulation start *********" << std::endl;
+    std::cout << "@" << sc_time_stamp() << " ********* simulation start *********" << std::endl;
     wait(10, SC_NS);
 
     while (undone) {
@@ -178,25 +179,9 @@ SC_MODULE(testbench) {
       fout << "is write? :" << '\t' << flex.flex_sim_if_axi_wr_in << '\t';
       fout << "addr in:" << '\t' << hex << flex.flex_sim_addr_in << '\t';
       fout << "data in:" << '\t';
-//      for (int k=0; k < 16; k++) {
-//        cout << hex << flex_data_signal[15-k] << ' ';
-//      }
-      fout << flex.flex_sim_data_in_15 << ' ';
-      fout << flex.flex_sim_data_in_14 << ' ';
-      fout << flex.flex_sim_data_in_13 << ' ';
-      fout << flex.flex_sim_data_in_12 << ' ';
-      fout << flex.flex_sim_data_in_11 << ' ';
-      fout << flex.flex_sim_data_in_10 << ' ';
-      fout << flex.flex_sim_data_in_9 << ' ';
-      fout << flex.flex_sim_data_in_8 << ' ';
-      fout << flex.flex_sim_data_in_7 << ' ';
-      fout << flex.flex_sim_data_in_6 << ' ';
-      fout << flex.flex_sim_data_in_5 << ' ';
-      fout << flex.flex_sim_data_in_4 << ' ';
-      fout << flex.flex_sim_data_in_3 << ' ';
-      fout << flex.flex_sim_data_in_2 << ' ';
-      fout << flex.flex_sim_data_in_1 << ' ';
-      fout << flex.flex_sim_data_in_0 << ' ';
+      for (int k=0; k < 16; k++) {
+        fout << hex << flex_data_signal[15-k] << ' ';
+      }
       fout << endl;
       fout << "flex status:" << '\t';
       fout << "reduce valid: " << '\t' << flex.flex_sim_gb_layer_reduce_is_valid << '\t';
@@ -205,9 +190,6 @@ SC_MODULE(testbench) {
     }
 
     wait(10000, SC_NS);
-    std::cout << "child flag is: " << flex.child_flag << endl;
-    std::cout << "num_of_timestep" << '\t' << flex.flex_sim_gb_layer_reduce_num_timestep_1 << endl;
-
     fout << "********* output for large buffer ***********" << endl;
     
     int entry_addr;
@@ -225,8 +207,8 @@ SC_MODULE(testbench) {
     }
 
     wait(1000, SC_NS);
-    fout << "test for accessing flex:  " << hex << flex.flex_sim_gb_core_large_buffer[12] << endl;
-    fout << "@" << sc_time_stamp() << " *********     sc_stop      *********" << std::endl;
+    cout << "test for accessing flex:  " << hex << flex.flex_sim_gb_core_large_buffer[12] << endl;
+    std::cout << "@" << sc_time_stamp() << " *********     sc_stop      *********" << std::endl;
     sc_stop();
   }
 };
