@@ -216,7 +216,7 @@ void AddChild_Group_Level(Ila& m) {
 														Extract(group_rem, 4, 0)));
 		// flags update
 		instr.SetUpdate(flag_timestep, BvConst(UNDONE, FLAG_BITWIDTH));
-		instr.SetUpdate(flag_group, Ite(group_index < group_num,
+		instr.SetUpdate(flag_group, Ite(group_index < (group_num - 1),
 																			BvConst(UNDONE, FLAG_BITWIDTH),
 																			BvConst(DONE, FLAG_BITWIDTH)));
 
@@ -275,7 +275,7 @@ void AddChild_Timestep_Level(Ila& m) {
 		instr.SetUpdate(vector_cntr, BvConst(0, GB_LAYER_REDUCE_VECTOR_LEVEL_OP_CNTR_WIDTH));
 
 		// flag updates
-		instr.SetUpdate(flag_timestep, Ite((ts_cntr < ts_num),
+		instr.SetUpdate(flag_timestep, Ite((ts_cntr < (ts_num - 1)),
 																					BvConst(UNDONE, FLAG_BITWIDTH), 
 																					BvConst(DONE, FLAG_BITWIDTH)));
 		instr.SetUpdate(flag_vector, BvConst(UNDONE, FLAG_BITWIDTH));
@@ -337,7 +337,7 @@ void AddChild_Vector_Level(Ila& m) {
 		instr.SetUpdate(byte_cntr, BvConst(0, GB_LAYER_REDUCE_BYTE_LEVEL_CNTR_WIDTH));
 
 		// flag updates
-		instr.SetUpdate(flag_vector, Ite((vector_cntr < num_vector),
+		instr.SetUpdate(flag_vector, Ite((vector_cntr < (num_vector - 1)),
 																			BvConst(UNDONE, FLAG_BITWIDTH), 
 																			BvConst(DONE, FLAG_BITWIDTH)));
 
@@ -399,7 +399,7 @@ void AddChild_Byte_Level(Ila& m) {
 		instr.SetUpdate(byte_cntr, byte_cntr + 1);
 		instr.SetUpdate(mem, Store(mem, addr_out_32, result));	
 		// flag update
-		instr.SetUpdate(flag_byte, Ite(byte_cntr < GB_CORE_SCALAR,
+		instr.SetUpdate(flag_byte, Ite(byte_cntr < (GB_CORE_SCALAR - 1),
 																		BvConst(UNDONE, FLAG_BITWIDTH),
 																		BvConst(DONE, FLAG_BITWIDTH)));
 																												
