@@ -22,51 +22,14 @@
 // SOFTWARE.
 // =============================================================================
 
-// File: flex.h
+// File: init_conditions.cc
 
-#ifndef FLEX_FLEX_H__
-#define FLEX_FLEX_H__
-
-#include <flex/gb_config.h>
-#include <flex/pe_config.h>
-#include <flex/top_config.h>
-
-#include <ilang/ilang++.h>
-#include <string>
+#include <flex/flex.h>
 
 namespace ilang {
+  void DefineInitConditons(Ila& m) {
 
-Ila GetFlexIla(const std::string& model_name = "flex");
-
-// helper functions
-void DefineTopInput(Ila& m);
-
-void DefineGBConfigState(Ila& m);
-void DefineGBOtherState(Ila& m);
-
-void DefinePEConfigState(Ila& m, const int& pe_idx);
-void DefinePEOtherState(Ila& m, const int& pe_idx);
-
-void DefineInitConditons(Ila& m);
-
-void DefineGBConfigInstr(Ila& m);
-void DefinePEConfigInstr(Ila& m, const int& pe_idx, const uint64_t& base);
-
-void DefineGBCoreStore(Ila& m);
-void DefinePECoreStore(Ila& m, const int& pe_idx, const uint64_t& base);
-void DefinePEActStore(Ila& m, const int& pe_idx, const uint64_t& base);
-
-void DefineStartGBAttention(Ila& m);
-void DefineStartGBControl(Ila& m);
-void DefineStartGBLayerNorm(Ila& m);
-void DefineStartGBLayerReduce(Ila& m);
-void DefineStartGBZeroPadding(Ila& m);
-
-void DefineStartPERnnLayerSizing(Ila& m, const int& pe_idx,
-                                 const uint64_t& base);
-
-void DefineGBInternalStates(Ila& m);
-
-}; // namespace ilang
-
-#endif // FLEX_FLEX_H__
+    // gb_layer_reduce_initial conditions
+    m.AddInit(m.state(GB_LAYER_REDUCE_START_FLAG) == 0);
+  }
+} // namespace ilang

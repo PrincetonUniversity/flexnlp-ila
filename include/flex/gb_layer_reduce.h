@@ -162,9 +162,15 @@ namespace ilang {
 
 
 // flag variables for deciding child sequences
+#define ON 1
+#define OFF 0
 #define DONE 1
 #define UNDONE 0
 #define FLAG_BITWIDTH 1
+
+#define GB_LAYER_REDUCE_START_FLAG                                            \
+  "gb_layer_reduce_start_flag"
+#define GB_LAYER_REDUCE_START_FLAG_WIDTH FLAG_BITWIDTH
 
 #define GB_LAYER_REDUCE_GROUP_LEVEL_FLAG                                      \
   "gb_layer_reduce_group_level_flag"
