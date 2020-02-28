@@ -1,11 +1,16 @@
 #include "systemc.h"
 #include "flex_sim.h"
 
-unsigned int signed_gt(unsigned int arg1, unsigned int arg2) {
-  unsigned int sb_1 = arg1 >> 7;
-  unsigned int sb_2 = arg2 >> 7;
-  unsigned int s_arg1 = (sb_1) ? (~arg1 + 1) : arg1;
-  unsigned int s_arg2 = (sb_2) ? (~arg2 + 1) : arg2;
-  unsigned int result = (s_arg1 > s_arg2)? arg1 : arg2;
+sc_biguint<8> signed_gt(sc_biguint<8> arg1, sc_biguint<8> arg2) {
+  int arg1_int = arg1.to_int();
+  int arg2_int = arg2.to_int();
+
+  int sb_1 = arg1_int >> 7;
+  int sb_2 = arg1_int >> 7;
+
+  unsigned int s_arg1 = (sb_1) ? (~arg1_int + 1) : arg1_int;
+  unsigned int s_arg2 = (sb_2) ? (~arg2_int + 1) : arg2_int;
+  
+  sc_biguint<8> result = (s_arg1 > s_arg2)? arg1 : arg2;
   return result;
 }
