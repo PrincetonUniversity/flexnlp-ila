@@ -37,6 +37,13 @@ void AddChild_Timestep_Level(Ila& m);
 void AddChild_Vector_Level(Ila& m);
 void AddChild_Byte_Level(Ila& m);
 
+// uninterpreted functions
+auto uf_out = SortRef::BV(8);
+auto uf_in1 = SortRef::BV(8);
+auto uf_in2 = SortRef::BV(8);
+
+FuncRef signed_gt("signed_gt", uf_out, uf_in1, uf_in2);
+
 
 void DefineStartGBLayerReduce(Ila& m) {
   auto instr = m.NewInstr("Start_GBLayer_Reduce");
@@ -427,7 +434,8 @@ void AddChild_Byte_Level(Ila& m) {
 
 		// TODO: add pooling is not correct!
 		auto result = Ite((op_mode == GB_LAYER_REDUCE_OP_MAX),
-										Ite((data_0 > data_1), data_0, data_1),
+										// Ite((data_0 > data_1), data_0, data_1),
+											signed_gt(data_0, data_1),
 												Ite((op_mode == GB_LAYER_REDUCE_OP_MEAN),
 														(data_0 + data_1) / BvConst(2, TOP_DATA_IN_WIDTH), 
 																data_0 + data_1)); 
