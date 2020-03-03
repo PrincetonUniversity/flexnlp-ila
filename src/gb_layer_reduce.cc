@@ -242,9 +242,10 @@ void AddChild_Group_Level(Ila& m) {
 		instr.SetUpdate(ts_cntr, BvConst(0, GB_LAYER_REDUCE_TIMESTEP_LEVEL_CNTR_WIDTH));
 		// update the number of timesteps remaining in the current group
 		instr.SetUpdate(ts_num_group, 
-											Ite((group_index == group_num - 1),
+											Ite((group_index < (group_num - 1)),
 														BvConst(GROUPING_SCALAR, GB_LAYER_REDUCE_GROUP_LEVEL_TS_NUM_WIDTH),
-														Extract(group_rem, 4, 0)));
+														Ite(group_rem == 0, BvConst(GROUPING_SCALAR, GB_LAYER_REDUCE_GROUP_LEVEL_TS_NUM_WIDTH),
+																								Extract(group_rem, 4, 0))));
 		// flags update
 		instr.SetUpdate(flag_timestep, BvConst(UNDONE, FLAG_BITWIDTH));
 		instr.SetUpdate(flag_group, Ite(group_index < (group_num - 1),
