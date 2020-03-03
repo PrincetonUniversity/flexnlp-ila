@@ -326,7 +326,8 @@ void AddChild_Vector_Level(Ila& m) {
 	auto child_timestep = child_group.child("GBLayerReduce_Timestep_Level");
 	auto child_vector = child_timestep.NewChild("GBLayerReduce_Vector_Level");
 
-	auto num_vector = m.state(GB_LAYER_REDUCE_CONFIG_REG_NUM_VECTOR_1);
+	auto num_vector = m.state(GB_LAYER_REDUCE_CONFIG_REG_NUM_VECTOR_1); // 8
+	auto num_vector_16 = Concat(BvConst(0, 8), num_vector);
 	auto vector_cntr = child_timestep.state(GB_LAYER_REDUCE_VECTOR_LEVEL_OP_CNTR); // 16
 
 	// flag states
@@ -335,7 +336,7 @@ void AddChild_Vector_Level(Ila& m) {
 	auto flag_byte = m.state(GB_LAYER_REDUCE_BYTE_LEVEL_FLAG);
 	auto flag_cond = (flag_vector == UNDONE) & (flag_byte == DONE) & (flag_start == ON);
 
-	child_vector.SetValid((vector_cntr < num_vector) & flag_cond);
+	child_vector.SetValid((vector_cntr < num_vector_16) & flag_cond);
 	child_vector.SetFetch(BvConst(1,1));
 
 	// vector level parameters
@@ -358,7 +359,7 @@ void AddChild_Vector_Level(Ila& m) {
 	{
 		auto instr = child_vector.NewInstr("gb_layer_vector_level_op");
 		
-		instr.SetDecode((vector_cntr < num_vector) & flag_cond);
+		instr.SetDecode((vector_cntr < num_vector_16) & flag_cond);
 
 		auto v_addr_offset = vector_cntr * GROUPING_SCALAR * GB_CORE_SCALAR; // 16
 		auto v_addr_offset_20 = Concat(BvConst(0, 4), v_addr_offset); // 20
@@ -374,7 +375,7 @@ void AddChild_Vector_Level(Ila& m) {
 		instr.SetUpdate(byte_cntr, BvConst(0, GB_LAYER_REDUCE_BYTE_LEVEL_CNTR_WIDTH));
 
 		// flag updates
-		instr.SetUpdate(flag_vector, Ite((vector_cntr < (num_vector - 1)),
+		instr.SetUpdate(flag_vector, Ite((vector_cntr < (num_vector_16 - 1)),
 																			BvConst(UNDONE, FLAG_BITWIDTH), 
 																			BvConst(DONE, FLAG_BITWIDTH)));
 
