@@ -231,7 +231,7 @@ void AddChild_Group_Level(Ila& m) {
 		auto base_addr_offset_20 = Concat(BvConst(0,4), base_addr_offset);//20
 
 		auto const_2 = BvConst(2, GB_LAYER_REDUCE_GROUPING_INDEX_WIDTH);
-		auto half_row_size = (GROUPING_SCALAR / 2) + GB_CORE_SCALAR;
+		auto half_row_size = (GROUPING_SCALAR / 2) * GB_CORE_SCALAR;
 		auto out_addr_offset = Ite((URem(group_index, const_2) > 0),
 																	group_size * (group_index / const_2) + half_row_size,
 																	group_size * (group_index / const_2));
