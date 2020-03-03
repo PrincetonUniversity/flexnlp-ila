@@ -162,8 +162,8 @@ void AddChild_Turnoff_Flag(Ila& m) {
 	auto flag_vector = m.state(GB_LAYER_REDUCE_VECTOR_LEVEL_FLAG);
 	auto flag_byte = m.state(GB_LAYER_REDUCE_BYTE_LEVEL_FLAG);	
 
-	auto cond = (flag_start == 1) & (flag_group == 1) & (flag_timestep == 1) & 
-							(flag_vector == 1) & (flag_byte == 1);
+	auto cond = (flag_start == ON) & (flag_group == DONE) & (flag_timestep == DONE) & 
+							(flag_vector == DONE) & (flag_byte == DONE);
 
 	auto child_done = m.NewChild("GBLayerReduce_Done_Flag");
 
@@ -186,9 +186,14 @@ void AddChild_Group_Level(Ila& m) {
 
 	// flags 
 	auto flag_start = m.state(GB_LAYER_REDUCE_START_FLAG);
+
 	auto flag_group = m.state(GB_LAYER_REDUCE_GROUP_LEVEL_FLAG);
 	auto flag_timestep = m.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_FLAG);
-	auto flag_cond = (flag_group == UNDONE) & (flag_timestep == DONE) & (flag_start == ON);
+	auto flag_vector = m.state(GB_LAYER_REDUCE_VECTOR_LEVEL_FLAG);
+	auto flag_byte = m.state(GB_LAYER_REDUCE_BYTE_LEVEL_FLAG);
+	
+	auto flag_cond = (flag_start == ON) & (flag_group == UNDONE) & (flag_timestep == DONE) & 
+										(flag_vector == DONE) & (flag_byte == DONE);
 
 	child_group.SetValid((group_index < group_num) & flag_cond);
 	child_group.SetFetch(BvConst(1,1));
@@ -274,10 +279,13 @@ void AddChild_Timestep_Level(Ila& m) {
 
 	// flags states
 	auto flag_start = m.state(GB_LAYER_REDUCE_START_FLAG);
+
 	auto flag_timestep = m.state(GB_LAYER_REDUCE_TIMESTEP_LEVEL_FLAG);
 	auto flag_vector = m.state(GB_LAYER_REDUCE_VECTOR_LEVEL_FLAG);
+	auto flag_byte = m.state(GB_LAYER_REDUCE_BYTE_LEVEL_FLAG);
 
-	auto flag_cond = (flag_timestep == UNDONE) & (flag_vector == DONE) & (flag_start == ON);
+	auto flag_cond = (flag_start == ON) & (flag_timestep == UNDONE) & 
+										(flag_vector == DONE) & (flag_byte == DONE);
 	
 	child_timestep.SetValid((ts_cntr < ts_num) & flag_cond);
 	child_timestep.SetFetch(BvConst(1,1));
