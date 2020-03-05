@@ -57,8 +57,6 @@ void flex_sim::compute() {
     flex_sim_gb_control_num_timestep_1 = flex_sim_gb_control_num_timestep_1_next;
     flex_sim_gb_control_num_vector_1 = flex_sim_gb_control_num_vector_1_next;
     flex_sim_gb_control_num_vector_2 = flex_sim_gb_control_num_vector_2_next;
-        std::cout << "@" << sc_time_stamp() << '\t' << "config_gb_control on!" << std::endl;
-
   }
   if (decode_flex_sim_CONFIG_GB_CORE_MEM_MNGR_LARGE()) {
     sc_biguint<16> flex_sim_gb_core_mem_mngr_large_base_large_0_next = decode_flex_sim_CONFIG_GB_CORE_MEM_MNGR_LARGE_update_flex_sim_gb_core_mem_mngr_large_base_large_0();
@@ -77,8 +75,6 @@ void flex_sim::compute() {
     flex_sim_gb_core_mem_mngr_large_num_vector_1 = flex_sim_gb_core_mem_mngr_large_num_vector_1_next;
     flex_sim_gb_core_mem_mngr_large_num_vector_2 = flex_sim_gb_core_mem_mngr_large_num_vector_2_next;
     flex_sim_gb_core_mem_mngr_large_num_vector_3 = flex_sim_gb_core_mem_mngr_large_num_vector_3_next;
-        std::cout << "@" << sc_time_stamp() << '\t' << "config_gb_mem_manager_large on!" << std::endl;
-    
   }
   if (decode_flex_sim_CONFIG_GB_CORE_MEM_MNGR_SMALL()) {
     sc_biguint<16> flex_sim_gb_core_mem_mngr_small_base_small_0_next = decode_flex_sim_CONFIG_GB_CORE_MEM_MNGR_SMALL_update_flex_sim_gb_core_mem_mngr_small_base_small_0();
@@ -97,8 +93,6 @@ void flex_sim::compute() {
     flex_sim_gb_core_mem_mngr_small_base_small_5 = flex_sim_gb_core_mem_mngr_small_base_small_5_next;
     flex_sim_gb_core_mem_mngr_small_base_small_6 = flex_sim_gb_core_mem_mngr_small_base_small_6_next;
     flex_sim_gb_core_mem_mngr_small_base_small_7 = flex_sim_gb_core_mem_mngr_small_base_small_7_next;
-        std::cout << "@" << sc_time_stamp() << '\t' << "config_gb_mem_manager_small on!" << std::endl;
-
   }
   if (decode_flex_sim_CONFIG_GB_LAYER_NORM()) {
     sc_biguint<3> flex_sim_gb_layer_norm_adpbias_1_next = decode_flex_sim_CONFIG_GB_LAYER_NORM_update_flex_sim_gb_layer_norm_adpbias_1();
@@ -117,8 +111,6 @@ void flex_sim::compute() {
     flex_sim_gb_layer_norm_mode = flex_sim_gb_layer_norm_mode_next;
     flex_sim_gb_layer_norm_num_timestep_1 = flex_sim_gb_layer_norm_num_timestep_1_next;
     flex_sim_gb_layer_norm_num_vector_1 = flex_sim_gb_layer_norm_num_vector_1_next;
-        std::cout << "@" << sc_time_stamp() << '\t' << "config_gb_layer_norm on!" << std::endl;
-
   }
   if (decode_flex_sim_CONFIG_GB_LAYER_REDUCE()) {
     sc_biguint<1> flex_sim_gb_layer_reduce_is_valid_next = decode_flex_sim_CONFIG_GB_LAYER_REDUCE_update_flex_sim_gb_layer_reduce_is_valid();
@@ -131,8 +123,6 @@ void flex_sim::compute() {
     flex_sim_gb_layer_reduce_mode = flex_sim_gb_layer_reduce_mode_next;
     flex_sim_gb_layer_reduce_num_timestep_1 = flex_sim_gb_layer_reduce_num_timestep_1_next;
     flex_sim_gb_layer_reduce_num_vector_1 = flex_sim_gb_layer_reduce_num_vector_1_next;
-        std::cout << "@" << sc_time_stamp() << '\t' << "config_gb_reduce on!" << std::endl;
-
   }
   if (decode_flex_sim_CONFIG_GB_ZERO_PADDING()) {
     sc_biguint<1> flex_sim_gb_zero_padding_is_valid_next = decode_flex_sim_CONFIG_GB_ZERO_PADDING_update_flex_sim_gb_zero_padding_is_valid();
@@ -151,16 +141,12 @@ void flex_sim::compute() {
     for (std::map<int, int>::iterator it = decode_flex_sim_GBCore_Store_Large_update_flex_sim_gb_core_large_buffer_map.begin(); it != decode_flex_sim_GBCore_Store_Large_update_flex_sim_gb_core_large_buffer_map.end(); it++) {
       flex_sim_gb_core_large_buffer[it->first] = it->second;
     }
-        std::cout << "@" << sc_time_stamp() << '\t' << "store_large on!" << std::endl;
-
   }
   if (decode_flex_sim_GBCore_Store_Small()) {
     decode_flex_sim_GBCore_Store_Small_update_flex_sim_gb_core_small_buffer(decode_flex_sim_GBCore_Store_Small_update_flex_sim_gb_core_small_buffer_map);
     for (std::map<int, int>::iterator it = decode_flex_sim_GBCore_Store_Small_update_flex_sim_gb_core_small_buffer_map.begin(); it != decode_flex_sim_GBCore_Store_Small_update_flex_sim_gb_core_small_buffer_map.end(); it++) {
       flex_sim_gb_core_small_buffer[it->first] = it->second;
     }
-        std::cout << "@" << sc_time_stamp() << '\t' << "store_small on!" << std::endl;
-
   }
   if (decode_flex_sim_Start_GBLayer_Reduce()) {
     sc_biguint<1> flex_sim_gb_layer_reduce_byte_level_flag_next = decode_flex_sim_Start_GBLayer_Reduce_update_flex_sim_gb_layer_reduce_byte_level_flag();
@@ -183,8 +169,6 @@ void flex_sim::compute() {
     flex_sim_gb_layer_reduce_start_flag = flex_sim_gb_layer_reduce_start_flag_next;
     flex_sim_gb_layer_reduce_timestep_level_flag = flex_sim_gb_layer_reduce_timestep_level_flag_next;
     flex_sim_gb_layer_reduce_vector_level_flag = flex_sim_gb_layer_reduce_vector_level_flag_next;
-        std::cout << "@" << sc_time_stamp() << '\t' << "start gb layer reduce on!" << std::endl;
-
   }
   init_GBLayerReduce_Group_Level();
   init_GBLayerReduce_Done_Flag();
@@ -209,15 +193,13 @@ void flex_sim::compute() {
       GBLayerReduce_Group_Level_gb_layer_reduce_timestep_level_cntr = GBLayerReduce_Group_Level_gb_layer_reduce_timestep_level_cntr_next;
       flex_sim_gb_layer_reduce_timestep_level_flag = flex_sim_gb_layer_reduce_timestep_level_flag_next;
       schedule_counter++;
-            std::cout << "@" << sc_time_stamp() << '\t' << "gb_reduce_group_level_op on!" << std::endl;
-
+      std::cout << hex << "group level on, group result addr: " << GBLayerReduce_Group_Level_gb_layer_reduce_group_level_out_addr << '\t';
+      std::cout << "ts_num: " << GBLayerReduce_Group_Level_gb_layer_reduce_group_level_ts_num << std::endl;
     }
     if (decode_GBLayerReduce_Done_Flag_gb_layer_reduce_done()) {
       sc_biguint<1> flex_sim_gb_layer_reduce_start_flag_next = decode_GBLayerReduce_Done_Flag_gb_layer_reduce_done_update_flex_sim_gb_layer_reduce_start_flag();
       flex_sim_gb_layer_reduce_start_flag = flex_sim_gb_layer_reduce_start_flag_next;
       schedule_counter++;
-            std::cout << "@" << sc_time_stamp() << '\t' << "gb_reduce_done on!" << std::endl;
-
     }
     if (decode_GBLayerReduce_Timestep_Level_gb_layer_timestep_level_op()) {
       sc_biguint<20> GBLayerReduce_Timestep_Level_gb_layer_reduce_timestep_level_base_addr_0_next = decode_GBLayerReduce_Timestep_Level_gb_layer_timestep_level_op_update_GBLayerReduce_Timestep_Level_gb_layer_reduce_timestep_level_base_addr_0();
@@ -235,8 +217,8 @@ void flex_sim::compute() {
       flex_sim_gb_layer_reduce_vector_level_flag = flex_sim_gb_layer_reduce_vector_level_flag_next;
       GBLayerReduce_Timestep_Level_gb_layer_reduce_vector_level_op_cntr = GBLayerReduce_Timestep_Level_gb_layer_reduce_vector_level_op_cntr_next;
       schedule_counter++;
-            std::cout << "@" << sc_time_stamp() << '\t' << "gb_reduce_timestep_level_op on!" << std::endl;
-
+      std::cout << hex << "timestep level on, timestep result addr: " << GBLayerReduce_Timestep_Level_gb_layer_reduce_timestep_level_base_addr_result << '\t';
+      std::cout << "ts_cntr is : " << GBLayerReduce_Group_Level_gb_layer_reduce_timestep_level_cntr << std::endl;
     }
     if (decode_GBLayerReduce_Vector_Level_gb_layer_vector_level_op()) {
       sc_biguint<5> GBLayerReduce_Vector_Level_gb_layer_reduce_byte_level_cntr_next = decode_GBLayerReduce_Vector_Level_gb_layer_vector_level_op_update_GBLayerReduce_Vector_Level_gb_layer_reduce_byte_level_cntr();
@@ -254,23 +236,18 @@ void flex_sim::compute() {
       flex_sim_gb_layer_reduce_vector_level_flag = flex_sim_gb_layer_reduce_vector_level_flag_next;
       GBLayerReduce_Timestep_Level_gb_layer_reduce_vector_level_op_cntr = GBLayerReduce_Timestep_Level_gb_layer_reduce_vector_level_op_cntr_next;
       schedule_counter++;
-            std::cout << "@" << sc_time_stamp() << '\t' << "gb_reduce_vector_level_op on!" << std::endl;
-
+      std::cout << hex << "vector level on, vector level result addr: " << GBLayerReduce_Vector_Level_gb_layer_reduce_vector_level_addr_0_result << std::endl;
     }
     if (decode_GBLayerReduce_Byte_Level_gb_layer_byte_level_op()) {
       decode_GBLayerReduce_Byte_Level_gb_layer_byte_level_op_update_flex_sim_gb_core_large_buffer(decode_GBLayerReduce_Byte_Level_gb_layer_byte_level_op_update_flex_sim_gb_core_large_buffer_map);
       sc_biguint<5> GBLayerReduce_Vector_Level_gb_layer_reduce_byte_level_cntr_next = decode_GBLayerReduce_Byte_Level_gb_layer_byte_level_op_update_GBLayerReduce_Vector_Level_gb_layer_reduce_byte_level_cntr();
       sc_biguint<1> flex_sim_gb_layer_reduce_byte_level_flag_next = decode_GBLayerReduce_Byte_Level_gb_layer_byte_level_op_update_flex_sim_gb_layer_reduce_byte_level_flag();
-            std::cout << "@" << sc_time_stamp() << '\t' << "gb_reduce_byte_level_op on!" << std::endl;
       for (std::map<int, int>::iterator it = decode_GBLayerReduce_Byte_Level_gb_layer_byte_level_op_update_flex_sim_gb_core_large_buffer_map.begin(); it != decode_GBLayerReduce_Byte_Level_gb_layer_byte_level_op_update_flex_sim_gb_core_large_buffer_map.end(); it++) {
         flex_sim_gb_core_large_buffer[it->first] = it->second;
-            std::cout << "addr: " << hex << it->first << ' ' << "data: " << hex << it->second;
       }
-      std::cout << std::endl;
       GBLayerReduce_Vector_Level_gb_layer_reduce_byte_level_cntr = GBLayerReduce_Vector_Level_gb_layer_reduce_byte_level_cntr_next;
       flex_sim_gb_layer_reduce_byte_level_flag = flex_sim_gb_layer_reduce_byte_level_flag_next;
       schedule_counter++;
-
     }
     if (schedule_counter == 0) 
       break;
