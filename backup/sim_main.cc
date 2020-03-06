@@ -174,7 +174,7 @@ SC_MODULE(testbench) {
       if (flex.flex_sim_addr_in.to_int() == stop_addr) {
           undone = false;
       }
-
+/*
       fout << "@ " << sc_time_stamp() << '\t';
       fout << "is write? :" << '\t' << flex.flex_sim_if_axi_wr_in << '\t';
       fout << "addr in:" << '\t' << hex << flex.flex_sim_addr_in << '\t';
@@ -186,15 +186,21 @@ SC_MODULE(testbench) {
       fout << "flex status:" << '\t';
       fout << "reduce valid: " << '\t' << flex.flex_sim_gb_layer_reduce_is_valid << '\t';
       fout << "grouping num: " << '\t' << flex.flex_sim_gb_layer_reduce_grouping_num << '\n' << endl;
+    fout << "num of timestep: " << flex.flex_sim_gb_layer_reduce_num_timestep_1 << endl;
+    fout << "num of vector: " << flex.flex_sim_gb_layer_reduce_num_vector_1 << endl;
+*/
       wait(10, SC_NS);
     }
 
     wait(10000, SC_NS);
     fout << "********* output for large buffer ***********" << endl;
-    
+    fout << "num of grouping: " << flex.flex_sim_gb_layer_reduce_grouping_num << endl;
+    fout << "num of timestep: " << flex.flex_sim_gb_layer_reduce_num_timestep_1 << endl;
+    fout << "num of vector: " << flex.flex_sim_gb_layer_reduce_num_vector_1 << endl;
+
     int entry_addr;
     int index;
-    for (int j = 0; j < 0xB00; j++) {
+    for (int j = 0; j < 0x040; j++) {
         entry_addr = 16*j;
         fout << "large buffer @ addr:" << '\t';
         fout << hex << entry_addr << '\t';
@@ -207,7 +213,14 @@ SC_MODULE(testbench) {
     }
 
     wait(1000, SC_NS);
-    cout << "test for accessing flex:  " << hex << flex.flex_sim_gb_core_large_buffer[12] << endl;
+    //cout << "test for accessing flex:  " << hex << flex.flex_sim_gb_core_large_buffer[12] << endl;
+    //cout << "test for uninterpreted function" << endl;
+    sc_biguint<8> in0 = "0x98";
+    sc_biguint<8> in1 = "0x0c";
+    //cout << "test in0: " << (in0.to_int() >> 7) << '\t' << "test in1: " << (in1.to_int() >> 7) << endl;
+    //cout << hex << ((~in0.to_int() + 1) & 127 ) << '\t' << ((~in1.to_int() + 1) & 127 )<< endl;
+    //cout << hex << (((~in0.to_int() + 1) & 127 ) > ((~in1.to_int() + 1) & 127 ))<< endl;
+
     std::cout << "@" << sc_time_stamp() << " *********     sc_stop      *********" << std::endl;
     sc_stop();
   }
