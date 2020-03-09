@@ -26,4 +26,4 @@ This is the ILA model of the [FlexNLP](https://github.com/ttambe/FlexNLP) accele
 run systemc simulation under systemc 2.3.1 with command " g++ -I $HOME/local/include -L $HOME/local/lib-linux64 -Wl,-rpath=$HOME/local/lib-linux64 -std=c++11 -o sim_main.o sim_main.cc *.o -lsystemc" 
 
 ## cosim command
- g++ -I $HOME/local/include -L $HOME/local/lib-linux64 -Wl,-rpath=$HOME/local/lib-linux64 -std=c++11 -o sim_main.o maxpool_sim_main.cc ./flexnlp_sim/FlexNLP-ila/build/sim_model/*.o ./relay_sim/relay-ila/build/sim_model/*.o -lsystem
+ g++ -I $HOME/local/include -L $HOME/local/lib-linux64 -Wl,-rpath=$HOME/local/lib-linux64 -std=c++11 -o maxpool_sim_main.o maxpool_sim_main.cc ../flexnlp_sim/FlexNLP-ila/build/sim_model/*.o ../relay_sim/relay-ila/build/sim_model/*.o -lsystemc
