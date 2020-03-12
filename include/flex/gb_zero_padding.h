@@ -52,6 +52,33 @@ namespace ilang {
   "gb_zero_padding_num_timestep_2"
 #define GB_ZERO_PADDING_CONFIG_REG_NUM_TIMESTEP_2_WIDTH 16
 
+// internal states
+#define GB_ZERO_PADDING_CHILD_VALID_FLAG "gb_zero_padding_child_valid_flag"
+#define GB_ZERO_PADDING_CHILD_VALID_FLAG_BITWIDTH 1
+#define GB_ZERO_PADDING_FLAG_ON 1
+#define GB_ZERO_PADDING_FLAG_OFF 0
+
+#define GB_ZERO_PADDING_CHILD_STATE "gb_zero_padding_child_state"
+#define GB_ZERO_PADDING_CHILD_STATE_BITWIDTH 3
+
+#define GB_ZERO_PADDING_CHILD_STATE_PREP 0
+#define GB_ZERO_PADDING_CHILD_STATE_TIMESTEP 1
+#define GB_ZERO_PADDING_CHILD_STATE_VECTOR 2
+#define GB_ZERO_PADDING_CHILD_STATE_BYTE 3
+#define GB_ZERO_PADDING_CHILD_STATE_NEXT 4
+#define GB_ZERO_PADDING_CHILD_STATE_DONE 5
+
+#define GB_ZERO_PADDING_TIMESTEP_CNTR "gb_zero_padding_timestep_cntr"
+#define GB_ZERO_PADDING_TIMESTEP_CNTR_BITWIDTH                                  \
+  GB_ZERO_PADDING_CONFIG_REG_NUM_TIMESTEP_1_WIDTH
+
+#define GB_ZERO_PADDING_VECTOR_CNTR "gb_zero_padding_vector_cntr"
+#define GB_ZERO_PADDING_VECTOR_CNTR_BITWIDTH                                    \
+  GB_ZERO_PADDING_CONFIG_REG_NUM_VECTOR_1_WIDTH
+
+#define GB_ZERO_PADDING_MEM_BASE_ADDR "gb_zero_padding_mem_base_addr"
+#define GB_ZERO_PADDING_MEM_BASE_ADDR_BITWIDTH                                  \
+  GB_CORE_STORE_LARGE_BITWIDTH
 }; // namespace ilang
 
 #endif // FLEX_GB_ZERO_PADDING_H__

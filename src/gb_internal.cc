@@ -82,6 +82,14 @@ void DefineGBInternalStates(Ila& m) {
   // state for memory min addr offset
   m.NewBvState(GB_LAYER_NORM_MEM_MIN_ADDR_OFFSET, GB_LAYER_NORM_MEM_MIN_ADDR_OFFSET_WIDTH);
 
+
+  /******* GBLayerZeroPadding internal states ******/
+  
+  // state for setting flag of child valid states
+  m.NewBvState(GB_ZERO_PADDING_CHILD_VALID_FLAG, GB_ZERO_PADDING_CHILD_VALID_FLAG_BITWIDTH);
+  // state for child model state machine
+  m.NewBvState(GB_ZERO_PADDING_CHILD_STATE, GB_ZERO_PADDING_CHILD_STATE_BITWIDTH);
+
 }
 
 
