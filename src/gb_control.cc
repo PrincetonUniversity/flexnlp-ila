@@ -197,7 +197,6 @@ void AddChild_GB_Control(Ila& m) {
     instr.SetUpdate(cntr_timestep, BvConst(0, GB_CONTROL_CHILD_TIMESTEP_CNTR_BITWIDTH));
     instr.SetUpdate(cntr_vector, BvConst(0, GB_CONTROL_CHILD_VECTOR_CNTR_BITWIDTH));
     // reset the valid bits for the shared states with PE
-    instr.SetUpdate(data_in_valid_bit, BvConst(GB_CONTROL_INVALID, GB_CONTROL_DATA_IN_VALID_BITWIDTH));
     instr.SetUpdate(data_out_valid_bit, BvConst(GB_CONTROL_INVALID, GB_CONTROL_DATA_OUT_VALID_BITWIDTH));
     instr.SetUpdate(pe_start, BvConst(GB_CONTROL_INVALID, PE_START_SIGNAL_SHARED_BITWIDTH));
 
@@ -232,13 +231,12 @@ void AddChild_GB_Control(Ila& m) {
 
     auto timestep_base_addr_offset = group_index_20 * group_size + group_offset_20;
     auto timestep_base_addr_tmp = memory_base_addr_1 + timestep_base_addr_offset;
-
+    // next state function
     auto next_state = BvConst(GB_CONTROL_CHILD_STATE_SEND, GB_CONTROL_CHILD_STATE_BITWIDTH);
 
     instr.SetUpdate(state, next_state);
     instr.SetUpdate(timestep_index, timestep_index_tmp);
     instr.SetUpdate(cntr_vector, cntr_vector_tmp);
-    // instr.SetUpdate(cntr_timestep, cntr_timestep + 1); // only update the cntr_timestep at the NEXT stage
     instr.SetUpdate(timestep_base_addr, timestep_base_addr_offset);
   }
 
@@ -390,70 +388,70 @@ void AddChild_GB_Control(Ila& m) {
 
     // updated value for mem_large
     auto data_0_write_large = Ite(mode < 3, Store(mem_large, addr_large_32 + 0, data_in_0),
-                                            Load(mem_large, addr_large_32 + 0));
+                                            mem_large);
     auto data_1_write_large = Ite(mode < 3, Store(data_0_write_large, addr_large_32 + 1, data_in_1),
-                                            Load(mem_large, addr_large_32 + 1));
+                                            mem_large);
     auto data_2_write_large = Ite(mode < 3, Store(data_1_write_large, addr_large_32 + 2, data_in_2),
-                                            Load(mem_large, addr_large_32 + 2));
+                                            mem_large);
     auto data_3_write_large = Ite(mode < 3, Store(data_2_write_large, addr_large_32 + 3, data_in_3),
-                                            Load(mem_large, addr_large_32 + 3));
+                                            mem_large);
     auto data_4_write_large = Ite(mode < 3, Store(data_3_write_large, addr_large_32 + 4, data_in_4),
-                                            Load(mem_large, addr_large_32 + 4));
+                                            mem_large);
     auto data_5_write_large = Ite(mode < 3, Store(data_4_write_large, addr_large_32 + 5, data_in_5),
-                                            Load(mem_large, addr_large_32 + 5));
+                                            mem_large);
     auto data_6_write_large = Ite(mode < 3, Store(data_5_write_large, addr_large_32 + 6, data_in_6),
-                                            Load(mem_large, addr_large_32 + 6));
+                                            mem_large);
     auto data_7_write_large = Ite(mode < 3, Store(data_6_write_large, addr_large_32 + 7, data_in_7),
-                                            Load(mem_large, addr_large_32 + 7));
+                                            mem_large);
     auto data_8_write_large = Ite(mode < 3, Store(data_7_write_large, addr_large_32 + 8, data_in_8),
-                                            Load(mem_large, addr_large_32 + 8));
+                                            mem_large);
     auto data_9_write_large = Ite(mode < 3, Store(data_8_write_large, addr_large_32 + 9, data_in_9),
-                                            Load(mem_large, addr_large_32 + 9));
+                                            mem_large);
     auto data_10_write_large = Ite(mode < 3, Store(data_9_write_large, addr_large_32 + 10, data_in_10),
-                                            Load(mem_large, addr_large_32 + 10));
+                                            mem_large);
     auto data_11_write_large = Ite(mode < 3, Store(data_10_write_large, addr_large_32 + 11, data_in_11),
-                                            Load(mem_large, addr_large_32 + 11));
+                                            mem_large);
     auto data_12_write_large = Ite(mode < 3, Store(data_11_write_large, addr_large_32 + 12, data_in_12),
-                                            Load(mem_large, addr_large_32 + 12));
+                                            mem_large);
     auto data_13_write_large = Ite(mode < 3, Store(data_12_write_large, addr_large_32 + 13, data_in_13),
-                                            Load(mem_large, addr_large_32 + 13));
+                                            mem_large);
     auto data_14_write_large = Ite(mode < 3, Store(data_13_write_large, addr_large_32 + 14, data_in_14),
-                                            Load(mem_large, addr_large_32 + 14));
+                                            mem_large);
     auto data_15_write_large = Ite(mode < 3, Store(data_14_write_large, addr_large_32 + 15, data_in_15),
-                                            Load(mem_large, addr_large_32 + 15));
+                                            mem_large);
 
-    auto data_0_write_small = Ite(mode < 3, Store(mem_small, addr_small_32 + 0, data_in_0),
-                                            Load(mem_small, addr_small_32 + 0));
-    auto data_1_write_small = Ite(mode < 3, Store(data_0_write_small, addr_small_32 + 1, data_in_1),
-                                            Load(mem_small, addr_small_32 + 1));
-    auto data_2_write_small = Ite(mode < 3, Store(data_1_write_small, addr_small_32 + 2, data_in_2),
-                                            Load(mem_small, addr_small_32 + 2));
-    auto data_3_write_small = Ite(mode < 3, Store(data_2_write_small, addr_small_32 + 3, data_in_3),
-                                            Load(mem_small, addr_small_32 + 3));
-    auto data_4_write_small = Ite(mode < 3, Store(data_3_write_small, addr_small_32 + 4, data_in_4),
-                                            Load(mem_small, addr_small_32 + 4));
-    auto data_5_write_small = Ite(mode < 3, Store(data_4_write_small, addr_small_32 + 5, data_in_5),
-                                            Load(mem_small, addr_small_32 + 5));
-    auto data_6_write_small = Ite(mode < 3, Store(data_5_write_small, addr_small_32 + 6, data_in_6),
-                                            Load(mem_small, addr_small_32 + 6));
-    auto data_7_write_small = Ite(mode < 3, Store(data_6_write_small, addr_small_32 + 7, data_in_7),
-                                            Load(mem_small, addr_small_32 + 7));
-    auto data_8_write_small = Ite(mode < 3, Store(data_7_write_small, addr_small_32 + 8, data_in_8),
-                                            Load(mem_small, addr_small_32 + 8));
-    auto data_9_write_small = Ite(mode < 3, Store(data_8_write_small, addr_small_32 + 9, data_in_9),
-                                            Load(mem_small, addr_small_32 + 9));
-    auto data_10_write_small = Ite(mode < 3, Store(data_9_write_small, addr_small_32 + 10, data_in_10),
-                                            Load(mem_small, addr_small_32 + 10));
-    auto data_11_write_small = Ite(mode < 3, Store(data_10_write_small, addr_small_32 + 11, data_in_11),
-                                            Load(mem_small, addr_small_32 + 11));
-    auto data_12_write_small = Ite(mode < 3, Store(data_11_write_small, addr_small_32 + 12, data_in_12),
-                                            Load(mem_small, addr_small_32 + 12));
-    auto data_13_write_small = Ite(mode < 3, Store(data_12_write_small, addr_small_32 + 13, data_in_13),
-                                            Load(mem_small, addr_small_32 + 13));
-    auto data_14_write_small = Ite(mode < 3, Store(data_13_write_small, addr_small_32 + 14, data_in_14),
-                                            Load(mem_small, addr_small_32 + 14));
-    auto data_15_write_small = Ite(mode < 3, Store(data_14_write_small, addr_small_32 + 15, data_in_15),
-                                            Load(mem_small, addr_small_32 + 15));                                            
+    auto data_0_write_small = Ite(mode == 3, Store(mem_small, addr_small_32 + 0, data_in_0),
+                                            mem_small);
+    auto data_1_write_small = Ite(mode == 3, Store(data_0_write_small, addr_small_32 + 1, data_in_1),
+                                            mem_small);
+    auto data_2_write_small = Ite(mode == 3, Store(data_1_write_small, addr_small_32 + 2, data_in_2),
+                                            mem_small);
+    auto data_3_write_small = Ite(mode == 3, Store(data_2_write_small, addr_small_32 + 3, data_in_3),
+                                            mem_small);
+    auto data_4_write_small = Ite(mode == 3, Store(data_3_write_small, addr_small_32 + 4, data_in_4),
+                                            mem_small);
+    auto data_5_write_small = Ite(mode == 3, Store(data_4_write_small, addr_small_32 + 5, data_in_5),
+                                            mem_small);
+    auto data_6_write_small = Ite(mode == 3, Store(data_5_write_small, addr_small_32 + 6, data_in_6),
+                                            mem_small);
+    auto data_7_write_small = Ite(mode == 3, Store(data_6_write_small, addr_small_32 + 7, data_in_7),
+                                            mem_small);
+    auto data_8_write_small = Ite(mode == 3, Store(data_7_write_small, addr_small_32 + 8, data_in_8),
+                                            mem_small);
+    auto data_9_write_small = Ite(mode == 3, Store(data_8_write_small, addr_small_32 + 9, data_in_9),
+                                            mem_small);
+    auto data_10_write_small = Ite(mode == 3, Store(data_9_write_small, addr_small_32 + 10, data_in_10),
+                                            mem_small);
+    auto data_11_write_small = Ite(mode == 3, Store(data_10_write_small, addr_small_32 + 11, data_in_11),
+                                            mem_small);
+    auto data_12_write_small = Ite(mode == 3, Store(data_11_write_small, addr_small_32 + 12, data_in_12),
+                                            mem_small);
+    auto data_13_write_small = Ite(mode == 3, Store(data_12_write_small, addr_small_32 + 13, data_in_13),
+                                            mem_small);
+    auto data_14_write_small = Ite(mode == 3, Store(data_13_write_small, addr_small_32 + 14, data_in_14),
+                                            mem_small);
+    auto data_15_write_small = Ite(mode == 3, Store(data_14_write_small, addr_small_32 + 15, data_in_15),
+                                            mem_small);                                            
 
 
     auto next_state = Ite(pe_done == GB_CONTROL_VALID,
@@ -518,7 +516,7 @@ void AddChild_GB_Control(Ila& m) {
 
     // memory address for reading from small buffer
     auto vector_addr_offset_small = cntr_vector_20 * GB_CORE_SCALAR;
-    auto addr_small = mem_base_addr_small_1 + vector_addr_offset_small;
+    auto addr_small = mem_base_addr_small_2 + vector_addr_offset_small;
     auto addr_small_32 = Concat(BvConst(0, 32 - GB_CORE_STORE_LARGE_BITWIDTH), addr_small);
 
     // fetch the data from the memory
