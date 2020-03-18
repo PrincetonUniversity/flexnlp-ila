@@ -92,11 +92,11 @@ Ila GetFlexIla(const std::string& model_name) {
 
 
   // GB specific start instructions
-//  DefineStartGBAttention(m);
-//  DefineStartGBControl(m);
-//  DefineStartGBLayerNorm(m);
+ DefineStartGBAttention(m);
+ DefineStartGBControl(m);
+ DefineStartGBLayerNorm(m);
   DefineStartGBLayerReduce(m);
-//  DefineStartGBZeroPadding(m);
+ DefineStartGBZeroPadding(m);
 
   // PE specific start instruction
   // DefineStartPERnnLayerSizing(m, 0, TOP_PE0_ADDR_MIN);
