@@ -90,6 +90,11 @@ void DefineGBInternalStates(Ila& m) {
   // state for child model state machine
   m.NewBvState(GB_ZERO_PADDING_CHILD_STATE, GB_ZERO_PADDING_CHILD_STATE_BITWIDTH);
 
+  /******* GBControl internal states ********/
+  // state for setting flag of child valid
+  m.NewBvState(GB_CONTROL_CHILD_VALID_FLAG, GB_CONTROL_CHILD_VALID_FLAG_BITWIDTH);
+  // state for child model state machine
+  m.NewBvState(GB_CONTROL_CHILD_STATE, GB_CONTROL_CHILD_STATE_BITWIDTH);
 }
 
 
