@@ -37,7 +37,7 @@ void AddChild_GB_LayerNorm_Byte_Level_Norm(Ila& m);
 
 void DefineStartGBLayerNorm(Ila& m) {
   // TODO 
-  auto instr = m.NewInstr("Start_GBLayer_Norm");
+  auto instr = m.NewInstr("GB_LAYER_NORM_START");
   // Decode condition
   auto is_write = m.input(TOP_IF_WR) & ~m.input(TOP_IF_RD);
   auto start_addr = TOP_GB_ADDR_MIN + START_ADDR_GB_LAYER_NORM;

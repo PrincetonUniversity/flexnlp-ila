@@ -36,6 +36,8 @@ Ila GetFlexIla(const std::string& model_name) {
   //
   DefineTopInput(m);
 
+  DefineSharedState(m);
+  
   DefineGBConfigState(m);
   DefineGBOtherState(m);
 

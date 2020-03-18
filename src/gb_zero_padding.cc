@@ -32,7 +32,7 @@ void AddChild_ZeroPadding(Ila& m);
 
 void DefineStartGBZeroPadding(Ila& m) {
   
-  auto instr = m.NewInstr("Start_GB_Zeropadding");
+  auto instr = m.NewInstr("GB_ZEROPADDING_START");
 
   // decode conditions
   auto is_write = m.input(TOP_IF_WR) & ~m.input(TOP_IF_RD);

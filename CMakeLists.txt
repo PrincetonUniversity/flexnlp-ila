@@ -28,6 +28,7 @@ find_package(ilang REQUIRED)
 # ---------------------------------------------------------------------------- #
 add_executable(${MyTarget} 
   app/main.cc
+  src/arch_state_shared.cc
   src/arch_state_gb.cc
   src/arch_state_pe.cc
   src/config_instr_gb.cc
