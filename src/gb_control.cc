@@ -149,7 +149,7 @@ void AddChild_GB_Control(Ila& m) {
                       Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_2), BvConst(0, 4)),
                       Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3), BvConst(0, 4)))));
   // small buffer
-  auto mem_base_addr_small = 
+  auto mem_base_addr_small_1 = 
         Ite((mem_index_1 == 0),
           Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_0), BvConst(0, 4)),
           Ite((mem_index_1 == 1),
@@ -165,6 +165,23 @@ void AddChild_GB_Control(Ila& m) {
                     Ite((mem_index_1 == 6),
                     Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_6), BvConst(0, 4)),
                     Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_7), BvConst(0, 4)))))))));
+
+  auto mem_base_addr_small_2 = 
+      Ite((mem_index_2 == 0),
+        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_0), BvConst(0, 4)),
+        Ite((mem_index_2 == 1),
+          Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_1), BvConst(0, 4)),
+          Ite((mem_index_2 == 2),
+            Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_2), BvConst(0, 4)),
+            Ite((mem_index_2 == 3),
+              Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_3), BvConst(0, 4)),
+              Ite((mem_index_2 == 4),
+                Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_4), BvConst(0, 4)),
+                Ite((mem_index_2 == 5),
+                  Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_5), BvConst(0, 4)),
+                  Ite((mem_index_2 == 6),
+                  Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_6), BvConst(0, 4)),
+                  Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_7), BvConst(0, 4)))))))));
 
   auto g_scalar = BvConst(GB_CORE_SCALAR, GB_CONTROL_CONFIG_REG_NUM_TIMESTEP_1_WIDTH);
 
@@ -221,7 +238,7 @@ void AddChild_GB_Control(Ila& m) {
     instr.SetUpdate(state, next_state);
     instr.SetUpdate(timestep_index, timestep_index_tmp);
     instr.SetUpdate(cntr_vector, cntr_vector_tmp);
-    instr.SetUpdate(cntr_timestep, cntr_timestep + 1);
+    // instr.SetUpdate(cntr_timestep, cntr_timestep + 1); // only update the cntr_timestep at the NEXT stage
     instr.SetUpdate(timestep_base_addr, timestep_base_addr_offset);
   }
 
@@ -242,7 +259,7 @@ void AddChild_GB_Control(Ila& m) {
 
     // memory address for reading from small buffer
     auto vector_addr_offset_small = cntr_vector_20 * GB_CORE_SCALAR;
-    auto addr_small = mem_base_addr_small + vector_addr_offset_small;
+    auto addr_small = mem_base_addr_small_1 + vector_addr_offset_small;
     auto addr_small_32 = Concat(BvConst(0, 32 - GB_CORE_STORE_LARGE_BITWIDTH), addr_small);
 
 
@@ -278,7 +295,8 @@ void AddChild_GB_Control(Ila& m) {
                                         Load(mem_small, addr_small_32 + 14));
     auto data_out_15_tmp = Ite(mode < 3, Load(mem_large, addr_large_32 + 15),
                                         Load(mem_small, addr_small_32 + 15));
-    
+
+    auto data_out_valid_tmp = BvConst(GB_CONTROL_VALID, GB_CONTROL_DATA_OUT_VALID_BITWIDTH);
     auto cntr_vector_tmp = cntr_vector + 1;
     auto next_state = Ite(cntr_vector_tmp == num_vector_1,
                             BvConst(GB_CONTROL_CHILD_STATE_PE_START, GB_CONTROL_CHILD_STATE_BITWIDTH),
@@ -304,6 +322,7 @@ void AddChild_GB_Control(Ila& m) {
     instr.SetUpdate(data_out_14, data_out_14_tmp);
     instr.SetUpdate(data_out_15, data_out_15_tmp);
 
+    instr.SetUpdate(data_out_valid_bit, data_out_valid_tmp);
     instr.SetUpdate(data_out_addr, cntr_vector);
 
   }
@@ -320,6 +339,271 @@ void AddChild_GB_Control(Ila& m) {
     instr.SetUpdate(state, next_state);
   }
 
+  { // instruction 4 ---- recv prep, set the parameters for receiving data
+    auto instr = child.NewInstr("gb_control_recv_prep");
+    auto state_recv_prep = (state == GB_CONTROL_CHILD_STATE_RECV_PREP);
+
+    instr.SetDecode(child_valid & state_recv_prep);
+
+    // reset the vector counter
+    auto cntr_vector_tmp = BvConst(0, GB_CONTROL_CHILD_VECTOR_CNTR_BITWIDTH);
+
+    // calculate the base address for the current timestep in the large buffer. (in memory_index_2)
+    auto num_vector_20 = Concat(BvConst(0, 12), num_vector_2);
+    auto timestep_size = num_vector_20 * GB_CORE_SCALAR;
+    auto group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
+
+    auto group_index = timestep_index / g_scalar;
+    auto group_offset = URem(timestep_index, g_scalar);
+
+    auto group_index_20 = Concat(BvConst(0, 4), group_index);
+    auto group_offset_20 = Concat(BvConst(0, 4), group_offset);
+
+    auto timestep_base_addr_offset = group_index_20 * group_size + group_offset_20;
+    auto timestep_base_addr_tmp = memory_base_addr_2 + timestep_base_addr_offset;
+
+    auto next_state = BvConst(GB_CONTROL_CHILD_STATE_RECV, GB_CONTROL_CHILD_STATE_BITWIDTH);
+
+    instr.SetUpdate(state, next_state);
+    instr.SetUpdate(cntr_vector, cntr_vector_tmp);
+    instr.SetUpdate(timestep_base_addr, timestep_base_addr_tmp);
+  }
+
+  { // instruction 5 ---- receive data from PE
+    auto instr = child.NewInstr("gb_control_recv");
+    auto state_recv = (state == GB_CONTROL_CHILD_STATE_RECV);
+    auto data_valid = (data_in_valid_bit == GB_CONTROL_VALID);
+
+    instr.SetDecode(child_valid & state_recv & data_valid);
+
+    // memory address for reading from large buffer
+    auto row_size = GB_CORE_SCALAR * GB_CORE_LARGE_NUM_BANKS;
+    auto vector_index_20 = Concat(BvConst(0, 12), data_in_addr);
+    auto vector_addr_offset = vector_index_20 * row_size;
+    auto addr_large = timestep_base_addr + vector_addr_offset;
+    auto addr_large_32 = Concat(BvConst(0, 32 - GB_CORE_STORE_LARGE_BITWIDTH), addr_large);
+
+    // memory address for reading from small buffer
+    auto vector_addr_offset_small = vector_index_20 * GB_CORE_SCALAR;
+    auto addr_small = mem_base_addr_small_2 + vector_addr_offset_small;
+    auto addr_small_32 = Concat(BvConst(0, 32 - GB_CORE_STORE_LARGE_BITWIDTH), addr_small); 
+
+    // updated value for mem_large
+    auto data_0_write_large = Ite(mode < 3, Store(mem_large, addr_large_32 + 0, data_in_0),
+                                            Load(mem_large, addr_large_32 + 0));
+    auto data_1_write_large = Ite(mode < 3, Store(data_0_write_large, addr_large_32 + 1, data_in_1),
+                                            Load(mem_large, addr_large_32 + 1));
+    auto data_2_write_large = Ite(mode < 3, Store(data_1_write_large, addr_large_32 + 2, data_in_2),
+                                            Load(mem_large, addr_large_32 + 2));
+    auto data_3_write_large = Ite(mode < 3, Store(data_2_write_large, addr_large_32 + 3, data_in_3),
+                                            Load(mem_large, addr_large_32 + 3));
+    auto data_4_write_large = Ite(mode < 3, Store(data_3_write_large, addr_large_32 + 4, data_in_4),
+                                            Load(mem_large, addr_large_32 + 4));
+    auto data_5_write_large = Ite(mode < 3, Store(data_4_write_large, addr_large_32 + 5, data_in_5),
+                                            Load(mem_large, addr_large_32 + 5));
+    auto data_6_write_large = Ite(mode < 3, Store(data_5_write_large, addr_large_32 + 6, data_in_6),
+                                            Load(mem_large, addr_large_32 + 6));
+    auto data_7_write_large = Ite(mode < 3, Store(data_6_write_large, addr_large_32 + 7, data_in_7),
+                                            Load(mem_large, addr_large_32 + 7));
+    auto data_8_write_large = Ite(mode < 3, Store(data_7_write_large, addr_large_32 + 8, data_in_8),
+                                            Load(mem_large, addr_large_32 + 8));
+    auto data_9_write_large = Ite(mode < 3, Store(data_8_write_large, addr_large_32 + 9, data_in_9),
+                                            Load(mem_large, addr_large_32 + 9));
+    auto data_10_write_large = Ite(mode < 3, Store(data_9_write_large, addr_large_32 + 10, data_in_10),
+                                            Load(mem_large, addr_large_32 + 10));
+    auto data_11_write_large = Ite(mode < 3, Store(data_10_write_large, addr_large_32 + 11, data_in_11),
+                                            Load(mem_large, addr_large_32 + 11));
+    auto data_12_write_large = Ite(mode < 3, Store(data_11_write_large, addr_large_32 + 12, data_in_12),
+                                            Load(mem_large, addr_large_32 + 12));
+    auto data_13_write_large = Ite(mode < 3, Store(data_12_write_large, addr_large_32 + 13, data_in_13),
+                                            Load(mem_large, addr_large_32 + 13));
+    auto data_14_write_large = Ite(mode < 3, Store(data_13_write_large, addr_large_32 + 14, data_in_14),
+                                            Load(mem_large, addr_large_32 + 14));
+    auto data_15_write_large = Ite(mode < 3, Store(data_14_write_large, addr_large_32 + 15, data_in_15),
+                                            Load(mem_large, addr_large_32 + 15));
+
+    auto data_0_write_small = Ite(mode < 3, Store(mem_small, addr_small_32 + 0, data_in_0),
+                                            Load(mem_small, addr_small_32 + 0));
+    auto data_1_write_small = Ite(mode < 3, Store(data_0_write_small, addr_small_32 + 1, data_in_1),
+                                            Load(mem_small, addr_small_32 + 1));
+    auto data_2_write_small = Ite(mode < 3, Store(data_1_write_small, addr_small_32 + 2, data_in_2),
+                                            Load(mem_small, addr_small_32 + 2));
+    auto data_3_write_small = Ite(mode < 3, Store(data_2_write_small, addr_small_32 + 3, data_in_3),
+                                            Load(mem_small, addr_small_32 + 3));
+    auto data_4_write_small = Ite(mode < 3, Store(data_3_write_small, addr_small_32 + 4, data_in_4),
+                                            Load(mem_small, addr_small_32 + 4));
+    auto data_5_write_small = Ite(mode < 3, Store(data_4_write_small, addr_small_32 + 5, data_in_5),
+                                            Load(mem_small, addr_small_32 + 5));
+    auto data_6_write_small = Ite(mode < 3, Store(data_5_write_small, addr_small_32 + 6, data_in_6),
+                                            Load(mem_small, addr_small_32 + 6));
+    auto data_7_write_small = Ite(mode < 3, Store(data_6_write_small, addr_small_32 + 7, data_in_7),
+                                            Load(mem_small, addr_small_32 + 7));
+    auto data_8_write_small = Ite(mode < 3, Store(data_7_write_small, addr_small_32 + 8, data_in_8),
+                                            Load(mem_small, addr_small_32 + 8));
+    auto data_9_write_small = Ite(mode < 3, Store(data_8_write_small, addr_small_32 + 9, data_in_9),
+                                            Load(mem_small, addr_small_32 + 9));
+    auto data_10_write_small = Ite(mode < 3, Store(data_9_write_small, addr_small_32 + 10, data_in_10),
+                                            Load(mem_small, addr_small_32 + 10));
+    auto data_11_write_small = Ite(mode < 3, Store(data_10_write_small, addr_small_32 + 11, data_in_11),
+                                            Load(mem_small, addr_small_32 + 11));
+    auto data_12_write_small = Ite(mode < 3, Store(data_11_write_small, addr_small_32 + 12, data_in_12),
+                                            Load(mem_small, addr_small_32 + 12));
+    auto data_13_write_small = Ite(mode < 3, Store(data_12_write_small, addr_small_32 + 13, data_in_13),
+                                            Load(mem_small, addr_small_32 + 13));
+    auto data_14_write_small = Ite(mode < 3, Store(data_13_write_small, addr_small_32 + 14, data_in_14),
+                                            Load(mem_small, addr_small_32 + 14));
+    auto data_15_write_small = Ite(mode < 3, Store(data_14_write_small, addr_small_32 + 15, data_in_15),
+                                            Load(mem_small, addr_small_32 + 15));                                            
+
+
+    auto next_state = Ite(pe_done == GB_CONTROL_VALID,
+                            Ite(is_rnn == GB_CONTROL_VALID,
+                                  BvConst(GB_CONTROL_CHILD_STATE_SEND_BACK_PREP, GB_CONTROL_CHILD_STATE_BITWIDTH),
+                                  BvConst(GB_CONTROL_CHILD_STATE_NEXT, GB_CONTROL_CHILD_STATE_BITWIDTH)),
+                            BvConst(GB_CONTROL_CHILD_STATE_RECV, GB_CONTROL_CHILD_STATE_BITWIDTH));
+
+    auto data_in_valid_tmp = BvConst(GB_CONTROL_INVALID, GB_CONTROL_DATA_IN_VALID_BITWIDTH);
+    // state updates
+    instr.SetUpdate(state, next_state);
+
+    instr.SetUpdate(mem_large, data_15_write_large);
+    instr.SetUpdate(mem_small, data_15_write_small);
+
+    instr.SetUpdate(data_in_valid_bit, data_in_valid_tmp);    
+  }
+
+  { // instruction 6 ---- send back prep, set the parameters needed for the send back state
+    auto instr = child.NewInstr("gb_control_child_send_back_prep");
+    auto state_send_back_prep = (state == GB_CONTROL_CHILD_STATE_SEND_BACK_PREP);
+    
+    instr.SetDecode(child_valid & state_send_back_prep);
+
+    // reset vector counter value
+    auto cntr_vector_tmp = BvConst(0, GB_CONTROL_CHILD_VECTOR_CNTR_BITWIDTH);
+
+    // calculate the base address for the current timestep in the large buffer. (in memory_index_2)
+    auto num_vector_20 = Concat(BvConst(0, 12), num_vector_2);
+    auto timestep_size = num_vector_20 * GB_CORE_SCALAR;
+    auto group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
+
+    auto group_index = timestep_index / g_scalar;
+    auto group_offset = URem(timestep_index, g_scalar);
+
+    auto group_index_20 = Concat(BvConst(0, 4), group_index);
+    auto group_offset_20 = Concat(BvConst(0, 4), group_offset);
+
+    auto timestep_base_addr_offset = group_index_20 * group_size + group_offset_20;
+    auto timestep_base_addr_tmp = memory_base_addr_2 + timestep_base_addr_offset;
+
+    auto next_state = BvConst(GB_CONTROL_CHILD_STATE_SEND_BACK, GB_CONTROL_CHILD_STATE_BITWIDTH);
+
+    instr.SetUpdate(state, next_state);
+    instr.SetUpdate(cntr_vector, cntr_vector_tmp);
+    instr.SetUpdate(timestep_base_addr, timestep_base_addr_tmp); 
+  }
+
+  { // instruction 7 ---- send back, send the vectors back 
+    auto instr = child.NewInstr("gb_control_child_send_back");
+    auto state_send_back = (state == GB_CONTROL_CHILD_STATE_SEND_BACK);
+    auto data_out_invalid = (data_out_valid_bit == GB_CONTROL_INVALID);
+
+    instr.SetDecode(child_valid & state_send_back & data_out_invalid);
+
+    // memory address for reading from large buffer
+    auto row_size = GB_CORE_SCALAR * GB_CORE_LARGE_NUM_BANKS;
+    auto cntr_vector_20 = Concat(BvConst(0, 12), cntr_vector);
+    auto vector_addr_offset = cntr_vector_20 * row_size;
+    auto addr_large = timestep_base_addr + vector_addr_offset;
+    auto addr_large_32 = Concat(BvConst(0, 32 - GB_CORE_STORE_LARGE_BITWIDTH), addr_large);
+
+    // memory address for reading from small buffer
+    auto vector_addr_offset_small = cntr_vector_20 * GB_CORE_SCALAR;
+    auto addr_small = mem_base_addr_small_1 + vector_addr_offset_small;
+    auto addr_small_32 = Concat(BvConst(0, 32 - GB_CORE_STORE_LARGE_BITWIDTH), addr_small);
+
+    // fetch the data from the memory
+    auto data_out_0_tmp = Ite(mode < 3, Load(mem_large, addr_large_32 + 0),
+                                        Load(mem_small, addr_small_32 + 0));
+    auto data_out_1_tmp = Ite(mode < 3, Load(mem_large, addr_large_32 + 1),
+                                        Load(mem_small, addr_small_32 + 1));
+    auto data_out_2_tmp = Ite(mode < 3, Load(mem_large, addr_large_32 + 2),
+                                        Load(mem_small, addr_small_32 + 2));
+    auto data_out_3_tmp = Ite(mode < 3, Load(mem_large, addr_large_32 + 3),
+                                        Load(mem_small, addr_small_32 + 3));
+    auto data_out_4_tmp = Ite(mode < 3, Load(mem_large, addr_large_32 + 4),
+                                        Load(mem_small, addr_small_32 + 4));
+    auto data_out_5_tmp = Ite(mode < 3, Load(mem_large, addr_large_32 + 5),
+                                        Load(mem_small, addr_small_32 + 5));
+    auto data_out_6_tmp = Ite(mode < 3, Load(mem_large, addr_large_32 + 6),
+                                        Load(mem_small, addr_small_32 + 6));
+    auto data_out_7_tmp = Ite(mode < 3, Load(mem_large, addr_large_32 + 7),
+                                        Load(mem_small, addr_small_32 + 7));                                    
+    auto data_out_8_tmp = Ite(mode < 3, Load(mem_large, addr_large_32 + 8),
+                                        Load(mem_small, addr_small_32 + 8));
+    auto data_out_9_tmp = Ite(mode < 3, Load(mem_large, addr_large_32 + 9),
+                                        Load(mem_small, addr_small_32 + 9));
+    auto data_out_10_tmp = Ite(mode < 3, Load(mem_large, addr_large_32 + 10),
+                                        Load(mem_small, addr_small_32 + 10));
+    auto data_out_11_tmp = Ite(mode < 3, Load(mem_large, addr_large_32 + 11),
+                                        Load(mem_small, addr_small_32 + 11));
+    auto data_out_12_tmp = Ite(mode < 3, Load(mem_large, addr_large_32 + 12),
+                                        Load(mem_small, addr_small_32 + 12));
+    auto data_out_13_tmp = Ite(mode < 3, Load(mem_large, addr_large_32 + 13),
+                                        Load(mem_small, addr_small_32 + 13));
+    auto data_out_14_tmp = Ite(mode < 3, Load(mem_large, addr_large_32 + 14),
+                                        Load(mem_small, addr_small_32 + 14));
+    auto data_out_15_tmp = Ite(mode < 3, Load(mem_large, addr_large_32 + 15),
+                                        Load(mem_small, addr_small_32 + 15));
+    
+    auto data_out_valid_tmp = BvConst(GB_CONTROL_VALID, GB_CONTROL_DATA_IN_VALID_BITWIDTH);
+    auto cntr_vector_tmp = cntr_vector + 1;
+    auto next_state = Ite(cntr_vector_tmp == num_vector_2,
+                            BvConst(GB_CONTROL_CHILD_STATE_NEXT, GB_CONTROL_CHILD_STATE_BITWIDTH),
+                            BvConst(GB_CONTROL_CHILD_STATE_SEND_BACK, GB_CONTROL_CHILD_STATE_BITWIDTH)); 
+    
+    instr.SetUpdate(state, next_state);
+    instr.SetUpdate(cntr_vector, cntr_vector_tmp);
+    // send data and address to the output port
+    instr.SetUpdate(data_out_0, data_out_0_tmp);
+    instr.SetUpdate(data_out_1, data_out_1_tmp);
+    instr.SetUpdate(data_out_2, data_out_2_tmp);
+    instr.SetUpdate(data_out_3, data_out_3_tmp);
+    instr.SetUpdate(data_out_4, data_out_4_tmp);
+    instr.SetUpdate(data_out_5, data_out_5_tmp);
+    instr.SetUpdate(data_out_6, data_out_6_tmp);
+    instr.SetUpdate(data_out_7, data_out_7_tmp);
+    instr.SetUpdate(data_out_8, data_out_8_tmp);
+    instr.SetUpdate(data_out_9, data_out_9_tmp);
+    instr.SetUpdate(data_out_10, data_out_10_tmp);
+    instr.SetUpdate(data_out_11, data_out_11_tmp);
+    instr.SetUpdate(data_out_12, data_out_12_tmp);
+    instr.SetUpdate(data_out_13, data_out_13_tmp);
+    instr.SetUpdate(data_out_14, data_out_14_tmp);
+    instr.SetUpdate(data_out_15, data_out_15_tmp);
+
+    instr.SetUpdate(data_out_addr, cntr_vector);
+    instr.SetUpdate(data_out_valid_bit, data_out_valid_tmp);
+  }
+
+  { // instruction 8 ---- Decide whether the control is finished or move to next timestep
+    auto instr = child.NewInstr("gb_control_child_next");
+    auto state_next = (state == GB_CONTROL_CHILD_STATE_NEXT);
+    
+    instr.SetDecode(child_valid & state_next);
+
+    auto cntr_timestep_tmp = cntr_timestep + 1;
+    auto done = (cntr_timestep_tmp == num_timestep);
+
+    auto next_state = Ite(done, BvConst(GB_CONTROL_CHILD_STATE_PREP, GB_CONTROL_CHILD_STATE_BITWIDTH),
+                                BvConst(GB_CONTROL_CHILD_STATE_SEND_PREP, GB_CONTROL_CHILD_STATE_BITWIDTH));
+    auto flag_child_next = Ite(done, BvConst(GB_CONTROL_CHILD_OFF, GB_CONTROL_CHILD_VALID_FLAG_BITWIDTH),
+                                     BvConst(GB_CONTROL_CHILD_ON, GB_CONTROL_CHILD_VALID_FLAG_BITWIDTH));
+
+    instr.SetUpdate(state, next_state);
+    instr.SetUpdate(flag_child, flag_child_next);
+    instr.SetUpdate(cntr_timestep, cntr_timestep_tmp);
+
+  }
 
 }
 
