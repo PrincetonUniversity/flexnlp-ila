@@ -32,6 +32,7 @@ namespace ilang {
 // read 128-bits (16 bytes) at a time
 #define GB_CORE_SCALAR 16
 #define GB_CORE_SCALAR_BITWIDTH 4
+#define GB_CORE_BYTE_BITWIDTH 8
 
 //
 // large buffer (1 MB)

@@ -46,7 +46,7 @@ FuncRef signed_gt("signed_gt", uf_out, uf_in1, uf_in2);
 
 
 void DefineStartGBLayerReduce(Ila& m) {
-  auto instr = m.NewInstr("Start_GBLayer_Reduce");
+  auto instr = m.NewInstr("GB_LAYER_REDUCE_START");
   // Decode condition
   auto is_write = m.input(TOP_IF_WR) & ~m.input(TOP_IF_RD);
   auto start_addr = TOP_GB_ADDR_MIN + START_ADDR_GB_LAYER_REDUCE;

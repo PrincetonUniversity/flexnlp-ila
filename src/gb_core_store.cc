@@ -33,7 +33,7 @@ void DefineGBCoreStore(Ila& m) {
   
   // Instruction for storing data into the GB large buffer
   {
-    auto instr = m.NewInstr("GBCore_Store_Large");
+    auto instr = m.NewInstr("GB_CORE_STORE_LARGE");
     // decode condition
     auto is_write = m.input(TOP_IF_WR) & ~m.input(TOP_IF_RD);
     auto valid_addr = (m.input(TOP_ADDR_IN) >= (TOP_ADDR_BASE + GB_CORE_STORE_LARGE_ADDR_MIN)) &
@@ -65,7 +65,7 @@ void DefineGBCoreStore(Ila& m) {
 
   // Instructions for storing data into the GB small buffer
   {
-    auto instr = m.NewInstr("GBCore_Store_Small");
+    auto instr = m.NewInstr("GB_CORE_STORE_SMALL");
     // decode condition
     auto is_write = m.input(TOP_IF_WR) & ~m.input(TOP_IF_RD);
     auto valid_addr = (m.input(TOP_ADDR_IN) >= (TOP_ADDR_BASE + GB_CORE_STORE_SMALL_ADDR_MIN)) &
