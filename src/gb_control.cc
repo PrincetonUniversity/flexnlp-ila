@@ -118,6 +118,8 @@ void AddChild_GB_Control(Ila& m) {
   auto data_out_14 = m.state(GB_CONTROL_DATA_OUT_14);
   auto data_out_15 = m.state(GB_CONTROL_DATA_OUT_15);
 
+  auto data_out_index = m.state(GB_CONTROL_DATA_OUT_INDEX);
+
   auto data_out_addr = m.state(GB_CONTROL_DATA_OUT_ADDR);
   auto data_in_valid_bit = m.state(GB_CONTROL_DATA_IN_VALID);
   auto data_out_valid_bit = m.state(GB_CONTROL_DATA_OUT_VALID);
@@ -322,6 +324,11 @@ void AddChild_GB_Control(Ila& m) {
 
     instr.SetUpdate(data_out_valid_bit, data_out_valid_tmp);
     instr.SetUpdate(data_out_addr, cntr_vector);
+
+    // send the data_out index, which is used to specify the pe manager
+    auto x_index = BvConst(GB_CONTROL_DATA_OUT_INDEX_X, GB_CONTROL_DATA_OUT_INDEX_BITWIDTH);
+
+    instr.SetUpdate(data_out_index, x_index);
 
   }
 
@@ -581,6 +588,11 @@ void AddChild_GB_Control(Ila& m) {
 
     instr.SetUpdate(data_out_addr, cntr_vector);
     instr.SetUpdate(data_out_valid_bit, data_out_valid_tmp);
+
+    // data out index, which is used to specify the pe manager
+    auto h_index = BvConst(GB_CONTROL_DATA_OUT_INDEX_H, GB_CONTROL_DATA_OUT_INDEX_BITWIDTH);
+
+    instr.SetUpdate(data_out_index, h_index);
   }
 
   { // instruction 8 ---- Decide whether the control is finished or move to next timestep
