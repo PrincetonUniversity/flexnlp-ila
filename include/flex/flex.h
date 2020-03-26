@@ -55,8 +55,11 @@ void DefineGBConfigInstr(Ila& m);
 void DefinePEConfigInstr(Ila& m, const int& pe_idx, const uint64_t& base);
 
 void DefineGBCoreStore(Ila& m);
+
 void DefinePECoreStore(Ila& m, const int& pe_idx, const uint64_t& base);
-void DefinePEActStore(Ila& m, const int& pe_idx, const uint64_t& base);
+
+void DefinePECore(Ila& m, const int& pe_idx, const uint64_t& base);
+void DefinePEAct(Ila& m, const int& pe_idx, const uint64_t& base);
 
 void DefineStartGBAttention(Ila& m);
 void DefineStartGBControl(Ila& m);

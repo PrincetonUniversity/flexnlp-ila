@@ -22,78 +22,14 @@
 // SOFTWARE.
 // =============================================================================
 
-// File: pe_core.cc
+// File: pe_core_store.cc
 
 #include <flex/flex.h>
 
 namespace ilang {
 
-void DefinePECoreStore(Ila& m, const int& pe_idx, const uint64_t& base) {
-  
-  { // instruction 0 ---- PE Core Store in Weight buffer
-    auto instr = m.NewInstr(PEGetInstrName(pe_idx, "CORE_STORE_WEIGHT_BUFFER"));
-    
-    auto is_write = m.input(TOP_IF_WR) & ~m.input(TOP_IF_RD);
-    auto addr_base = TOP_ADDR_BASE + (pe_idx + 1) * PE_PARTITION_SIZE;
-    auto valid_addr = (m.input(TOP_ADDR_IN) >= (addr_base + PE_CORE_STORE_WEIGHT_ADDR_MIN)) &
-                        (m.input(TOP_ADDR_IN) <= (addr_base + PE_CORE_STORE_WEIGHT_ADDR_MAX));
-    // ILA_INFO << "PE " << pe_idx << " base addr: " << std::hex << addr_base;
-
-    instr.SetDecode(is_write & valid_addr);
-
-    auto mem = m.state(PEGetVarName(pe_idx, CORE_WEIGHT_BUFFER));
-    auto addr = m.input(TOP_ADDR_IN) - addr_base - PE_CORE_STORE_WEIGHT_ADDR_MIN;
-
-    auto mem_next = Store(mem, (addr + 0), m.input(TOP_DATA_IN_0));
-    mem_next = Store(mem_next, (addr + 1), m.input(TOP_DATA_IN_1));
-    mem_next = Store(mem_next, (addr + 2), m.input(TOP_DATA_IN_2));
-    mem_next = Store(mem_next, (addr + 3), m.input(TOP_DATA_IN_3));
-    mem_next = Store(mem_next, (addr + 4), m.input(TOP_DATA_IN_4));
-    mem_next = Store(mem_next, (addr + 5), m.input(TOP_DATA_IN_5));
-    mem_next = Store(mem_next, (addr + 6), m.input(TOP_DATA_IN_6));
-    mem_next = Store(mem_next, (addr + 7), m.input(TOP_DATA_IN_7));
-    mem_next = Store(mem_next, (addr + 8), m.input(TOP_DATA_IN_8));
-    mem_next = Store(mem_next, (addr + 9), m.input(TOP_DATA_IN_9));
-    mem_next = Store(mem_next, (addr + 10), m.input(TOP_DATA_IN_10));
-    mem_next = Store(mem_next, (addr + 11), m.input(TOP_DATA_IN_11));
-    mem_next = Store(mem_next, (addr + 12), m.input(TOP_DATA_IN_12));
-    mem_next = Store(mem_next, (addr + 13), m.input(TOP_DATA_IN_13));
-    mem_next = Store(mem_next, (addr + 14), m.input(TOP_DATA_IN_14));
-
-    instr.SetUpdate(mem, Store(mem_next, (addr + 15), m.input(TOP_DATA_IN_15)));
-  }
-
-  { // instruction 1 ---- PE Core Store for input buffer
-    auto instr = m.NewInstr(PEGetInstrName(pe_idx, "CORE_STORE_INPUT_BUFFER"));
-
-    auto is_write = m.input(TOP_IF_WR) & ~m.input(TOP_IF_RD);
-    auto addr_base = TOP_ADDR_BASE + (pe_idx + 1) * PE_PARTITION_SIZE;
-    auto valid_addr = (m.input(TOP_ADDR_IN) >= (addr_base + PE_CORE_STORE_INPUT_ADDR_MIN)) &
-                        (m.input(TOP_ADDR_IN) <= (addr_base + PE_CORE_STORE_INPUT_ADDR_MAX));
-    
-    instr.SetDecode(is_write & valid_addr);
-
-    auto mem = m.state(PEGetVarName(pe_idx, CORE_INPUT_BUFFER));
-    auto addr = m.input(TOP_ADDR_IN) - addr_base - PE_CORE_STORE_INPUT_ADDR_MIN;
-
-    auto mem_next = Store(mem, (addr + 0), m.input(TOP_DATA_IN_0));
-    mem_next = Store(mem_next, (addr + 1), m.input(TOP_DATA_IN_1));
-    mem_next = Store(mem_next, (addr + 2), m.input(TOP_DATA_IN_2));
-    mem_next = Store(mem_next, (addr + 3), m.input(TOP_DATA_IN_3));
-    mem_next = Store(mem_next, (addr + 4), m.input(TOP_DATA_IN_4));
-    mem_next = Store(mem_next, (addr + 5), m.input(TOP_DATA_IN_5));
-    mem_next = Store(mem_next, (addr + 6), m.input(TOP_DATA_IN_6));
-    mem_next = Store(mem_next, (addr + 7), m.input(TOP_DATA_IN_7));
-    mem_next = Store(mem_next, (addr + 8), m.input(TOP_DATA_IN_8));
-    mem_next = Store(mem_next, (addr + 9), m.input(TOP_DATA_IN_9));
-    mem_next = Store(mem_next, (addr + 10), m.input(TOP_DATA_IN_10));
-    mem_next = Store(mem_next, (addr + 11), m.input(TOP_DATA_IN_11));
-    mem_next = Store(mem_next, (addr + 12), m.input(TOP_DATA_IN_12));
-    mem_next = Store(mem_next, (addr + 13), m.input(TOP_DATA_IN_13));
-    mem_next = Store(mem_next, (addr + 14), m.input(TOP_DATA_IN_14));
-
-    instr.SetUpdate(mem, Store(mem_next, (addr + 15), m.input(TOP_DATA_IN_15)));
-  }
+void DefinePECore(Ila& m, const int& pe_idx, const uint64_t& base) {
+// TODO
 }
 
 }; // namespace ilang
