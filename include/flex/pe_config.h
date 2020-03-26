@@ -44,4 +44,11 @@ inline std::string PEGetInstrName(const int& idx,
   return "PE" + prefix + "_" + instr_name;
 }
 
+inline std::string PEGetChildName(const int& idx,
+                                  const std::string& child_name) {
+  ILA_ASSERT(idx >= 0 && idx < 4) << "Invalid PE index " << idx;
+  auto prefix = std::to_string(idx);
+  return "PE" + prefix + "_" + child_name;
+}
+
 #endif // FLEX_PE_CONFIG_H__

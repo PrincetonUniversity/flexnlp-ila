@@ -52,6 +52,14 @@ void DefinePEOtherState(Ila& m, const int& pe_idx) {
       m.NewMemState(PEGetVarName(pe_idx, CORE_INPUT_BUFFER), TOP_ADDR_IN_WIDTH,
                     TOP_DATA_IN_WIDTH);
   pe_core_input_buffer.SetEntryNum(CORE_INPUT_BUFFER_SIZE);
+
+  //
+  // Define child states in the PE Core
+  //
+  
+  // state machine for PE Core module
+  m.NewBvState(PEGetVarName(pe_idx, CORE_STATE), CORE_STATE_BITWIDTH);
+
 }
 
 }; // namespace ilang

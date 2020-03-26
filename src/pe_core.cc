@@ -22,14 +22,26 @@
 // SOFTWARE.
 // =============================================================================
 
-// File: pe_core_store.cc
+// File: pe_core.cc
 
 #include <flex/flex.h>
 
 namespace ilang {
 
+void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base);
+
 void DefinePECore(Ila& m, const int& pe_idx, const uint64_t& base) {
-// TODO
+
+// PE Core instructions are not visible at the top interface, we need to use child model to implement PE core
+// Thus this DefinePECore function will only contain the declaration of the child model of PE Core
+  AddChild_PECore(m, pe_idx, base);
+}
+
+void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
+  auto child = m.NewChild(PEGetChildName(pe_idx, "CORE_CHILD"));
+  // TODO: currently set the child valid function as always true.
+  child.SetValid(BoolConst(true));
+  
 }
 
 }; // namespace ilang

@@ -289,6 +289,16 @@ namespace ilang {
 #define RNN_LAYER_SIZING_CONFIG_REG_NUM_OUTPUT "rnn_layer_sizing_num_output"
 #define RNN_LAYER_SIZING_CONFIG_REG_NUM_OUTPUT_WIDTH 8
 
+
+
+// 
+// Define PE Core Child state
+//
+
+#define CORE_STATE "core_state"
+#define CORE_STATE_BITWIDTH 3
+
+
 }; // namespace ilang
 
 #endif // FLEX_PE_CORE_H__
