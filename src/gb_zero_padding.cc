@@ -54,7 +54,7 @@ void DefineStartGBZeroPadding(Ila& m) {
 }
 
 void AddChild_ZeroPadding(Ila& m) {
-  auto child = m.NewChild("GBZeroPadding_child");
+  auto child = m.NewChild("Child_GBZeroPadding");
   auto flag_child = m.state(GB_ZERO_PADDING_CHILD_VALID_FLAG);
   auto child_valid = (flag_child == GB_ZERO_PADDING_FLAG_ON);
   

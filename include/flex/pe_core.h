@@ -292,11 +292,29 @@ namespace ilang {
 
 
 // 
-// Define PE Core Child state
+// Define PE Core states
 //
+#define PE_CORE_INVALID 0
+#define PE_CORE_VALID 1
+
+#define PE_CNTR "PE_CNTR"
+#define PE_CNTR_BIWTDTH 3
 
 #define CORE_STATE "core_state"
-#define CORE_STATE_BITWIDTH 3
+#define PE_CORE_STATE_BITWIDTH 3
+
+// states that defined in the specs
+#define PE_CORE_STATE_IDLE 0
+#define PE_CORE_STATE_PRE 1
+#define PE_CORE_STATE_MAC 2
+#define PE_CORE_STATE_BIAS 3
+#define PE_CORE_STATE_OUT 4
+
+
+#define CORE_MNGR_CNTR "core_manager_cntr"
+#define PE_CORE_MNGR_CNTR_BITWIDTH 1
+#define PE_CORE_MNGR_0 0
+#define PE_CORE_MNGR_1 1
 
 
 }; // namespace ilang

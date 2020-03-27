@@ -58,7 +58,7 @@ void DefinePEOtherState(Ila& m, const int& pe_idx) {
   //
   
   // state machine for PE Core module
-  m.NewBvState(PEGetVarName(pe_idx, CORE_STATE), CORE_STATE_BITWIDTH);
+  m.NewBvState(PEGetVarName(pe_idx, CORE_STATE), PE_CORE_STATE_BITWIDTH);
 
 }
 

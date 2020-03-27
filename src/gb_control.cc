@@ -54,7 +54,7 @@ void DefineStartGBControl(Ila& m) {
 }
 
 void AddChild_GB_Control(Ila& m) {
-  auto child = m.NewChild("GB_Control_child");
+  auto child = m.NewChild("GB_Control");
   auto flag_child = m.state(GB_CONTROL_CHILD_VALID_FLAG);
   auto child_valid = (flag_child == GB_CONTROL_CHILD_ON);
 
@@ -333,14 +333,22 @@ void AddChild_GB_Control(Ila& m) {
   }
 
   { // instruction 3 ---- finishing sending the whole timestep, sending pe_start
+    // update: set the start signal only after all the pe have read the last piece of data.
     auto instr = child.NewInstr("gb_control_pe_start");
     auto state_pe_start = (state == GB_CONTROL_CHILD_STATE_PE_START);
     
     instr.SetDecode(child_valid & state_pe_start);
 
-    auto next_state = BvConst(GB_CONTROL_CHILD_STATE_RECV_PREP, GB_CONTROL_CHILD_STATE_BITWIDTH);
+    //update
+    auto pe_read_done = (data_out_valid_bit == GB_CONTROL_INVALID);
+    auto next_state = Ite(pe_read_done,
+                            BvConst(GB_CONTROL_CHILD_STATE_RECV_PREP, GB_CONTROL_CHILD_STATE_BITWIDTH),
+                            BvConst(GB_CONTROL_CHILD_STATE_PE_START, GB_CONTROL_CHILD_STATE_BITWIDTH));
+    auto pe_start_next = Ite(pe_read_done, 
+                              BvConst(GB_CONTROL_VALID, PE_START_SIGNAL_SHARED_BITWIDTH),
+                              BvConst(GB_CONTROL_INVALID, PE_START_SIGNAL_SHARED_BITWIDTH));
     
-    instr.SetUpdate(pe_start, BvConst(GB_CONTROL_VALID, PE_START_SIGNAL_SHARED_BITWIDTH));
+    instr.SetUpdate(pe_start, pe_start_next);
     instr.SetUpdate(state, next_state);
   }
 

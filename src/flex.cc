@@ -53,6 +53,13 @@ Ila GetFlexIla(const std::string& model_name) {
 
   // GB internal states
   DefineGBInternalStates(m);
+
+  // PE internal states
+  DefinePEInternalStates(m);
+  DefinePEInternalStates(m, 0);
+  DefinePEInternalStates(m, 1);
+  DefinePEInternalStates(m, 2);
+  DefinePEInternalStates(m, 3); 
   
   // define initial conditions
   DefineInitConditons(m);
@@ -85,6 +92,7 @@ Ila GetFlexIla(const std::string& model_name) {
   DefinePECoreStore(m, 1, TOP_PE1_ADDR_MIN);
   DefinePECoreStore(m, 2, TOP_PE2_ADDR_MIN);
   DefinePECoreStore(m, 3, TOP_PE3_ADDR_MIN);
+
   // Define PE core instructions for 4 PE Cores
   DefinePECore(m, 0, TOP_PE0_ADDR_MIN);
   DefinePECore(m, 1, TOP_PE1_ADDR_MIN);
