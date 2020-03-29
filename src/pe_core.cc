@@ -30,11 +30,7 @@
 namespace ilang {
 
 void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base);
-// helper functions
-void PECoreRunMac(Ila& m, const int& pe_idx,
-                          ExprRef& is_cluster,
-                          ExprRef& weight_base_v,
-                          ExprRef& input_base_v);
+void AddChild_PECoreRunMac(Ila& m, const int& pe_idx);
 
 void DefinePECore(Ila& m, const int& pe_idx, const uint64_t& base) {
 
@@ -54,6 +50,17 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
   auto mngr_cntr = child.NewBvState(PEGetVarName(pe_idx, CORE_MNGR_CNTR), PE_CORE_MNGR_CNTR_BITWIDTH);
   auto input_cntr = child.NewBvState(PEGetVarName(pe_idx, CORE_INPUT_CNTR), PE_CORE_INPUT_CNTR_BITWIDTH);
   auto output_cntr = child.NewBvState(PEGetVarName(pe_idx, CORE_OUTPUT_CNTR), PE_CORE_OUTPUT_CNTR_BITWIDTH);
+  
+  auto run_mac_flag = child.NewBvState(PEGetVarName(pe_idx, CORE_CHILD_RUN_MAC_FLAG),
+                                        PE_CORE_CHILD_RUN_MAC_FLAG_BITWIDTH);
+  auto run_mac_cntr = child.NewBvState(PEGetVarName(pe_idx, CORE_CHILD_RUN_MAC_CNTR),
+                                       PE_CORE_CHILD_RUN_MAC_CNTR_BITWIDTH);
+  auto run_mac_state = child.NewBvState(PEGetVarName(pe_idx, CORE_RUN_MAC_CHILD_STATE),
+                                        PE_CORE_RUN_MAC_CHILD_STATE_BITWIDTH);
+  auto weight_base_v = child.NewBvState(PEGetVarName(pe_idx, CORE_CHILD_RUN_MAC_WEIGHT_BASE_VECTOR),
+                                        PE_CORE_CHILD_RUN_MAC_WEIGHT_BASE_VECTOR_BITWIDTH);
+  auto input_base_v = child.NewBvState(PEGetVarName(pe_idx, CORE_CHILD_RUN_MAC_INPUT_BASE_VECTOR),
+                                        PE_CORE_CHILD_RUN_MAC_INPUT_BASE_VECTOR_BITWIDTH);
   
   // common states used in this child instructions
   auto state = m.state(PEGetVarName(pe_idx, CORE_STATE));
@@ -170,6 +177,11 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     }
     
     instr.SetUpdate(state, next_state);
+
+    // reset the run mac child valid flag
+    // when run_mac_flag is valid, it means it is still calculating the results, and instr 4 shouldn't run
+    instr.SetUpdate(run_mac_flag, 
+                    BvConst(PE_CORE_INVALID, PE_CORE_CHILD_RUN_MAC_INPUT_BASE_VECTOR_BITWIDTH));
   }
 
   { // instruction 4 ---- MAC state
@@ -178,8 +190,9 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto pe_start_valid = (m.state(GB_CONTROL_CHILD_STATE_PE_START) == PE_CORE_VALID);
     auto is_start = pe_config_is_valid & pe_start_valid;
     auto state_mac = (state == PE_CORE_STATE_MAC);
+    auto run_mac_invalid = (run_mac_flag == PE_CORE_INVALID);
 
-    instr.SetDecode(is_start & state_mac);
+    instr.SetDecode(is_start & state_mac & run_mac_invalid);
 
     // state transition control signal
     auto num_input = Ite(mngr_cntr == PE_CORE_MNGR_0,
@@ -190,6 +203,8 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
                                         BvConst(PE_CORE_STATE_MAC, PE_CORE_STATE_BITWIDTH));
 
     instr.SetUpdate(state, next_state);
+    // update input counter
+    instr.SetUpdate(input_cntr, input_cntr + 1);
 
     // calculate the addresses
     auto is_cluster = m.state(PEGetVarName(pe_idx, RNN_LAYER_SIZING_CONFIG_REG_IS_CLUSTER));
@@ -201,36 +216,62 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
                                 m.state(PEGetVarName(pe_idx, MEM_MNGR_FIRST_CONFIG_REG_BASE_INPUT)),
                                 m.state(PEGetVarName(pe_idx, MEM_MNGR_SECOND_CONFIG_REG_BASE_INPUT)));
 
-    auto weight_base_v = Ite(is_cluster == 1,
+    auto weight_base_v_next = Ite(is_cluster == 1,
                               (output_cntr*num_input + input_cntr)*8 + config_base_weight,
                               (output_cntr*num_input + input_cntr)*16 + config_base_weight);
-    auto input_base_v = input_cntr + config_base_input;
+    auto input_base_v_next = input_cntr + config_base_input;
+
+    auto run_mac_state_fetch = BvConst(PE_CORE_RUN_MAC_STATE_FETCH,
+                                        PE_CORE_RUN_MAC_CHILD_STATE_BITWIDTH);
+    instr.SetUpdate(weight_base_v, weight_base_v_next);
+    instr.SetUpdate(input_base_v, input_base_v_next);
     
-    PECoreRunMac(m, pe_idx, is_cluster, weight_base_v, input_base_v);
+    instr.SetUpdate(run_mac_flag, BvConst(PE_CORE_VALID, PE_CORE_CHILD_RUN_MAC_FLAG_BITWIDTH));
+    instr.SetUpdate(run_mac_cntr, BvConst(0, PE_CORE_CHILD_RUN_MAC_CNTR_BITWIDTH));
+    instr.SetUpdate(run_mac_state, run_mac_state_fetch);
+
+    // Add child to do the run mac function
+    AddChild_PECoreRunMac(m, pe_idx);
   }
 }
 
-void PECoreRunMac(Ila& m, const int& pe_idx,
-                          ExprRef& is_cluster,
-                          ExprRef& weight_base_v,
-                          ExprRef& input_base_v) {
+void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
   // TODO: implement the matrix multiplication here.
-  auto child = m.child(PEGetChildName(pe_idx, "CORE_CHILD"));
-  std::vector<ExprRef> weights_data_byte;
-  std::vector<std::vector<ExprRef>> weights_data_vector;
-  // current weight vector base addr
-  auto weights_addr_current_v = Concat(BvConst(0, TOP_ADDR_IN_WIDTH - weight_base_v.bit_width()),
-                                        weight_base_v);
-  weights_addr_current_v = weights_addr_current_v << 4;; // changed into byte units
+  auto child_pe_core = m.child(PEGetChildName(pe_idx, "CORE_CHILD"));
+  auto child_run_mac = child_pe_core.NewChild(PEGetChildName(pe_idx, "CORE_RUN_MAC_CHILD"));
+  auto run_mac_flag = child_pe_core.state(PEGetVarName(pe_idx, CORE_CHILD_RUN_MAC_FLAG));
 
-  // auto index_max = Ite(is_cluster, BvConst(8, 16), BvConst(16, 16));
+  child_run_mac.SetValid(run_mac_flag == PE_CORE_VALID);
 
-  // for (auto i = BvConst(0, 16); i < index_max; i++) {
-  //   weights_addr_current_v = weights_addr_current_v + i*CORE_SCALAR;
-    
-  // }
+  // common states
+  auto state = child_pe_core.state(PEGetVarName(pe_idx, CORE_RUN_MAC_CHILD_STATE));
+  auto weight_base_v = child_pe_core.state(PEGetVarName(pe_idx, 
+                                            CORE_CHILD_RUN_MAC_WEIGHT_BASE_VECTOR));
+  auto input_base_v = child_pe_core.state(PEGetVarName(pe_idx,
+                                            CORE_CHILD_RUN_MAC_INPUT_BASE_VECTOR));
+  // transfering vector address into byte address
+  auto weight_base_b = (Concat(BvConst(0, TOP_ADDR_IN_WIDTH - weight_base_v.bit_width()),
+                                weight_base_v)) << 4;
+  auto input_base_b = (Concat(BvConst(0, TOP_ADDR_IN_WIDTH - input_base_v.bit_width()),
+                                input_base_v)) << 4;
 
+  // declare child states
+  for (auto i = 0; i < 16; i++) {
+    // declare states for holding weight vector values
+    child_run_mac.NewBvState(PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_WEIGHT_BYTE),
+                              PE_CORE_RUN_MAC_CHILD_WEIGHT_BYTE_BITWIDTH);
+    // declare states for holding input vector values
+    child_run_mac.NewBvState(PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_INPUT_BYTE),
+                              PE_CORE_RUN_MAC_CHILD_INPUT_BYTE_BITWIDTH);
+  }
+
+  {// instruction 0 ---- fetch data from the memory.
+
+  }
   
+
+
+    
 
   
 }

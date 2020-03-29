@@ -337,6 +337,31 @@ namespace ilang {
 #define CORE_OUTPUT_CNTR "core_output_counter"
 #define PE_CORE_OUTPUT_CNTR_BITWIDTH 8
 
+// core run mac child related states
+#define CORE_CHILD_RUN_MAC_FLAG "core_child_run_mac_flag"
+#define PE_CORE_CHILD_RUN_MAC_FLAG_BITWIDTH 1
+
+#define CORE_CHILD_RUN_MAC_CNTR "core_child_run_mac_cntr"
+#define PE_CORE_CHILD_RUN_MAC_CNTR_BITWIDTH 5
+
+#define CORE_CHILD_RUN_MAC_WEIGHT_BASE_VECTOR "core_child_run_mac_weight_base_vector"
+#define PE_CORE_CHILD_RUN_MAC_WEIGHT_BASE_VECTOR_BITWIDTH                               \
+  MEM_MNGR_FIRST_CONFIG_REG_BASE_WEIGHT_WIDTH
+
+#define CORE_CHILD_RUN_MAC_INPUT_BASE_VECTOR "core_child_run_mac_input_base_vector"
+#define PE_CORE_CHILD_RUN_MAC_INPUT_BASE_VECTOR_BITWIDTH                                \
+  MEM_MNGR_FIRST_CONFIG_REG_BASE_INPUT_WIDTH
+
+#define CORE_RUN_MAC_CHILD_STATE "core_run_mac_child_state"
+#define PE_CORE_RUN_MAC_CHILD_STATE_BITWIDTH 4
+#define PE_CORE_RUN_MAC_STATE_FETCH 0
+
+
+#define CORE_RUN_MAC_CHILD_WEIGHT_BYTE "core_run_mac_child_weight_byte"
+#define PE_CORE_RUN_MAC_CHILD_WEIGHT_BYTE_BITWIDTH 8
+#define CORE_RUN_MAC_CHILD_INPUT_BYTE "core_run_mac_child_input_byte"
+#define PE_CORE_RUN_MAC_CHILD_INPUT_BYTE_BITWIDTH 8
+
 }; // namespace ilang
 
 #endif // FLEX_PE_CORE_H__
