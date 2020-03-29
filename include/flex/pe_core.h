@@ -355,6 +355,7 @@ namespace ilang {
 #define CORE_RUN_MAC_CHILD_STATE "core_run_mac_child_state"
 #define PE_CORE_RUN_MAC_CHILD_STATE_BITWIDTH 4
 #define PE_CORE_RUN_MAC_STATE_FETCH 0
+#define PE_CORE_RUN_MAC_STATE_MUL 1
 
 
 #define CORE_RUN_MAC_CHILD_WEIGHT_BYTE "core_run_mac_child_weight_byte"

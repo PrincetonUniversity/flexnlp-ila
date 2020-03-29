@@ -233,6 +233,8 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     instr.SetUpdate(run_mac_state, run_mac_state_fetch);
 
     // Add child to do the run mac function
+    // weight: 16 x 16, input vector 16
+    // child do the MAC by 16 steps, do a weight vector and input vector multiplication each step.
     AddChild_PECoreRunMac(m, pe_idx);
   }
 }
@@ -282,8 +284,6 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
     instr.SetDecode(child_valid & state_fetch);
 
     std::vector<ExprRef> weight_vector_cluster;
-    std::vector<ExprRef> split_index_0;
-    std::vector<ExprRef> split_index_1;
     std::vector<ExprRef> weight_vector_not_cluster;
 
     for (auto i = 0; i < 16; i++) {
@@ -308,10 +308,21 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
       weight_vector_cluster.push_back(result);
     }
 
-
+    // update the weight data and input data
+    for (auto i = 0; i < 16; i++) {
+      instr.SetUpdate(child_run_mac.state(PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_WEIGHT_BYTE)),
+                      Ite(is_cluster, weight_vector_cluster[i], weight_vector_not_cluster[i]));
+      auto input_addr = input_base_b + run_mac_cntr * CORE_SCALAR + i;
+      instr.SetUpdate(child_run_mac.state(PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_INPUT_BYTE)),
+                      Load(input_buffer, input_addr));
+    }
     
+    auto next_state = BvConst(PE_CORE_RUN_MAC_STATE_MUL, PE_CORE_RUN_MAC_CHILD_STATE_BITWIDTH);
+    instr.SetUpdate(state, next_state);
+  }
 
-
+  {// instruction 1 ---- multiply the weight vector and input vector
+    
 
   }
   
