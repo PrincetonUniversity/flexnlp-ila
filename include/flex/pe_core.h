@@ -362,6 +362,9 @@ namespace ilang {
 #define CORE_RUN_MAC_CHILD_INPUT_BYTE "core_run_mac_child_input_byte"
 #define PE_CORE_RUN_MAC_CHILD_INPUT_BYTE_BITWIDTH 8
 
+#define CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY "cluster_table_first_Entry"
+#define CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY "cluster_table_second_Entry"
+
 }; // namespace ilang
 
 #endif // FLEX_PE_CORE_H__

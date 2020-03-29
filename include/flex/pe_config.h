@@ -60,4 +60,14 @@ inline std::string PEGetVarNameVector(const int& pe_idx, const int& v_idx,
   return "PE" + prefix + "_" + var_name + "_" + suffix;
 }
 
+inline std::string PEGetClusterData(const int& pe_idx, const int& byte_idx,
+                                    const std::string& var_name) {
+  ILA_ASSERT(pe_idx >= 0 && pe_idx < 4) << "Invalid PE index" << pe_idx;
+  ILA_ASSERT(byte_idx >= 0 && byte_idx < CORE_SCALAR) << "Invalid PE byte index" << byte_idx;
+  auto prefix = std::to_string(pe_idx);
+  auto suffix = std::to_string(byte_idx);
+  return "PE" + prefix + "_" + var_name + suffix;
+
+}
+
 #endif // FLEX_PE_CONFIG_H__

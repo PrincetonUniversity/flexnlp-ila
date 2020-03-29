@@ -37,6 +37,9 @@ namespace ilang {
 void SetUpdateForConfigWr(Ila& m, InstrRef& instr, const ExprRef& next,
                           const std::string& state_name);
 
+ExprRef FetchClusterLUT_First(Ila& m, const int& pe_idx, const ExprRef& index);
+ExprRef FetchClusterLUT_Second(Ila& m, const int& pe_idx, const ExprRef& index);
+
 }; // namespace ilang
 
 #endif // FLEX_UTIL_H__

@@ -25,6 +25,8 @@
 // File: pe_core.cc
 
 #include <flex/flex.h>
+#include <flex/util.h>
+
 #include <vector>
 
 namespace ilang {
@@ -240,20 +242,28 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
   auto child_pe_core = m.child(PEGetChildName(pe_idx, "CORE_CHILD"));
   auto child_run_mac = child_pe_core.NewChild(PEGetChildName(pe_idx, "CORE_RUN_MAC_CHILD"));
   auto run_mac_flag = child_pe_core.state(PEGetVarName(pe_idx, CORE_CHILD_RUN_MAC_FLAG));
+  auto run_mac_cntr = child_pe_core.state(PEGetVarName(pe_idx, CORE_CHILD_RUN_MAC_CNTR));
 
-  child_run_mac.SetValid(run_mac_flag == PE_CORE_VALID);
+  auto child_valid = ((run_mac_flag == PE_CORE_VALID) & (run_mac_cntr < 16));
+
+  child_run_mac.SetValid(child_valid);
 
   // common states
   auto state = child_pe_core.state(PEGetVarName(pe_idx, CORE_RUN_MAC_CHILD_STATE));
+  auto is_cluster = (m.state(PEGetVarName(pe_idx, RNN_LAYER_SIZING_CONFIG_REG_IS_CLUSTER)) == 1);
+
   auto weight_base_v = child_pe_core.state(PEGetVarName(pe_idx, 
                                             CORE_CHILD_RUN_MAC_WEIGHT_BASE_VECTOR));
   auto input_base_v = child_pe_core.state(PEGetVarName(pe_idx,
                                             CORE_CHILD_RUN_MAC_INPUT_BASE_VECTOR));
-  // transfering vector address into byte address
+  // transfering vector address into byte address, in 32 bits.
   auto weight_base_b = (Concat(BvConst(0, TOP_ADDR_IN_WIDTH - weight_base_v.bit_width()),
                                 weight_base_v)) << 4;
   auto input_base_b = (Concat(BvConst(0, TOP_ADDR_IN_WIDTH - input_base_v.bit_width()),
                                 input_base_v)) << 4;
+  auto weight_buffer = m.state(PEGetVarName(pe_idx, CORE_WEIGHT_BUFFER));
+  auto input_buffer = m.state(PEGetVarName(pe_idx, CORE_INPUT_BUFFER));
+
 
   // declare child states
   for (auto i = 0; i < 16; i++) {
@@ -266,6 +276,42 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
   }
 
   {// instruction 0 ---- fetch data from the memory.
+    auto instr = child_run_mac.NewInstr(PEGetInstrName(pe_idx, "CORE_RUN_MAC_FETCH"));
+    auto state_fetch = (state == PE_CORE_RUN_MAC_STATE_FETCH);
+
+    instr.SetDecode(child_valid & state_fetch);
+
+    std::vector<ExprRef> weight_vector_cluster;
+    std::vector<ExprRef> split_index_0;
+    std::vector<ExprRef> split_index_1;
+    std::vector<ExprRef> weight_vector_not_cluster;
+
+    for (auto i = 0; i < 16; i++) {
+      auto addr = weight_base_b + run_mac_cntr * CORE_SCALAR + i;
+      auto data = Load(weight_buffer, addr);
+      weight_vector_not_cluster.push_back(data);
+    }
+
+    for (auto i = 0; i < 16; i++) {
+      auto addr = weight_base_b 
+                  + (run_mac_cntr / BvConst(2, run_mac_cntr.bit_width())) * CORE_SCALAR + i;
+      auto data = Load(weight_buffer, addr);
+      // get the index after splitting the data for clustered mode.
+      auto ind = Ite(URem(run_mac_cntr, BvConst(2, run_mac_cntr.bit_width())) == 0,
+                     Extract(data, 3, 0), Extract(data, 7, 4));
+                     
+      // get the cluster lut result
+      auto mgnr_cntr = child_pe_core.state(PEGetVarName(pe_idx, CORE_MNGR_CNTR));
+      auto result = Ite(mgnr_cntr == 0,
+                        FetchClusterLUT_First(m, pe_idx, ind),
+                        FetchClusterLUT_Second(m, pe_idx, ind));
+      weight_vector_cluster.push_back(result);
+    }
+
+
+    
+
+
 
   }
   

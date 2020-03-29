@@ -25,6 +25,7 @@
 // File: util.cc
 
 #include <flex/util.h>
+#include <flex/pe_config.h>
 
 #include <ilang/ilang++.h>
 #include <ilang/util/log.h>
@@ -47,4 +48,47 @@ void SetUpdateForConfigWr(Ila& m, InstrRef& instr, const ExprRef& next,
   }
 }
 
+ExprRef FetchClusterLUT_First(Ila& m, const int& pe_idx, const ExprRef& index) {
+  auto result = 
+    Ite(index == 0, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY0)),
+      Ite(index == 1, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY1)),
+      Ite(index == 2, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY2)), 
+      Ite(index == 3, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY3)),
+      Ite(index == 4, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY4)),
+      Ite(index == 5, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY5)),
+      Ite(index == 6, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY6)),
+      Ite(index == 7, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY7)),
+      Ite(index == 8, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY8)),
+      Ite(index == 9, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY9)),
+      Ite(index == 10, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY10)), 
+      Ite(index == 11, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY11)),
+      Ite(index == 12, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY12)),
+      Ite(index == 13, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY13)),
+      Ite(index == 14, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY14)),
+                       m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY15))
+                       )))))))))))))));
+  return result;
+}
+
+ExprRef FetchClusterLUT_Second(Ila& m, const int& pe_idx, const ExprRef& index) {
+  auto result = 
+    Ite(index == 0, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY0)),
+      Ite(index == 1, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY1)),
+      Ite(index == 2, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY2)), 
+      Ite(index == 3, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY3)),
+      Ite(index == 4, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY4)),
+      Ite(index == 5, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY5)),
+      Ite(index == 6, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY6)),
+      Ite(index == 7, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY7)),
+      Ite(index == 8, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY8)),
+      Ite(index == 9, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY9)),
+      Ite(index == 10, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY10)), 
+      Ite(index == 11, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY11)),
+      Ite(index == 12, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY12)),
+      Ite(index == 13, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY13)),
+      Ite(index == 14, m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY14)),
+                       m.state(PEGetVarName(pe_idx, CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY15))
+                       )))))))))))))));
+  return result;
+}
 }; // namespace ilang
