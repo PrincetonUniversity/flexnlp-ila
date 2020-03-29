@@ -310,12 +310,32 @@ namespace ilang {
 #define PE_CORE_STATE_BIAS 3
 #define PE_CORE_STATE_OUT 4
 
-
+// // is start register
+// #define CORE_IS_START "core_is_start"
+// #define PE_CORE_IS_START_BITWIDTH 1
+// core manager counter
 #define CORE_MNGR_CNTR "core_manager_cntr"
 #define PE_CORE_MNGR_CNTR_BITWIDTH 1
 #define PE_CORE_MNGR_0 0
 #define PE_CORE_MNGR_1 1
 
+// core accumulator register
+#define CORE_ACCUM_VECTOR "core_accum_vector"
+#define PE_CORE_ACCUM_VECTOR_BITWIDTH 32
+#define PE_CORE_ACCUM_VECTOR_LANES CORE_SCALAR
+
+// core activation vector type
+#define CORE_ACT_VECOTR "core_act_vector"
+#define PE_CORE_ACT_VECTOR_BITWIDTH 20
+#define PE_CORE_ACT_VECTOR_LANES CORE_SCALAR
+
+// core input counter
+#define CORE_INPUT_CNTR "core_input_counter"
+#define PE_CORE_INPUT_CNTR_BITWIDTH 8
+
+// core output counter
+#define CORE_OUTPUT_CNTR "core_output_counter"
+#define PE_CORE_OUTPUT_CNTR_BITWIDTH 8
 
 }; // namespace ilang
 

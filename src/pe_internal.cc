@@ -38,6 +38,7 @@ void DefinePEInternalStates(Ila& m) {
 
 void DefinePEInternalStates(Ila& m, const int& pe_idx) {
   // Define PE own internal states here
+  
 }
 
 }; // namespace ilang

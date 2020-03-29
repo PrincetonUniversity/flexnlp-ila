@@ -51,4 +51,13 @@ inline std::string PEGetChildName(const int& idx,
   return "PE" + prefix + "_" + child_name;
 }
 
+inline std::string PEGetVarNameVector(const int& pe_idx, const int& v_idx,
+                                      const std::string& var_name) {
+  ILA_ASSERT(pe_idx >= 0 && pe_idx < 4) << "Invalid PE index" << pe_idx;
+  ILA_ASSERT(v_idx >= 0 && v_idx < CORE_SCALAR) << "Invalid PE vector index" << v_idx;
+  auto prefix = std::to_string(pe_idx);
+  auto suffix = std::to_string(v_idx);
+  return "PE" + prefix + "_" + var_name + "_" + suffix;
+}
+
 #endif // FLEX_PE_CONFIG_H__
