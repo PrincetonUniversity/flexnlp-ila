@@ -39,7 +39,6 @@ void SetUpdateForConfigWr(Ila& m, InstrRef& instr, const ExprRef& next,
 
 ExprRef FetchClusterLUT_First(Ila& m, const int& pe_idx, const ExprRef& index);
 ExprRef FetchClusterLUT_Second(Ila& m, const int& pe_idx, const ExprRef& index);
-
 }; // namespace ilang
 
 #endif // FLEX_UTIL_H__

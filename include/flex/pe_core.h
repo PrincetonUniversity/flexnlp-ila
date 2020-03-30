@@ -366,6 +366,11 @@ namespace ilang {
 #define CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY "cluster_table_first_Entry"
 #define CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY "cluster_table_second_Entry"
 
+#define CORE_RUN_BIAS_CHILD_FLAG "core_child_run_bias_flag"
+#define PE_CORE_RUN_BIAS_CHILD_FLAG_BITWIDTH 1
+#define CORE_RUN_BIAS_CHILD_CNTR "core_run_bias_child_cntr"
+#define PE_CORE_RUN_BIAS_CHILD_CNTR_BITWIDTH 5
+
 }; // namespace ilang
 
 #endif // FLEX_PE_CORE_H__

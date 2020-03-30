@@ -34,6 +34,11 @@ namespace ilang {
 void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base);
 void AddChild_PECoreRunMac(Ila& m, const int& pe_idx);
 
+// helper function
+ExprRef to_adpflow(ExprRef& in);
+ExprRef adpflow_mul(ExprRef& in_0, ExprRef& in_1);
+
+
 void DefinePECore(Ila& m, const int& pe_idx, const uint64_t& base) {
 
 // PE Core instructions are not visible at the top interface, we need to use child model to implement PE core
@@ -52,7 +57,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
   auto mngr_cntr = child.NewBvState(PEGetVarName(pe_idx, CORE_MNGR_CNTR), PE_CORE_MNGR_CNTR_BITWIDTH);
   auto input_cntr = child.NewBvState(PEGetVarName(pe_idx, CORE_INPUT_CNTR), PE_CORE_INPUT_CNTR_BITWIDTH);
   auto output_cntr = child.NewBvState(PEGetVarName(pe_idx, CORE_OUTPUT_CNTR), PE_CORE_OUTPUT_CNTR_BITWIDTH);
-  
+  // states for run mac child 
   auto run_mac_flag = child.NewBvState(PEGetVarName(pe_idx, CORE_CHILD_RUN_MAC_FLAG),
                                         PE_CORE_CHILD_RUN_MAC_FLAG_BITWIDTH);
   auto run_mac_cntr = child.NewBvState(PEGetVarName(pe_idx, CORE_CHILD_RUN_MAC_CNTR),
@@ -63,7 +68,12 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
                                         PE_CORE_CHILD_RUN_MAC_WEIGHT_BASE_VECTOR_BITWIDTH);
   auto input_base_v = child.NewBvState(PEGetVarName(pe_idx, CORE_CHILD_RUN_MAC_INPUT_BASE_VECTOR),
                                         PE_CORE_CHILD_RUN_MAC_INPUT_BASE_VECTOR_BITWIDTH);
-  
+  // states for run bias child
+  auto run_bias_flag = child.NewBvState(PEGetVarName(pe_idx, CORE_RUN_BIAS_CHILD_FLAG),
+                                        PE_CORE_RUN_BIAS_CHILD_FLAG_BITWIDTH);
+  auto run_bias_cntr = child.NewBvState(PEGetVarName(pe_idx, CORE_RUN_BIAS_CHILD_CNTR),
+                                        PE_CORE_RUN_BIAS_CHILD_CNTR_BITWIDTH);
+
   // common states used in this child instructions
   auto state = m.state(PEGetVarName(pe_idx, CORE_STATE));
 
@@ -237,6 +247,18 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     // child do the MAC by 16 steps, do a weight vector and input vector multiplication each step.
     AddChild_PECoreRunMac(m, pe_idx);
   }
+
+  { // instruction 5 ---- BIAS state
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "CORE_STATE_BIAS"));
+
+    auto pe_start_valid = (m.state(GB_CONTROL_CHILD_STATE_PE_START) == PE_CORE_VALID);
+    auto is_start = pe_config_is_valid & pe_start_valid;
+    auto state_bias = (state == PE_CORE_STATE_BIAS);
+    auto run_bias_invalid = (run_bias_flag == PE_CORE_INVALID);
+
+  }
+
+
 }
 
 void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
@@ -244,7 +266,7 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
   auto child_pe_core = m.child(PEGetChildName(pe_idx, "CORE_CHILD"));
   auto child_run_mac = child_pe_core.NewChild(PEGetChildName(pe_idx, "CORE_RUN_MAC_CHILD"));
   auto run_mac_flag = child_pe_core.state(PEGetVarName(pe_idx, CORE_CHILD_RUN_MAC_FLAG));
-  auto run_mac_cntr = child_pe_core.state(PEGetVarName(pe_idx, CORE_CHILD_RUN_MAC_CNTR));
+  auto run_mac_cntr = child_pe_core.state(PEGetVarName(pe_idx, CORE_CHILD_RUN_MAC_CNTR)); // check cntr_bitwidth > 4 !!
 
   auto child_valid = ((run_mac_flag == PE_CORE_VALID) & (run_mac_cntr < 16));
 
@@ -286,12 +308,16 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
     std::vector<ExprRef> weight_vector_cluster;
     std::vector<ExprRef> weight_vector_not_cluster;
 
+    weight_vector_cluster.clear();
+    weight_vector_not_cluster.clear();
+
+    // fetch the non-clustered weigth values.
     for (auto i = 0; i < 16; i++) {
       auto addr = weight_base_b + run_mac_cntr * CORE_SCALAR + i;
       auto data = Load(weight_buffer, addr);
       weight_vector_not_cluster.push_back(data);
     }
-
+    // fetch the clustered weight values
     for (auto i = 0; i < 16; i++) {
       auto addr = weight_base_b 
                   + (run_mac_cntr / BvConst(2, run_mac_cntr.bit_width())) * CORE_SCALAR + i;
@@ -322,15 +348,44 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
   }
 
   {// instruction 1 ---- multiply the weight vector and input vector
+    auto instr = child_run_mac.NewInstr(PEGetInstrName(pe_idx, "CORE_RUN_MAC_MULTIPLY"));
+    auto state_mul = (state == PE_CORE_RUN_MAC_STATE_MUL);
+
+    instr.SetDecode(child_valid & state_mul);
+
+    std::vector<ExprRef> weight_vector_adpflow;
+    std::vector<ExprRef> input_vector_adpflow;
+
+    weight_vector_adpflow.clear();
+    input_vector_adpflow.clear();
+
+    auto accum = BvConst(0, PE_CORE_ACCUM_VECTOR_BITWIDTH);
+
+    // translate the data into adaptive flow format
+    for (auto i = 0; i < CORE_SCALAR; i++) {
+      auto weight_byte = child_run_mac.state(PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_WEIGHT_BYTE));
+      auto input_byte = child_run_mac.state(PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_INPUT_BYTE));
+      // TODO: implement the adaptiveflow translation function
+      auto input_byte_adpflow = to_adpflow(weight_byte);
+      auto weight_byte_adpflow = to_adpflow(input_byte);
+
+      // TODO: implement the multiplication function here
+      auto result = adpflow_mul(weight_byte_adpflow, input_byte_adpflow);
+      accum = accum + result;
+    }
+
+    // update the corresponding accummulated values in the accum array.
+    for (auto i = 0; i < 16; i++) {
+      auto tmp = child_pe_core.state(PEGetVarNameVector(pe_idx, i, CORE_ACCUM_VECTOR));
+      instr.SetUpdate(tmp, Ite(run_mac_cntr == i, tmp + accum, tmp));
+    }
+
+    auto next_state = BvConst(PE_CORE_RUN_MAC_STATE_FETCH, PE_CORE_RUN_MAC_CHILD_STATE_BITWIDTH);
     
-
-  }
-  
-
-
-    
-
-  
+    // update the control parameters
+    instr.SetUpdate(state, next_state);
+    instr.SetUpdate(run_mac_cntr, run_mac_cntr + 1);
+  }  
 }
 
 
