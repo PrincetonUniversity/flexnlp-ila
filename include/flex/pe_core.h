@@ -360,6 +360,12 @@ namespace ilang {
 #define PE_CORE_RUN_MAC_STATE_FETCH 0
 #define PE_CORE_RUN_MAC_STATE_MUL 1
 
+// adaptive flow format parameter
+#define ADPTFLOW_WIDTH 8
+#define ADPTFLOW_EXP_WIDTH 3
+#define ADPTFLOW_MAN_WIDTH (ADPTFLOW_WIDTH - ADPTFLOW_EXP_WIDTH - 1)
+#define ADPTFLOW_SIGN_BIT_IDX (ADPTFLOW_WIDTH - 1)
+
 
 #define CORE_RUN_MAC_CHILD_WEIGHT_BYTE "core_run_mac_child_weight_byte"
 #define PE_CORE_RUN_MAC_CHILD_WEIGHT_BYTE_BITWIDTH 8

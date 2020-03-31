@@ -311,7 +311,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
                           BvConst(PE_CORE_STATE_PRE, PE_CORE_STATE_BITWIDTH));
     // TODO: set is_start to false
     instr.SetUpdate(is_start_reg, BvConst(PE_CORE_INVALID, PE_CORE_IS_START_BITWIDTH));
-    
+
     instr.SetUpdate(mngr_cntr, mngr_cntr_next);
     instr.SetUpdate(output_cntr, output_cntr_next);
     instr.SetUpdate(is_zero_first, is_zero_first_next);
@@ -321,8 +321,11 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
 
 }
 
+// *************************************************************//
+// ************ child model : PECoreRunMac *********************//
+// *************************************************************//
+
 void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
-  // TODO: implement the matrix multiplication here.
   auto child_pe_core = m.child(PEGetChildName(pe_idx, "CORE_CHILD"));
   auto child_run_mac = child_pe_core.NewChild(PEGetChildName(pe_idx, "CORE_RUN_MAC_CHILD"));
   auto run_mac_flag = child_pe_core.state(PEGetVarName(pe_idx, CORE_CHILD_RUN_MAC_FLAG));
@@ -426,6 +429,7 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
       auto weight_byte = child_run_mac.state(PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_WEIGHT_BYTE));
       auto input_byte = child_run_mac.state(PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_INPUT_BYTE));
       // TODO: implement the adaptiveflow translation function
+      // the input is already adaptive flow format?
       auto input_byte_adpflow = to_adpflow(weight_byte);
       auto weight_byte_adpflow = to_adpflow(input_byte);
 
@@ -448,5 +452,60 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
   }  
 }
 
+//////////////////////////////////////////
+//        Helper function for PERunMac
+//////////////////////////////////////////
+// it seems that the data given is already in adaptiveflow format
+ExprRef to_adpflow(ExprRef& in) {
+  return in;
+}
+// adaptive flow mul function
+ExprRef adpflow_mul(ExprRef& in_0, ExprRef& in_1) {
+  auto is_zero_0 = (Extract(in_0, ADPTFLOW_SIGN_BIT_IDX - 1, 0) == 0);
+  auto is_zero_1 = (Extract(in_1, ADPTFLOW_SIGN_BIT_IDX - 1, 0) == 0);
+
+  auto sign_0 = SelectBit(in_0, ADPTFLOW_SIGN_BIT_IDX);
+  auto sign_1 = SelectBit(in_1, ADPTFLOW_SIGN_BIT_IDX);
+  auto exp_0 = Extract(in_0, ADPTFLOW_WIDTH - 2, ADPTFLOW_WIDTH - 5);
+  auto exp_1 = Extract(in_1, ADPTFLOW_WIDTH - 2, ADPTFLOW_WIDTH - 5);
+  auto man_0 = Extract(in_0, ADPTFLOW_MAN_WIDTH - 1, 0);
+  auto man_1 = Extract(in_1, ADPTFLOW_MAN_WIDTH - 1, 0);
+
+  auto exp_sum = Concat(BvConst(0,1), exp_0) + Concat(BvConst(0,1), exp_1);
+  auto in_0_temp = Ite(is_zero_0, Concat(BvConst(0,1), man_0),
+                                  Concat(BvConst(1,1), man_0));
+  auto in_1_temp = Ite(is_zero_1, Concat(BvConst(0,1), man_1),
+                                  Concat(BvConst(1,1), man_1));
+  in_0_temp = Concat(BvConst(0, in_0_temp.bit_width() + 1), in_0_temp);
+  in_1_temp = Concat(BvConst(0, in_1_temp.bit_width() + 1), in_1_temp);
+  auto man_mul = in_0_temp * in_1_temp;
+  // TODO: check if the ilang bitvector negation "-" is the same as the flexnlp
+  man_mul = Ite(sign_0 ^ sign_1, -man_mul, man_mul);
+
+  auto output_tmp = Concat(BvConst(0, PE_CORE_ACCUM_VECTOR_BITWIDTH - man_mul.bit_width()), man_mul);
+  auto result = output_tmp << exp_sum;
+  
+  return result;
+}
+
+// *************************************************************//
+// **************** child model: PECoreRunBias *****************//
+// *************************************************************//
+
+void AddChild_PECoreRunBias(Ila& m, const int& pe_idx) {
+  auto child_pe_core = m.child(PEGetChildName(pe_idx, "CORE_CHILD"));
+  auto child_run_bias = child_pe_core.NewChild(PEGetChildName(pe_idx, "CORE_RUN_BIAS_CHILD"));
+  auto run_bias_flag = child_pe_core.state(PEGetVarName(pe_idx, CORE_RUN_BIAS_CHILD_FLAG));
+  auto run_bias_cntr = child_pe_core.state(PEGetVarName(pe_idx, CORE_RUN_BIAS_CHILD_CNTR));
+
+  child_run_bias.SetValid(run_bias_flag & (run_bias_cntr < 16));
+
+
+
+
+
+  
+
+}
 
 }; // namespace ilang
