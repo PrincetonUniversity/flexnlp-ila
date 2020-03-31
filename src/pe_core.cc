@@ -33,6 +33,7 @@ namespace ilang {
 
 void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base);
 void AddChild_PECoreRunMac(Ila& m, const int& pe_idx);
+void AddChild_PECoreRunBias(Ila& m, const int& pe_idx);
 
 // helper function
 ExprRef to_adpflow(ExprRef& in);
@@ -54,6 +55,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
   child.SetValid(pe_config_is_valid);
   
   // declare new child states
+  auto is_start_reg = child.NewBvState(PEGetVarName(pe_idx, CORE_IS_START), PE_CORE_IS_START_BITWIDTH);
   auto mngr_cntr = child.NewBvState(PEGetVarName(pe_idx, CORE_MNGR_CNTR), PE_CORE_MNGR_CNTR_BITWIDTH);
   auto input_cntr = child.NewBvState(PEGetVarName(pe_idx, CORE_INPUT_CNTR), PE_CORE_INPUT_CNTR_BITWIDTH);
   auto output_cntr = child.NewBvState(PEGetVarName(pe_idx, CORE_OUTPUT_CNTR), PE_CORE_OUTPUT_CNTR_BITWIDTH);
@@ -87,6 +89,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
   }
 
   // add initial condition
+  child.AddInit(is_start_reg == PE_CORE_INVALID);
   child.AddInit(mngr_cntr == PE_CORE_MNGR_0);
   child.AddInit(input_cntr == 0);
   child.AddInit(output_cntr == 0);
@@ -95,7 +98,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
   { // instructions 0 ---- read the data from GB
     auto instr = child.NewInstr(PEGetInstrName(pe_idx, "CORE_READ_GB_0"));
   
-    auto pe_not_start = (m.state(PE_START_SIGNAL_SHARED) == PE_CORE_INVALID);
+    auto pe_not_start = (is_start_reg == PE_CORE_INVALID);
     auto gb_data_valid = (m.state(GB_CONTROL_DATA_OUT_VALID) == PE_CORE_VALID);
 
     auto cntr_valid = (m.state(PE_CNTR) == pe_idx);
@@ -151,22 +154,34 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     // the last piece of data.
     auto instr = child.NewInstr(PEGetInstrName(pe_idx, "CORE_IS_START_PREP"));
 
-    auto pe_start_valid = (m.state(GB_CONTROL_CHILD_STATE_PE_START) == PE_CORE_VALID);
+    auto pe_start_valid = (m.state(PE_START_SIGNAL_SHARED) == PE_CORE_VALID);
     auto state_idle = (state == PE_CORE_STATE_IDLE);
     auto is_start = pe_config_is_valid & pe_start_valid;
+    // this instruction access the shared states, thus needs scheduling
+    auto cntr_valid = (m.state(PE_CNTR) == pe_idx);
     // only need the pe_start_valid here because the d
-    instr.SetDecode(is_start & state_idle);
+    instr.SetDecode(is_start & state_idle & cntr_valid);
 
     auto next_state = BvConst(PE_CORE_STATE_PRE, PE_CORE_STATE_BITWIDTH);
+    auto all_pe_cond = BoolConst(pe_idx >= 3);
+    auto pe_cntr_next = Ite(all_pe_cond, BvConst(0, PE_CNTR_BIWTDTH),
+                                         BvConst(pe_idx + 1, PE_CNTR_BIWTDTH));
+    auto pe_start_next = Ite(all_pe_cond, BvConst(PE_CORE_INVALID, PE_START_SIGNAL_SHARED_BITWIDTH),
+                                          m.state(PE_START_SIGNAL_SHARED));
 
     instr.SetUpdate(state, next_state);
+    // set the is_start_reg to be valid, and set the shared start state to be invalid,
+    // immitate the behavior of the pop operation
+    // NEED TO BE CAREFUL ABOUT THE 4 PE CORES ACCESSES TO THE SHARED STATES!!!!!
+    instr.SetUpdate(is_start_reg, BvConst(PE_CORE_VALID, PE_CORE_IS_START_BITWIDTH));
+    instr.SetUpdate(m.state(PE_CNTR), pe_cntr_next);
+    instr.SetUpdate(m.state(PE_START_SIGNAL_SHARED), pe_start_next);
   }
 
   { // instruction 3 ---- select next state
     auto instr = child.NewInstr(PEGetInstrName(pe_idx, "CORE_STATE_PRE"));
 
-    auto pe_start_valid = (m.state(GB_CONTROL_CHILD_STATE_PE_START) == PE_CORE_VALID);
-    auto is_start = pe_config_is_valid & pe_start_valid;
+    auto is_start = pe_config_is_valid & is_start_reg;
     auto state_pre = (state == PE_CORE_STATE_PRE);
 
     instr.SetDecode(is_start & state_pre);
@@ -199,8 +214,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
   { // instruction 4 ---- MAC state
     auto instr = child.NewInstr(PEGetInstrName(pe_idx, "CORE_STATE_MAC"));
     
-    auto pe_start_valid = (m.state(GB_CONTROL_CHILD_STATE_PE_START) == PE_CORE_VALID);
-    auto is_start = pe_config_is_valid & pe_start_valid;
+    auto is_start = pe_config_is_valid & is_start_reg;
     auto state_mac = (state == PE_CORE_STATE_MAC);
     auto run_mac_invalid = (run_mac_flag == PE_CORE_INVALID);
 
@@ -251,11 +265,57 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
   { // instruction 5 ---- BIAS state
     auto instr = child.NewInstr(PEGetInstrName(pe_idx, "CORE_STATE_BIAS"));
 
-    auto pe_start_valid = (m.state(GB_CONTROL_CHILD_STATE_PE_START) == PE_CORE_VALID);
-    auto is_start = pe_config_is_valid & pe_start_valid;
+    auto is_start = pe_config_is_valid & is_start_reg;
     auto state_bias = (state == PE_CORE_STATE_BIAS);
     auto run_bias_invalid = (run_bias_flag == PE_CORE_INVALID);
 
+    instr.SetDecode(is_start & state_bias & run_bias_invalid);
+
+    // set parameters for run bias child
+    instr.SetUpdate(run_bias_cntr, BvConst(0, PE_CORE_RUN_BIAS_CHILD_CNTR_BITWIDTH));
+    instr.SetUpdate(run_bias_flag, BvConst(PE_CORE_VALID, PE_CORE_RUN_BIAS_CHILD_FLAG_BITWIDTH));
+    instr.SetUpdate(state, BvConst(PE_CORE_STATE_OUT, PE_CORE_STATE_BITWIDTH));
+
+    // Add child to do Run Bias
+    AddChild_PECoreRunBias(m, pe_idx);
+
+  }
+
+  { // instruction 6 ---- OUT state
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "CORE_STATE_OUT"));
+
+    auto is_start = pe_config_is_valid & is_start_reg;
+    auto state_out = (state == PE_CORE_STATE_OUT);
+    auto run_bias_invalid = (run_bias_flag == PE_CORE_INVALID);
+
+    instr.SetDecode(is_start & state_out & run_bias_invalid);
+
+    auto num_mngr = m.state(PEGetVarName(pe_idx, RNN_LAYER_SIZING_CONFIG_REG_NUM_MANAGER));
+    auto num_output = m.state(PEGetVarName(pe_idx, RNN_LAYER_SIZING_CONFIG_REG_NUM_OUTPUT));
+    auto last_mngr = (mngr_cntr == (num_mngr - 1));
+    auto last_output = (input_cntr == (num_output - 1));
+    auto is_output_end = last_mngr & last_output;
+
+    auto is_zero_first = m.state(PEGetVarName(pe_idx, RNN_LAYER_SIZING_CONFIG_REG_IS_ZERO_FIRST));
+
+    auto mngr_cntr_next = Ite(last_mngr, BvConst(0, PE_CORE_MNGR_CNTR_BITWIDTH), mngr_cntr + 1);
+    auto output_cntr_next = Ite(last_mngr & last_output,
+                                BvConst(0, PE_CORE_OUTPUT_CNTR_BITWIDTH),
+                                Ite(last_mngr & ~last_output, output_cntr + 1, output_cntr));
+    auto is_zero_first_next = Ite(last_mngr & last_output, 
+                                  BvConst(0, RNN_LAYER_SIZING_CONFIG_REG_IS_ZERO_FIRST_WIDTH),
+                                  is_zero_first);
+    
+    auto next_state = Ite(is_output_end, 
+                          BvConst(PE_CORE_STATE_IDLE, PE_CORE_STATE_BITWIDTH),
+                          BvConst(PE_CORE_STATE_PRE, PE_CORE_STATE_BITWIDTH));
+    // TODO: set is_start to false
+    instr.SetUpdate(is_start_reg, BvConst(PE_CORE_INVALID, PE_CORE_IS_START_BITWIDTH));
+    
+    instr.SetUpdate(mngr_cntr, mngr_cntr_next);
+    instr.SetUpdate(output_cntr, output_cntr_next);
+    instr.SetUpdate(is_zero_first, is_zero_first_next);
+    instr.SetUpdate(state, next_state);
   }
 
 
