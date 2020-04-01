@@ -48,7 +48,6 @@ void DefineStartGBControl(Ila& m) {
   instr.SetUpdate(child_state,
                     BvConst(GB_CONTROL_CHILD_STATE_PREP, GB_CONTROL_CHILD_STATE_BITWIDTH));
 
-  ILA_INFO << "before calling child";
   AddChild_GB_Control(m);
 
 }
