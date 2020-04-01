@@ -138,7 +138,6 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto all_pe_cond = BoolConst(pe_idx >= 3);
     auto pe_cntr_next = Ite(all_pe_cond, BvConst(0, PE_CNTR_BIWTDTH),
                                          BvConst(pe_idx + 1, PE_CNTR_BIWTDTH));
-
     instr.SetUpdate(m.state(PE_CNTR), pe_cntr_next);    
     instr.SetUpdate(m.state(GB_CONTROL_DATA_OUT_VALID), 
                       BvConst(PE_CORE_INVALID, GB_CONTROL_DATA_OUT_VALID_BITWIDTH));
@@ -172,6 +171,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     instr.SetUpdate(is_start_reg, BvConst(PE_CORE_VALID, PE_CORE_IS_START_BITWIDTH));
     instr.SetUpdate(m.state(PE_CNTR), pe_cntr_next);
     instr.SetUpdate(m.state(PE_START_SIGNAL_SHARED), pe_start_next);
+
   }
 
   { // instruction 3 ---- select next state
@@ -238,10 +238,14 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
                                 m.state(PEGetVarName(pe_idx, MEM_MNGR_FIRST_CONFIG_REG_BASE_INPUT)),
                                 m.state(PEGetVarName(pe_idx, MEM_MNGR_SECOND_CONFIG_REG_BASE_INPUT)));
 
+    auto num_input_16 = Concat(BvConst(0, 16 - num_input.bit_width()), num_input);
+    auto input_cntr_16 = Concat(BvConst(0, 16 - input_cntr.bit_width()), input_cntr);
+    auto output_cntr_16 = Concat(BvConst(0, 16 - output_cntr.bit_width()), output_cntr);
+
     auto weight_base_v_next = Ite(is_cluster == 1,
-                              (output_cntr*num_input + input_cntr)*8 + config_base_weight,
-                              (output_cntr*num_input + input_cntr)*16 + config_base_weight);
-    auto input_base_v_next = input_cntr + config_base_input;
+                              (output_cntr_16*num_input_16 + input_cntr_16)*8 + config_base_weight,
+                              (output_cntr_16*num_input_16 + input_cntr_16)*16 + config_base_weight);
+    auto input_base_v_next = input_cntr_16 + config_base_input;
 
     auto run_mac_state_fetch = BvConst(PE_CORE_RUN_MAC_STATE_FETCH,
                                         PE_CORE_RUN_MAC_CHILD_STATE_BITWIDTH);
@@ -272,11 +276,20 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
                                       m.state(PEGetVarName(pe_idx, MEM_MNGR_SECOND_CONFIG_REG_ADPFLOAT_BIAS_W)));
     auto bias_i = Ite(mngr_cntr == 0, m.state(PEGetVarName(pe_idx, MEM_MNGR_FIRST_CONFIG_REG_ADPFLOAT_BIAS_I)),
                                       m.state(PEGetVarName(pe_idx, MEM_MNGR_SECOND_CONFIG_REG_ADPFLOAT_BIAS_I)));
-    auto right_shift = - bias_w - bias_i - 2*ADPTFLOW_OFFSET + 2*ADPTFLOW_MAN_WIDTH - ACT_NUM_FRAC;
+
+    auto bias_w_32 = Concat(BvConst(0, 32 - bias_w.bit_width()), bias_w);
+    auto bias_i_32 = Concat(BvConst(0, 32 - bias_i.bit_width()), bias_i);
+    // FIXME: BvConst cannot set negative number..
+    auto right_shift = BvConst(ADPTFLOW_MAN_WIDTH, 32) * 2 + BvConst(ADPTFLOW_OFFSET_NEG, 32) * 2
+                        - BvConst(ACT_NUM_FRAC, 32) - bias_w_32 - bias_i_32;
 
     auto base_bias = Ite(mngr_cntr == 0, m.state(PEGetVarName(pe_idx, MEM_MNGR_FIRST_CONFIG_REG_BASE_BIAS)),
                                       m.state(PEGetVarName(pe_idx, MEM_MNGR_SECOND_CONFIG_REG_BASE_BIAS)));
-    auto bias_addr_base = (base_bias + output_cntr) << 4; // turn the address into byte unit
+    // extend the address to 32 bits
+    auto base_bias_32 = Concat(BvConst(0, 32-base_bias.bit_width()), base_bias);
+    auto output_cntr_32 = Concat(BvConst(0, 32 - output_cntr.bit_width()), output_cntr);
+    auto bias_addr_base = (base_bias_32 + output_cntr_32) << 4; // turn the address into byte unit
+
     auto input_mem = m.state(PEGetVarName(pe_idx, CORE_INPUT_BUFFER));
     
     auto adpfloat_bias_bias = Ite(mngr_cntr == 0,
@@ -291,10 +304,11 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
       // TODO: implement function GetBiasTmp(bias)
       auto bias_tmp = GetBiasTmp(bias, adpfloat_bias_bias);
 
-      tmp = Ite(is_bias, tmp + bias_tmp, tmp);
+      tmp = Ite(is_bias == 1, tmp + bias_tmp, tmp);
       // overflow checking and cutting
+      // TODO: have to implement negative BvConst?
       tmp = Ite(tmp > ACT_WORD_MAX, BvConst(ACT_WORD_MAX, tmp.bit_width()), tmp);
-      tmp = Ite(tmp < ACT_WORD_MIN, BvConst(ACT_WORD_MIN, tmp.bit_width()), tmp);
+      // tmp = Ite(tmp < ACT_WORD_MIN, BvConst(ACT_WORD_MIN, tmp.bit_width()), tmp);
       
       auto act_reg = Extract(tmp, PE_CORE_ACT_VECTOR_BITWIDTH - 1, 0);
       auto act_vector = m.state(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECOTR));
@@ -315,7 +329,8 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
 
     auto num_mngr = m.state(PEGetVarName(pe_idx, RNN_LAYER_SIZING_CONFIG_REG_NUM_MANAGER));
     auto num_output = m.state(PEGetVarName(pe_idx, RNN_LAYER_SIZING_CONFIG_REG_NUM_OUTPUT));
-    auto last_mngr = (mngr_cntr == (num_mngr - 1));
+    auto mngr_cntr_4 = Concat(BvConst(0, 4-mngr_cntr.bit_width()), mngr_cntr);
+    auto last_mngr = (mngr_cntr_4 == (num_mngr - 1));
     auto last_output = (input_cntr == (num_output - 1));
     auto is_output_end = last_mngr & last_output;
 
@@ -324,11 +339,11 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto mngr_cntr_next = Ite(last_mngr, BvConst(0, PE_CORE_MNGR_CNTR_BITWIDTH), mngr_cntr + 1);
     auto output_cntr_next = Ite(last_mngr & last_output,
                                 BvConst(0, PE_CORE_OUTPUT_CNTR_BITWIDTH),
-                                Ite(last_mngr & ~last_output, output_cntr + 1, output_cntr));
+                                Ite(last_mngr & !last_output, output_cntr + 1, output_cntr));
     auto is_zero_first_next = Ite(last_mngr & last_output, 
                                   BvConst(0, RNN_LAYER_SIZING_CONFIG_REG_IS_ZERO_FIRST_WIDTH),
                                   is_zero_first);
-    
+
     auto next_state = Ite(is_output_end, 
                           BvConst(PE_CORE_STATE_IDLE, PE_CORE_STATE_BITWIDTH),
                           BvConst(PE_CORE_STATE_PRE, PE_CORE_STATE_BITWIDTH));
@@ -399,14 +414,17 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
 
     // fetch the non-clustered weigth values.
     for (auto i = 0; i < 16; i++) {
-      auto addr = weight_base_b + run_mac_cntr * CORE_SCALAR + i;
+      auto addr_offset = run_mac_cntr * CORE_SCALAR + i;
+      auto addr = weight_base_b + 
+            Concat(BvConst(0, weight_base_b.bit_width() - addr_offset.bit_width()), addr_offset);
       auto data = Load(weight_buffer, addr);
       weight_vector_not_cluster.push_back(data);
     }
     // fetch the clustered weight values
     for (auto i = 0; i < 16; i++) {
-      auto addr = weight_base_b 
-                  + (run_mac_cntr / BvConst(2, run_mac_cntr.bit_width())) * CORE_SCALAR + i;
+      auto addr_offset = (run_mac_cntr / BvConst(2, run_mac_cntr.bit_width())) * CORE_SCALAR + i;
+      auto addr = weight_base_b + 
+            Concat(BvConst(0, weight_base_b.bit_width() - addr_offset.bit_width()), addr_offset);
       auto data = Load(weight_buffer, addr);
       // get the index after splitting the data for clustered mode.
       auto ind = Ite(URem(run_mac_cntr, BvConst(2, run_mac_cntr.bit_width())) == 0,
@@ -424,7 +442,10 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
     for (auto i = 0; i < 16; i++) {
       instr.SetUpdate(child_run_mac.state(PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_WEIGHT_BYTE)),
                       Ite(is_cluster, weight_vector_cluster[i], weight_vector_not_cluster[i]));
-      auto input_addr = input_base_b + run_mac_cntr * CORE_SCALAR + i;
+      auto input_addr_offset = run_mac_cntr * CORE_SCALAR + i;
+      auto input_addr = input_base_b + 
+            Concat(BvConst(0, input_base_b.bit_width() - input_addr_offset.bit_width()), input_addr_offset);
+
       instr.SetUpdate(child_run_mac.state(PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_INPUT_BYTE)),
                       Load(input_buffer, input_addr));
     }
@@ -487,8 +508,10 @@ ExprRef adpflow_mul(ExprRef& in_0, ExprRef& in_1) {
 
   auto sign_0 = SelectBit(in_0, ADPTFLOW_SIGN_BIT_IDX);
   auto sign_1 = SelectBit(in_1, ADPTFLOW_SIGN_BIT_IDX);
-  auto exp_0 = Extract(in_0, ADPTFLOW_WIDTH - 2, ADPTFLOW_WIDTH - 5);
-  auto exp_1 = Extract(in_1, ADPTFLOW_WIDTH - 2, ADPTFLOW_WIDTH - 5);
+
+  auto exp_0 = Extract(in_0, ADPTFLOW_MAN_WIDTH + ADPTFLOW_EXP_WIDTH - 1, ADPTFLOW_MAN_WIDTH);
+  auto exp_1 = Extract(in_1, ADPTFLOW_MAN_WIDTH + ADPTFLOW_EXP_WIDTH - 1, ADPTFLOW_MAN_WIDTH);
+
   auto man_0 = Extract(in_0, ADPTFLOW_MAN_WIDTH - 1, 0);
   auto man_1 = Extract(in_1, ADPTFLOW_MAN_WIDTH - 1, 0);
 
@@ -497,14 +520,18 @@ ExprRef adpflow_mul(ExprRef& in_0, ExprRef& in_1) {
                                   Concat(BvConst(1,1), man_0));
   auto in_1_temp = Ite(is_zero_1, Concat(BvConst(0,1), man_1),
                                   Concat(BvConst(1,1), man_1));
+  // extend the bit width for multiplication.
   in_0_temp = Concat(BvConst(0, in_0_temp.bit_width() + 1), in_0_temp);
   in_1_temp = Concat(BvConst(0, in_1_temp.bit_width() + 1), in_1_temp);
   auto man_mul = in_0_temp * in_1_temp;
+
   // TODO: check if the ilang bitvector negation "-" is the same as the flexnlp
-  man_mul = Ite(sign_0 ^ sign_1, -man_mul, man_mul);
+  auto is_neg = ((sign_0 ^ sign_1) == 1);
+  man_mul = Ite(is_neg, -man_mul, man_mul);
 
   auto output_tmp = Concat(BvConst(0, PE_CORE_ACCUM_VECTOR_BITWIDTH - man_mul.bit_width()), man_mul);
-  auto result = output_tmp << exp_sum;
+  auto exp_sum_extend = Concat(BvConst(0, PE_CORE_ACCUM_VECTOR_BITWIDTH - exp_sum.bit_width()), exp_sum);
+  auto result = output_tmp << exp_sum_extend;
   
   return result;
 }
@@ -512,14 +539,20 @@ ExprRef adpflow_mul(ExprRef& in_0, ExprRef& in_1) {
 ExprRef GetBiasTmp(ExprRef& in, ExprRef& bias_bias) {
   auto sign = SelectBit(in, ADPTFLOW_SIGN_BIT_IDX);
   auto man = Extract(in, ADPTFLOW_MAN_WIDTH - 1, 0);
-  auto exp = Extract(in, ADPTFLOW_WIDTH - 2, ADPTFLOW_WIDTH - 5);
+  auto exp = Extract(in, ADPTFLOW_MAN_WIDTH + ADPTFLOW_EXP_WIDTH - 1, ADPTFLOW_MAN_WIDTH);
 
   auto man_plus1 = Concat(BvConst(1,1), man);
-  auto out = Concat(BvConst(0, PE_CORE_ACT_VECTOR_BITWIDTH - man_plus1.bit_width()), man_plus1);
-  auto left_shift = exp + bias_bias + ADPTFLOW_OFFSET - ADPTFLOW_MAN_WIDTH + ACT_NUM_FRAC;
+  auto out = Concat(BvConst(0, PE_CORE_ACCUM_VECTOR_BITWIDTH - man_plus1.bit_width()), man_plus1);
+  // CHECK THE CORRECTNESS OF ADPTFLOW OFFSET!
+  // CHANGE THE adptflow_offset to adptflow_ffset_neg
+  auto exp_32 = Concat(BvConst(0, 32 - exp.bit_width()), exp);
+  auto bias_bias_32 = Concat(BvConst(0, 32 - bias_bias.bit_width()), bias_bias);
+  auto left_shift = exp_32 + bias_bias_32
+                    - BvConst(ADPTFLOW_OFFSET_NEG, 32) - BvConst(ADPTFLOW_MAN_WIDTH, 32) 
+                    - BvConst(ACT_NUM_FRAC, 32);
   out = out << left_shift;
 
-  auto result = Ite(sign, out, -out);
+  auto result = Ite(sign == 0, out, -out);
 
   return result;
 }
