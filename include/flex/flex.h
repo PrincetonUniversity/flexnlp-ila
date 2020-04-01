@@ -30,6 +30,7 @@
 #include <flex/gb_config.h>
 #include <flex/pe_config.h>
 #include <flex/top_config.h>
+#include <flex/adpfloat_spec.h>
 
 #include <ilang/ilang++.h>
 #include <string>

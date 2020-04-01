@@ -33,12 +33,11 @@ namespace ilang {
 
 void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base);
 void AddChild_PECoreRunMac(Ila& m, const int& pe_idx);
-void AddChild_PECoreRunBias(Ila& m, const int& pe_idx);
 
 // helper function
 ExprRef to_adpflow(ExprRef& in);
 ExprRef adpflow_mul(ExprRef& in_0, ExprRef& in_1);
-
+ExprRef GetBiasTmp(ExprRef& in, ExprRef& bias_bias);
 
 void DefinePECore(Ila& m, const int& pe_idx, const uint64_t& base) {
 
@@ -83,10 +82,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
   for (auto i = 0; i < PE_CORE_ACCUM_VECTOR_LANES; i++) {
     child.NewBvState(PEGetVarNameVector(pe_idx, i, CORE_ACCUM_VECTOR), PE_CORE_ACCUM_VECTOR_BITWIDTH);
   }
-  // core activation vector
-  for (auto i = 0; i < PE_CORE_ACT_VECTOR_LANES; i++) {
-    child.NewBvState(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECOTR), PE_CORE_ACT_VECTOR_BITWIDTH);
-  }
+
 
   // add initial condition
   child.AddInit(is_start_reg == PE_CORE_INVALID);
@@ -113,7 +109,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto data_in_addr = m.state(GB_CONTROL_DATA_OUT_ADDR);
     auto data_in_addr_16 = Concat(BvConst(0, 8), data_in_addr);
     auto input_wr_addr = base_addr + data_in_addr_16; // this address is vector level (16 byte);
-    // TODO: verify the correctness of the input addr !!!!
+
     input_wr_addr = (Concat(BvConst(0, 16), input_wr_addr)) << 4; // change the address to byte
 
     // fetch the data from GB and store them into the input buffer
@@ -199,7 +195,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     for (auto i = 0; i < CORE_SCALAR; i++) {
       instr.SetUpdate(child.state(PEGetVarNameVector(pe_idx, i, CORE_ACCUM_VECTOR)),
                         BvConst(0, PE_CORE_ACCUM_VECTOR_BITWIDTH));
-      instr.SetUpdate(child.state(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECOTR)),
+      instr.SetUpdate(m.state(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECOTR)),
                         BvConst(0, PE_CORE_ACT_VECTOR_BITWIDTH));
     }
     
@@ -271,13 +267,40 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
 
     instr.SetDecode(is_start & state_bias & run_bias_invalid);
 
-    // set parameters for run bias child
-    instr.SetUpdate(run_bias_cntr, BvConst(0, PE_CORE_RUN_BIAS_CHILD_CNTR_BITWIDTH));
-    instr.SetUpdate(run_bias_flag, BvConst(PE_CORE_VALID, PE_CORE_RUN_BIAS_CHILD_FLAG_BITWIDTH));
-    instr.SetUpdate(state, BvConst(PE_CORE_STATE_OUT, PE_CORE_STATE_BITWIDTH));
+    auto is_bias = m.state(PEGetVarName(pe_idx, RNN_LAYER_SIZING_CONFIG_REG_IS_BIAS));
+    auto bias_w = Ite(mngr_cntr == 0, m.state(PEGetVarName(pe_idx, MEM_MNGR_FIRST_CONFIG_REG_ADPFLOAT_BIAS_W)),
+                                      m.state(PEGetVarName(pe_idx, MEM_MNGR_SECOND_CONFIG_REG_ADPFLOAT_BIAS_W)));
+    auto bias_i = Ite(mngr_cntr == 0, m.state(PEGetVarName(pe_idx, MEM_MNGR_FIRST_CONFIG_REG_ADPFLOAT_BIAS_I)),
+                                      m.state(PEGetVarName(pe_idx, MEM_MNGR_SECOND_CONFIG_REG_ADPFLOAT_BIAS_I)));
+    auto right_shift = - bias_w - bias_i - 2*ADPTFLOW_OFFSET + 2*ADPTFLOW_MAN_WIDTH - ACT_NUM_FRAC;
 
-    // Add child to do Run Bias
-    AddChild_PECoreRunBias(m, pe_idx);
+    auto base_bias = Ite(mngr_cntr == 0, m.state(PEGetVarName(pe_idx, MEM_MNGR_FIRST_CONFIG_REG_BASE_BIAS)),
+                                      m.state(PEGetVarName(pe_idx, MEM_MNGR_SECOND_CONFIG_REG_BASE_BIAS)));
+    auto bias_addr_base = (base_bias + output_cntr) << 4; // turn the address into byte unit
+    auto input_mem = m.state(PEGetVarName(pe_idx, CORE_INPUT_BUFFER));
+    
+    auto adpfloat_bias_bias = Ite(mngr_cntr == 0,
+                                  m.state(PEGetVarName(pe_idx, MEM_MNGR_FIRST_CONFIG_REG_ADPFLOAT_BIAS_B)),
+                                  m.state(PEGetVarName(pe_idx, MEM_MNGR_SECOND_CONFIG_REG_ADPFLOAT_BIAS_B)));
+
+    for (auto i = 0; i < CORE_SCALAR; i++) {
+      auto accum_vector = child.state(PEGetVarNameVector(pe_idx, i, CORE_ACCUM_VECTOR));
+      auto tmp = accum_vector >> right_shift;
+
+      auto bias = Load(input_mem, bias_addr_base + i);
+      // TODO: implement function GetBiasTmp(bias)
+      auto bias_tmp = GetBiasTmp(bias, adpfloat_bias_bias);
+
+      tmp = Ite(is_bias, tmp + bias_tmp, tmp);
+      // overflow checking and cutting
+      tmp = Ite(tmp > ACT_WORD_MAX, BvConst(ACT_WORD_MAX, tmp.bit_width()), tmp);
+      tmp = Ite(tmp < ACT_WORD_MIN, BvConst(ACT_WORD_MIN, tmp.bit_width()), tmp);
+      
+      auto act_reg = Extract(tmp, PE_CORE_ACT_VECTOR_BITWIDTH - 1, 0);
+      auto act_vector = m.state(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECOTR));
+      // update the activation vector registers 
+      instr.SetUpdate(act_vector, act_reg);
+    }
 
   }
 
@@ -309,7 +332,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto next_state = Ite(is_output_end, 
                           BvConst(PE_CORE_STATE_IDLE, PE_CORE_STATE_BITWIDTH),
                           BvConst(PE_CORE_STATE_PRE, PE_CORE_STATE_BITWIDTH));
-    // TODO: set is_start to false
+    // use the is_start_reg to end the run mac when there is no new pe_start signal pushed into the channel
     instr.SetUpdate(is_start_reg, BvConst(PE_CORE_INVALID, PE_CORE_IS_START_BITWIDTH));
 
     instr.SetUpdate(mngr_cntr, mngr_cntr_next);
@@ -428,12 +451,10 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
     for (auto i = 0; i < CORE_SCALAR; i++) {
       auto weight_byte = child_run_mac.state(PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_WEIGHT_BYTE));
       auto input_byte = child_run_mac.state(PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_INPUT_BYTE));
-      // TODO: implement the adaptiveflow translation function
-      // the input is already adaptive flow format?
+      // TODO: check the input is already adaptive flow format?
       auto input_byte_adpflow = to_adpflow(weight_byte);
       auto weight_byte_adpflow = to_adpflow(input_byte);
 
-      // TODO: implement the multiplication function here
       auto result = adpflow_mul(weight_byte_adpflow, input_byte_adpflow);
       accum = accum + result;
     }
@@ -453,7 +474,7 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
 }
 
 //////////////////////////////////////////
-//        Helper function for PERunMac
+//        Helper functions
 //////////////////////////////////////////
 // it seems that the data given is already in adaptiveflow format
 ExprRef to_adpflow(ExprRef& in) {
@@ -488,24 +509,19 @@ ExprRef adpflow_mul(ExprRef& in_0, ExprRef& in_1) {
   return result;
 }
 
-// *************************************************************//
-// **************** child model: PECoreRunBias *****************//
-// *************************************************************//
+ExprRef GetBiasTmp(ExprRef& in, ExprRef& bias_bias) {
+  auto sign = SelectBit(in, ADPTFLOW_SIGN_BIT_IDX);
+  auto man = Extract(in, ADPTFLOW_MAN_WIDTH - 1, 0);
+  auto exp = Extract(in, ADPTFLOW_WIDTH - 2, ADPTFLOW_WIDTH - 5);
 
-void AddChild_PECoreRunBias(Ila& m, const int& pe_idx) {
-  auto child_pe_core = m.child(PEGetChildName(pe_idx, "CORE_CHILD"));
-  auto child_run_bias = child_pe_core.NewChild(PEGetChildName(pe_idx, "CORE_RUN_BIAS_CHILD"));
-  auto run_bias_flag = child_pe_core.state(PEGetVarName(pe_idx, CORE_RUN_BIAS_CHILD_FLAG));
-  auto run_bias_cntr = child_pe_core.state(PEGetVarName(pe_idx, CORE_RUN_BIAS_CHILD_CNTR));
+  auto man_plus1 = Concat(BvConst(1,1), man);
+  auto out = Concat(BvConst(0, PE_CORE_ACT_VECTOR_BITWIDTH - man_plus1.bit_width()), man_plus1);
+  auto left_shift = exp + bias_bias + ADPTFLOW_OFFSET - ADPTFLOW_MAN_WIDTH + ACT_NUM_FRAC;
+  out = out << left_shift;
 
-  child_run_bias.SetValid(run_bias_flag & (run_bias_cntr < 16));
+  auto result = Ite(sign, out, -out);
 
-
-
-
-
-  
-
+  return result;
 }
 
 }; // namespace ilang
