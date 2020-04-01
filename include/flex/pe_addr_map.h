@@ -72,6 +72,11 @@ namespace ilang {
 #define CONFIG_ADDR_PE_ACT_VECTOR_0_15 (0x00800000 + 0x20)
 #define CONFIG_ADDR_PE_ACT_VECTOR_16_31 (0x00800000 + 0x30)
 
+// 
+// Define PE Partition Size
+//
+#define PE_PARTITION_SIZE 0x01000000
+
 }; // namespace ilang
 
 #endif // FLEX_PE_ADDR_MAP_H__

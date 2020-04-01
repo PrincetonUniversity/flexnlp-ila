@@ -54,7 +54,7 @@ void DefineStartGBControl(Ila& m) {
 }
 
 void AddChild_GB_Control(Ila& m) {
-  auto child = m.NewChild("GB_Control_child");
+  auto child = m.NewChild("GB_Control");
   auto flag_child = m.state(GB_CONTROL_CHILD_VALID_FLAG);
   auto child_valid = (flag_child == GB_CONTROL_CHILD_ON);
 
@@ -117,6 +117,8 @@ void AddChild_GB_Control(Ila& m) {
   auto data_out_13 = m.state(GB_CONTROL_DATA_OUT_13);
   auto data_out_14 = m.state(GB_CONTROL_DATA_OUT_14);
   auto data_out_15 = m.state(GB_CONTROL_DATA_OUT_15);
+
+  auto data_out_index = m.state(GB_CONTROL_DATA_OUT_INDEX);
 
   auto data_out_addr = m.state(GB_CONTROL_DATA_OUT_ADDR);
   auto data_in_valid_bit = m.state(GB_CONTROL_DATA_IN_VALID);
@@ -323,17 +325,30 @@ void AddChild_GB_Control(Ila& m) {
     instr.SetUpdate(data_out_valid_bit, data_out_valid_tmp);
     instr.SetUpdate(data_out_addr, cntr_vector);
 
+    // send the data_out index, which is used to specify the pe manager
+    auto x_index = BvConst(GB_CONTROL_DATA_OUT_INDEX_X, GB_CONTROL_DATA_OUT_INDEX_BITWIDTH);
+
+    instr.SetUpdate(data_out_index, x_index);
+
   }
 
   { // instruction 3 ---- finishing sending the whole timestep, sending pe_start
+    // update: set the start signal only after all the pe have read the last piece of data.
     auto instr = child.NewInstr("gb_control_pe_start");
     auto state_pe_start = (state == GB_CONTROL_CHILD_STATE_PE_START);
     
     instr.SetDecode(child_valid & state_pe_start);
 
-    auto next_state = BvConst(GB_CONTROL_CHILD_STATE_RECV_PREP, GB_CONTROL_CHILD_STATE_BITWIDTH);
+    //update
+    auto pe_read_done = (data_out_valid_bit == GB_CONTROL_INVALID);
+    auto next_state = Ite(pe_read_done,
+                            BvConst(GB_CONTROL_CHILD_STATE_RECV_PREP, GB_CONTROL_CHILD_STATE_BITWIDTH),
+                            BvConst(GB_CONTROL_CHILD_STATE_PE_START, GB_CONTROL_CHILD_STATE_BITWIDTH));
+    auto pe_start_next = Ite(pe_read_done, 
+                              BvConst(GB_CONTROL_VALID, PE_START_SIGNAL_SHARED_BITWIDTH),
+                              BvConst(GB_CONTROL_INVALID, PE_START_SIGNAL_SHARED_BITWIDTH));
     
-    instr.SetUpdate(pe_start, BvConst(GB_CONTROL_VALID, PE_START_SIGNAL_SHARED_BITWIDTH));
+    instr.SetUpdate(pe_start, pe_start_next);
     instr.SetUpdate(state, next_state);
   }
 
@@ -581,6 +596,11 @@ void AddChild_GB_Control(Ila& m) {
 
     instr.SetUpdate(data_out_addr, cntr_vector);
     instr.SetUpdate(data_out_valid_bit, data_out_valid_tmp);
+
+    // data out index, which is used to specify the pe manager
+    auto h_index = BvConst(GB_CONTROL_DATA_OUT_INDEX_H, GB_CONTROL_DATA_OUT_INDEX_BITWIDTH);
+
+    instr.SetUpdate(data_out_index, h_index);
   }
 
   { // instruction 8 ---- Decide whether the control is finished or move to next timestep

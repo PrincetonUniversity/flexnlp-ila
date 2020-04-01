@@ -28,7 +28,7 @@
 
 namespace ilang {
 
-void DefinePEActStore(Ila& m, const int& pe_idx, const uint64_t& base) {
+void DefinePEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
   // TODO
 }
 

@@ -118,6 +118,13 @@ namespace ilang {
 #define GB_CONTROL_DATA_OUT_ADDR "gb_control_data_out_addr"
 #define GB_CONTROL_DATA_OUT_ADDR_BITWIDTH GB_CONTROL_CONFIG_REG_NUM_VECTOR_1_WIDTH
 
+#define GB_CONTROL_DATA_OUT_INDEX "gb_control_data_out_index"
+#define GB_CONTROL_DATA_OUT_INDEX_BITWIDTH 2
+
+// this index is used to specify the PE manager
+#define GB_CONTROL_DATA_OUT_INDEX_X 0
+#define GB_CONTROL_DATA_OUT_INDEX_H 1
+
 // valid flag for share states
 #define GB_CONTROL_DATA_IN_VALID "gb_control_data_in_valid"
 #define GB_CONTROL_DATA_IN_VALID_BITWIDTH 1

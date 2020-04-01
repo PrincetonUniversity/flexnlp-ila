@@ -30,6 +30,7 @@
 #include <flex/gb_config.h>
 #include <flex/pe_config.h>
 #include <flex/top_config.h>
+#include <flex/adpfloat_spec.h>
 
 #include <ilang/ilang++.h>
 #include <string>
@@ -55,8 +56,11 @@ void DefineGBConfigInstr(Ila& m);
 void DefinePEConfigInstr(Ila& m, const int& pe_idx, const uint64_t& base);
 
 void DefineGBCoreStore(Ila& m);
+
 void DefinePECoreStore(Ila& m, const int& pe_idx, const uint64_t& base);
-void DefinePEActStore(Ila& m, const int& pe_idx, const uint64_t& base);
+
+void DefinePECore(Ila& m, const int& pe_idx, const uint64_t& base);
+void DefinePEAct(Ila& m, const int& pe_idx, const uint64_t& base);
 
 void DefineStartGBAttention(Ila& m);
 void DefineStartGBControl(Ila& m);
@@ -68,6 +72,9 @@ void DefineStartPERnnLayerSizing(Ila& m, const int& pe_idx,
                                  const uint64_t& base);
 
 void DefineGBInternalStates(Ila& m);
+
+void DefinePEInternalStates(Ila& m);
+void DefinePEInternalStates(Ila& m, const int& pe_idx);
 
 }; // namespace ilang
 

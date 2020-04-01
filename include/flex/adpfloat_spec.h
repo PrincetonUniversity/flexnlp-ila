@@ -22,25 +22,21 @@
 // SOFTWARE.
 // =============================================================================
 
-// File: init_conditions.cc
+// File: adpflow_spec.h
 
-#include <flex/flex.h>
+#ifndef FLEX_ADPFLOAT_SPEC__
+#define FLEX_ADPFLOAT_SPEC__
 
 namespace ilang {
-  void DefineInitConditons(Ila& m) {
+// define the adaptive flow related specs here
+#define ADPTFLOW_WIDTH 8
+#define ADPTFLOW_EXP_WIDTH 3
+#define ADPTFLOW_MAN_WIDTH (ADPTFLOW_WIDTH - ADPTFLOW_EXP_WIDTH - 1)
+#define ADPTFLOW_SIGN_BIT_IDX (ADPTFLOW_WIDTH - 1)
+#define ADPTFLOW_OFFSET -10
+#define ACT_NUM_FRAC 14
+#define ACT_WORD_MAX 0x7FFFF
+#define ACT_WORD_MIN -ACT_WORD_MAX
 
-    // gb_layer_reduce_initial conditions
-    m.AddInit(m.state(GB_LAYER_REDUCE_START_FLAG) == 0);
-    
-    // pe_core instruction initial conditions
-    // initial conditions for PE cntr
-    m.AddInit(m.state(PE_CNTR) == 0);
-    // initial conditions for the PE core state machine
-    m.AddInit(m.state(PEGetVarName(0, CORE_STATE)) == PE_CORE_STATE_IDLE);
-    m.AddInit(m.state(PEGetVarName(1, CORE_STATE)) == PE_CORE_STATE_IDLE);
-    m.AddInit(m.state(PEGetVarName(2, CORE_STATE)) == PE_CORE_STATE_IDLE);
-    m.AddInit(m.state(PEGetVarName(3, CORE_STATE)) == PE_CORE_STATE_IDLE);
-
-    
-  }
 } // namespace ilang
+#endif

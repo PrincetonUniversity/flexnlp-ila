@@ -46,7 +46,9 @@ add_executable(${MyTarget}
   src/gb_internal.cc
   src/pe_act.cc
   src/pe_core.cc
+  src/pe_core_store.cc
   src/pe_rnn_layer_sizing.cc
+  src/pe_internal.cc
   src/top_input.cc
   src/util.cc
 )
