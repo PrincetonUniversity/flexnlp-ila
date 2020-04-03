@@ -41,15 +41,15 @@ Ila GetFlexIla(const std::string& model_name) {
   DefineGBConfigState(m);
   DefineGBOtherState(m);
 
-  // DefinePEConfigState(m, 0);
-  // DefinePEConfigState(m, 1);
-  // DefinePEConfigState(m, 2);
-  // DefinePEConfigState(m, 3);
+  DefinePEConfigState(m, 0);
+  DefinePEConfigState(m, 1);
+  DefinePEConfigState(m, 2);
+  DefinePEConfigState(m, 3);
 
-  // DefinePEOtherState(m, 0);
-  // DefinePEOtherState(m, 1);
-  // DefinePEOtherState(m, 2);
-  // DefinePEOtherState(m, 3);
+  DefinePEOtherState(m, 0);
+  DefinePEOtherState(m, 1);
+  DefinePEOtherState(m, 2);
+  DefinePEOtherState(m, 3);
 
   // GB internal states
   DefineGBInternalStates(m);
@@ -79,10 +79,10 @@ Ila GetFlexIla(const std::string& model_name) {
   // configuration setting
   DefineGBConfigInstr(m);
 
-  // DefinePEConfigInstr(m, 0, TOP_PE0_ADDR_MIN);
-  // DefinePEConfigInstr(m, 1, TOP_PE1_ADDR_MIN);
-  // DefinePEConfigInstr(m, 2, TOP_PE2_ADDR_MIN);
-  // DefinePEConfigInstr(m, 3, TOP_PE3_ADDR_MIN);
+  DefinePEConfigInstr(m, 0, TOP_PE0_ADDR_MIN);
+  DefinePEConfigInstr(m, 1, TOP_PE1_ADDR_MIN);
+  DefinePEConfigInstr(m, 2, TOP_PE2_ADDR_MIN);
+  DefinePEConfigInstr(m, 3, TOP_PE3_ADDR_MIN);
 
   // store instructions
   // This instruction have conflicts with other buffer write instructions.
@@ -106,17 +106,17 @@ Ila GetFlexIla(const std::string& model_name) {
 
 
   // GB specific start instructions
- DefineStartGBAttention(m);
- DefineStartGBControl(m);
- DefineStartGBLayerNorm(m);
+  DefineStartGBAttention(m);
+  DefineStartGBControl(m);
+  DefineStartGBLayerNorm(m);
   DefineStartGBLayerReduce(m);
- DefineStartGBZeroPadding(m);
+  DefineStartGBZeroPadding(m);
 
   // PE specific start instruction
-  // DefineStartPERnnLayerSizing(m, 0, TOP_PE0_ADDR_MIN);
-  // DefineStartPERnnLayerSizing(m, 1, TOP_PE1_ADDR_MIN);
-  // DefineStartPERnnLayerSizing(m, 2, TOP_PE2_ADDR_MIN);
-  // DefineStartPERnnLayerSizing(m, 3, TOP_PE3_ADDR_MIN);
+  DefineStartPERnnLayerSizing(m, 0, TOP_PE0_ADDR_MIN);
+  DefineStartPERnnLayerSizing(m, 1, TOP_PE1_ADDR_MIN);
+  DefineStartPERnnLayerSizing(m, 2, TOP_PE2_ADDR_MIN);
+  DefineStartPERnnLayerSizing(m, 3, TOP_PE3_ADDR_MIN);
 
   return m;
 }
