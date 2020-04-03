@@ -83,7 +83,6 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     child.NewBvState(PEGetVarNameVector(pe_idx, i, CORE_ACCUM_VECTOR), PE_CORE_ACCUM_VECTOR_BITWIDTH);
   }
 
-
   // add initial condition
   child.AddInit(is_start_reg == PE_CORE_INVALID);
   child.AddInit(mngr_cntr == PE_CORE_MNGR_0);
@@ -267,9 +266,8 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
 
     auto is_start = pe_config_is_valid & is_start_reg;
     auto state_bias = (state == PE_CORE_STATE_BIAS);
-    auto run_bias_invalid = (run_bias_flag == PE_CORE_INVALID);
 
-    instr.SetDecode(is_start & state_bias & run_bias_invalid);
+    instr.SetDecode(is_start & state_bias);
 
     auto is_bias = m.state(PEGetVarName(pe_idx, RNN_LAYER_SIZING_CONFIG_REG_IS_BIAS));
     auto bias_w = Ite(mngr_cntr == 0, m.state(PEGetVarName(pe_idx, MEM_MNGR_FIRST_CONFIG_REG_ADPFLOAT_BIAS_W)),
@@ -280,6 +278,9 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto bias_w_32 = Concat(BvConst(0, 32 - bias_w.bit_width()), bias_w);
     auto bias_i_32 = Concat(BvConst(0, 32 - bias_i.bit_width()), bias_i);
     // FIXME: BvConst cannot set negative number..
+    // NVUINT5 right_shift = -2*spec::kAdpfloatOffset + 2*spec::kAdpfloatManWidth - spec::kActNumFrac
+    //                         - pe_manager[m_index].adplfloat_bias_weight
+    //                         - pe_manager[m_index].adplfloat_bias_input;
     auto right_shift = BvConst(ADPTFLOW_MAN_WIDTH, 32) * 2 + BvConst(ADPTFLOW_OFFSET_NEG, 32) * 2
                         - BvConst(ACT_NUM_FRAC, 32) - bias_w_32 - bias_i_32;
 
@@ -307,8 +308,12 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
       tmp = Ite(is_bias == 1, tmp + bias_tmp, tmp);
       // overflow checking and cutting
       // TODO: have to implement negative BvConst?
-      tmp = Ite(tmp > ACT_WORD_MAX, BvConst(ACT_WORD_MAX, tmp.bit_width()), tmp);
-      // tmp = Ite(tmp < ACT_WORD_MIN, BvConst(ACT_WORD_MIN, tmp.bit_width()), tmp);
+      // FIXME: careful with the negative number here!!
+      // current implementation is definitely wrong.
+      auto act_word_max = BvConst(ACT_WORD_MAX, PE_CORE_ACCUM_VECTOR_BITWIDTH);
+      auto act_word_min = -act_word_max;
+      tmp = Ite(tmp > act_word_max, act_word_max, tmp);
+      tmp = Ite(tmp < act_word_min, act_word_min, tmp);
       
       auto act_reg = Extract(tmp, PE_CORE_ACT_VECTOR_BITWIDTH - 1, 0);
       auto act_vector = m.state(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECOTR));
@@ -316,6 +321,8 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
       instr.SetUpdate(act_vector, act_reg);
     }
 
+    auto next_state = BvConst(PE_CORE_STATE_BIAS, PE_CORE_STATE_BITWIDTH);
+    instr.SetUpdate(state, next_state);
   }
 
   { // instruction 6 ---- OUT state
@@ -323,15 +330,14 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
 
     auto is_start = pe_config_is_valid & is_start_reg;
     auto state_out = (state == PE_CORE_STATE_OUT);
-    auto run_bias_invalid = (run_bias_flag == PE_CORE_INVALID);
 
-    instr.SetDecode(is_start & state_out & run_bias_invalid);
+    instr.SetDecode(is_start & state_out);
 
     auto num_mngr = m.state(PEGetVarName(pe_idx, RNN_LAYER_SIZING_CONFIG_REG_NUM_MANAGER));
     auto num_output = m.state(PEGetVarName(pe_idx, RNN_LAYER_SIZING_CONFIG_REG_NUM_OUTPUT));
     auto mngr_cntr_4 = Concat(BvConst(0, 4-mngr_cntr.bit_width()), mngr_cntr);
     auto last_mngr = (mngr_cntr_4 == (num_mngr - 1));
-    auto last_output = (input_cntr == (num_output - 1));
+    auto last_output = (output_cntr == (num_output - 1));
     auto is_output_end = last_mngr & last_output;
 
     auto is_zero_first = m.state(PEGetVarName(pe_idx, RNN_LAYER_SIZING_CONFIG_REG_IS_ZERO_FIRST));
@@ -432,6 +438,7 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
                      
       // get the cluster lut result
       auto mgnr_cntr = child_pe_core.state(PEGetVarName(pe_idx, CORE_MNGR_CNTR));
+      // FetchClusterLut is defined in utils.cc
       auto result = Ite(mgnr_cntr == 0,
                         FetchClusterLUT_First(m, pe_idx, ind),
                         FetchClusterLUT_Second(m, pe_idx, ind));
@@ -468,7 +475,7 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
 
     auto accum = BvConst(0, PE_CORE_ACCUM_VECTOR_BITWIDTH);
 
-    // translate the data into adaptive flow format
+    // do adaptive flow multiplication
     for (auto i = 0; i < CORE_SCALAR; i++) {
       auto weight_byte = child_run_mac.state(PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_WEIGHT_BYTE));
       auto input_byte = child_run_mac.state(PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_INPUT_BYTE));
@@ -487,10 +494,14 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
     }
 
     auto next_state = BvConst(PE_CORE_RUN_MAC_STATE_FETCH, PE_CORE_RUN_MAC_CHILD_STATE_BITWIDTH);
+    auto run_mac_flag_next = Ite(run_mac_cntr >= 15, 
+                                  BvConst(PE_CORE_INVALID, PE_CORE_CHILD_RUN_MAC_FLAG_BITWIDTH),
+                                  BvConst(PE_CORE_VALID, PE_CORE_CHILD_RUN_MAC_FLAG_BITWIDTH));
     
     // update the control parameters
     instr.SetUpdate(state, next_state);
     instr.SetUpdate(run_mac_cntr, run_mac_cntr + 1);
+    instr.SetUpdate(run_mac_flag, run_mac_flag_next);
   }  
 }
 
@@ -547,9 +558,10 @@ ExprRef GetBiasTmp(ExprRef& in, ExprRef& bias_bias) {
   // CHANGE THE adptflow_offset to adptflow_ffset_neg
   auto exp_32 = Concat(BvConst(0, 32 - exp.bit_width()), exp);
   auto bias_bias_32 = Concat(BvConst(0, 32 - bias_bias.bit_width()), bias_bias);
+  // exp + adpfloat_bias + spec::kAdpfloatOffset - M + F1
   auto left_shift = exp_32 + bias_bias_32
                     - BvConst(ADPTFLOW_OFFSET_NEG, 32) - BvConst(ADPTFLOW_MAN_WIDTH, 32) 
-                    - BvConst(ACT_NUM_FRAC, 32);
+                    + BvConst(ACT_NUM_FRAC, 32);
   out = out << left_shift;
 
   auto result = Ite(sign == 0, out, -out);
