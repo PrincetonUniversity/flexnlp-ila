@@ -36,16 +36,14 @@
 // for debug
 #include <queue>
 
-
 using namespace ilang;
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   SetToStdErr(1);
 
   // get the ILA model
 
   auto flex = GetFlexIla("flex_sim");
-
 
   ILA_INFO << "#input: " << flex.input_num();
   ILA_INFO << "#state: " << flex.state_num();
@@ -54,9 +52,8 @@ int main(int argc, char *argv[]) {
   for (auto i = 0; i < flex.instr_num(); i++) {
     ILA_INFO << flex.instr(i);
   }
-  
-  auto model = flex.get();
 
+  auto model = flex.get();
 
   ILA_INFO << "before calling sim gen function";
   // simulation generation
@@ -68,7 +65,8 @@ int main(int argc, char *argv[]) {
   simulator_generator.set_instr_lvl_abs(model);
   simulator_generator.set_systemc_path(systemc_path);
   // ILA_INFO << "before debug";
-  //simulator_generator.sim_gen_decode_d();
+  // simulator_generator.sim_gen_decode_d();
+  simulator_generator.enable_cmake_support();
   simulator_generator.sim_gen(sim_gen_dir, false, true, cpp_gen);
 
   return 0;
