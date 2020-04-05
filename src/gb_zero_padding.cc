@@ -146,8 +146,9 @@ void AddChild_ZeroPadding(Ila& m) {
   {// instruction do zero padding at the byte
     auto instr = child.NewInstr("gb_zero_padding_child_byte");
     instr.SetDecode(child_valid & (state == GB_ZERO_PADDING_CHILD_STATE_BYTE));
-
-    auto zero = BvConst(0, TOP_DATA_IN_WIDTH);
+    auto zero_0 = BvConst(0, TOP_DATA_IN_WIDTH);
+    auto zero_1 = BvConst(0, TOP_DATA_IN_WIDTH);
+    auto zero = zero_0 + zero_1;
     auto addr = Concat(BvConst(0, 12), start_addr);
     
     auto next_state = BvConst(GB_ZERO_PADDING_CHILD_STATE_NEXT, GB_ZERO_PADDING_CHILD_STATE_BITWIDTH);
