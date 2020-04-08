@@ -53,7 +53,6 @@ int main(int argc, char* argv[]) {
     ILA_INFO << flex.instr(i);
   }
 
-<<<<<<< HEAD
   auto model = flex.get();
 
   ILA_INFO << "before calling sim gen function";
@@ -69,8 +68,6 @@ int main(int argc, char* argv[]) {
   // simulator_generator.sim_gen_decode_d();
   simulator_generator.enable_cmake_support();
   simulator_generator.sim_gen(sim_gen_dir, false, true, cpp_gen);
-=======
->>>>>>> origin/yl
 
   return 0;
 }
