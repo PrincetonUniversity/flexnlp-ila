@@ -53,7 +53,7 @@ void DefineStartGBControl(Ila& m) {
 }
 
 void AddChild_GB_Control(Ila& m) {
-  auto child = m.NewChild("GB_Control");
+  auto child = m.NewChild("Child_GB_Control");
   auto flag_child = m.state(GB_CONTROL_CHILD_VALID_FLAG);
   auto child_valid = (flag_child == GB_CONTROL_CHILD_ON);
 
@@ -333,7 +333,7 @@ void AddChild_GB_Control(Ila& m) {
 
   { // instruction 3 ---- finishing sending the whole timestep, sending pe_start
     // update: set the start signal only after all the pe have read the last piece of data.
-    auto instr = child.NewInstr("gb_control_pe_start");
+    auto instr = child.NewInstr("gb_control_child_pe_start");
     auto state_pe_start = (state == GB_CONTROL_CHILD_STATE_PE_START);
     
     instr.SetDecode(child_valid & state_pe_start);
@@ -352,7 +352,7 @@ void AddChild_GB_Control(Ila& m) {
   }
 
   { // instruction 4 ---- recv prep, set the parameters for receiving data
-    auto instr = child.NewInstr("gb_control_recv_prep");
+    auto instr = child.NewInstr("gb_control_child_recv_prep");
     auto state_recv_prep = (state == GB_CONTROL_CHILD_STATE_RECV_PREP);
 
     instr.SetDecode(child_valid & state_recv_prep);
@@ -382,7 +382,7 @@ void AddChild_GB_Control(Ila& m) {
   }
 
   { // instruction 5 ---- receive data from PE
-    auto instr = child.NewInstr("gb_control_recv");
+    auto instr = child.NewInstr("gb_control_child_recv");
     auto state_recv = (state == GB_CONTROL_CHILD_STATE_RECV);
     auto data_valid = (data_in_valid_bit == GB_CONTROL_VALID);
 

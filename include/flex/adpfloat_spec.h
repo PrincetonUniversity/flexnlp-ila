@@ -37,7 +37,7 @@ namespace ilang {
 #define ADPTFLOW_OFFSET_NEG 10
 #define ACT_NUM_FRAC 14
 #define ACT_WORD_MAX 0x7FFFF
-#define ACT_WORD_MIN -ACT_WORD_MAX
+#define ACT_WORD_MIN - ACT_WORD_MAX
 
 } // namespace ilang
 #endif

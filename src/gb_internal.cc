@@ -72,6 +72,10 @@ void DefineGBInternalStates(Ila& m) {
   
 
   /******** GBLayerNorm internal states ********/
+  // state for setting flag of child valid state
+  m.NewBvState(GB_LAYER_NORM_CHILD_VALID_FLAG, GB_LAYER_NORM_CHILD_VALID_FLAG_BITWIDTH);
+  // state for child model state machine
+  m.NewBvState(GB_LAYER_NORM_CHILD_STATE, GB_LAYER_NORM_CHILD_STATE_BITWIDTH);
 
   // state for iterations, iterations = num_timestep
   m.NewBvState(GB_LAYER_NORM_ITERATIONS, GB_LAYER_NORM_ITERATIONS_WIDTH);
