@@ -17,7 +17,6 @@ SC_MODULE(Source) {
   sc_out< sc_biguint<8> > flex_data_in[16];
 
 //  void source_input();
-
   SC_CTOR(Source) {
     SC_THREAD(source_input);
     sensitive << clk.pos();
@@ -64,11 +63,18 @@ SC_MODULE(Source) {
         flex_rd_in = 1;
       }
       // extract the address
-      addr = addr.substr(2);
-      addr_format = "0x00" + addr;
-      addr_c = addr_format.c_str();
-      flex_addr_in = addr_c;
+      // addr = addr.substr(2);
+      // addr_format = "0x00" + addr;
+      // addr_c = addr_format.c_str();
 
+      // remove the "0x" at the begining.
+      addr = addr.substr(2);
+      flex_addr_in = addr.c_str();
+
+      // remove the possible '\r' at the end of the line
+      if(int(data[data.size()-1]) == 13) {
+        data = data.substr(0, data.size()-1);
+      }
       // extract the data
       data_format.clear();
       if (data.length() <= 34) {
@@ -85,22 +91,6 @@ SC_MODULE(Source) {
  //       cout << data_byte << ' ';
         flex_data_in[i] = data_byte_c;
       }
-//      cout << endl;
-      
-//       cout << "@" << sc_time_stamp() << " :" << '\t' 
-//            << "mode:" << mode << '\t'
-//            << "addr:" << addr_c << '\t'
-//            << "data:" << data_format << '\t';
-// //      cout << "sc_addr" << '\t'
-// //           << hex << flex_addr_in << '\t'; 
-// //           << "sc_mode" << '\t'
-// //           << flex_wr_in << '\t'
-// //           << flex_rd_in << endl;
-// //      for (int j = 0; j < 16; j++) {
-// //          cout << hex << flex_data_in[15-j] << ' ';
-// //      }
-//       cout << endl;
-
 
       wait(10, SC_NS);
     }
@@ -163,7 +153,7 @@ SC_MODULE(testbench) {
   void run() {
     int i = 0;
     bool undone = true;
-    int stop_addr = 0xdead;
+    int stop_addr = 0xdeaddead;
     std::ofstream fout;
     fout.open("./test_output.txt", ofstream::out | ofstream::trunc);
     
@@ -191,32 +181,11 @@ SC_MODULE(testbench) {
     }
 
     wait(10000, SC_NS);
-    fout << "********* output for large buffer ***********" << endl;
-    
-    int entry_addr;
-    int index;
-    for (int j = 0; j < 0xB00; j++) {
-        entry_addr = 16*j;
-        fout << "large buffer @ addr:" << '\t';
-        fout << hex << entry_addr << '\t';
-        fout << "data:" << '\t';
-        for (int k = 0; k < 16; k++) {
-            index = 16*j + 15 - k;
-            fout << hex << flex.flex_sim_gb_core_large_buffer[index] << ' ';
-        }
-        fout << endl;
-    }
-
-    wait(1000, SC_NS);
-    cout << "test for accessing flex:  " << hex << flex.flex_sim_gb_core_large_buffer[12] << endl;
-    cout << "test for uninterpreted function" << endl;
-    sc_biguint<8> in0 = "0x98";
-    sc_biguint<8> in1 = "0x0c";
-    cout << "test in0: " << (in0.to_int() >> 7) << '\t' << "test in1: " << (in1.to_int() >> 7) << endl;
-    cout << hex << ((~in0.to_int() + 1) & 127 ) << '\t' << ((~in1.to_int() + 1) & 127 )<< endl;
-    cout << hex << (((~in0.to_int() + 1) & 127 ) > ((~in1.to_int() + 1) & 127 ))<< endl;
-
     std::cout << "@" << sc_time_stamp() << " *********     sc_stop      *********" << std::endl;
+    std::fstream instr_log;
+    instr_log.open("./instr_out_flex.txt", ofstream::out | ofstream::trunc);
+    instr_log << flex.instr_log.rdbuf();
+    instr_log.close();
     sc_stop();
   }
 };
@@ -227,4 +196,3 @@ int sc_main(int argc, char *argv[]) {
   sc_start();
   return 0;
 }
-
