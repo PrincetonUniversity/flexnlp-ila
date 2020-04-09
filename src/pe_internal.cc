@@ -32,7 +32,10 @@ namespace ilang {
 
 void DefinePEInternalStates(Ila& m) {
   // define PE shared internal states here
+  // counter for recording pe
   m.NewBvState(PE_CNTR, PE_CNTR_BIWTDTH);
+  // number of valid pe
+  m.NewBvState(PE_VALID_NUM, PE_VALID_NUM_BITWIDTH);
 
 }
 

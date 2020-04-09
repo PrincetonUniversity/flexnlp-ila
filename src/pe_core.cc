@@ -78,6 +78,9 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
   // common states used in this child instructions
   auto state = m.state(PEGetVarName(pe_idx, CORE_STATE));
 
+  // state holding valid pe numbers
+  auto pe_valid_num = m.state(PE_VALID_NUM);
+
   // core accumulator registers
   for (auto i = 0; i < PE_CORE_ACCUM_VECTOR_LANES; i++) {
     child.NewBvState(PEGetVarNameVector(pe_idx, i, CORE_ACCUM_VECTOR), PE_CORE_ACCUM_VECTOR_BITWIDTH);
@@ -324,7 +327,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
       instr.SetUpdate(act_vector, act_reg);
     }
 
-    auto next_state = BvConst(PE_CORE_STATE_BIAS, PE_CORE_STATE_BITWIDTH);
+    auto next_state = BvConst(PE_CORE_STATE_OUT, PE_CORE_STATE_BITWIDTH);
     instr.SetUpdate(state, next_state);
   }
 
