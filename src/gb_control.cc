@@ -335,27 +335,30 @@ void AddChild_GB_Control(Ila& m) {
     // update: set the start signal only after all the pe have read the last piece of data.
     auto instr = child.NewInstr("gb_control_child_pe_start");
     auto state_pe_start = (state == GB_CONTROL_CHILD_STATE_PE_START);
-    
-    instr.SetDecode(child_valid & state_pe_start);
-
-    //update
     auto pe_read_done = (data_out_valid_bit == GB_CONTROL_INVALID);
-    auto next_state = Ite(pe_read_done,
-                            BvConst(GB_CONTROL_CHILD_STATE_RECV_PREP, GB_CONTROL_CHILD_STATE_BITWIDTH),
-                            BvConst(GB_CONTROL_CHILD_STATE_PE_START, GB_CONTROL_CHILD_STATE_BITWIDTH));
-    auto pe_start_next = Ite(pe_read_done, 
-                              BvConst(GB_CONTROL_VALID, PE_START_SIGNAL_SHARED_BITWIDTH),
-                              BvConst(GB_CONTROL_INVALID, PE_START_SIGNAL_SHARED_BITWIDTH));
     
-    instr.SetUpdate(pe_start, pe_start_next);
+    instr.SetDecode(child_valid & state_pe_start & pe_read_done);
+
+    //update;
+    // auto next_state = Ite(pe_read_done,
+    //                         BvConst(GB_CONTROL_CHILD_STATE_RECV_PREP, GB_CONTROL_CHILD_STATE_BITWIDTH),
+    //                         BvConst(GB_CONTROL_CHILD_STATE_PE_START, GB_CONTROL_CHILD_STATE_BITWIDTH));
+    // auto pe_start_next = Ite(pe_read_done, 
+    //                           BvConst(GB_CONTROL_VALID, PE_START_SIGNAL_SHARED_BITWIDTH),
+    //                           BvConst(GB_CONTROL_INVALID, PE_START_SIGNAL_SHARED_BITWIDTH));
+    
+    // instr.SetUpdate(pe_start, pe_start_next);
+    auto next_state = BvConst(GB_CONTROL_CHILD_STATE_RECV_PREP, GB_CONTROL_CHILD_STATE_BITWIDTH);
     instr.SetUpdate(state, next_state);
   }
 
   { // instruction 4 ---- recv prep, set the parameters for receiving data
     auto instr = child.NewInstr("gb_control_child_recv_prep");
     auto state_recv_prep = (state == GB_CONTROL_CHILD_STATE_RECV_PREP);
+    // auto pe_done_valid = (pe_done == GB_CONTROL_VALID);
+    auto data_valid = (data_in_valid_bit == GB_CONTROL_VALID);
 
-    instr.SetDecode(child_valid & state_recv_prep);
+    instr.SetDecode(child_valid & state_recv_prep & data_valid);
 
     // reset the vector counter
     auto cntr_vector_tmp = BvConst(0, GB_CONTROL_CHILD_VECTOR_CNTR_BITWIDTH);
