@@ -137,9 +137,12 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto all_pe_cond = BoolConst(pe_idx >= 3);
     auto pe_cntr_next = Ite(all_pe_cond, BvConst(0, PE_CNTR_BIWTDTH),
                                          BvConst(pe_idx + 1, PE_CNTR_BIWTDTH));
+    auto gb_control_data_out_valid_next =
+            Ite(all_pe_cond, BvConst(PE_CORE_INVALID, GB_CONTROL_DATA_OUT_VALID_BITWIDTH),
+                              BvConst(PE_CORE_VALID, GB_CONTROL_DATA_OUT_VALID_BITWIDTH));
+
     instr.SetUpdate(m.state(PE_CNTR), pe_cntr_next);    
-    instr.SetUpdate(m.state(GB_CONTROL_DATA_OUT_VALID), 
-                      BvConst(PE_CORE_INVALID, GB_CONTROL_DATA_OUT_VALID_BITWIDTH));
+    instr.SetUpdate(m.state(GB_CONTROL_DATA_OUT_VALID), gb_control_data_out_valid_next);
     
   }
 
