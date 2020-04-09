@@ -271,9 +271,10 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto instr = child.NewInstr(PEGetInstrName(pe_idx, "CORE_STATE_BIAS"));
 
     auto is_start = pe_config_is_valid & is_start_reg;
+    auto run_mac_invalid = (run_mac_flag == PE_CORE_INVALID);
     auto state_bias = (state == PE_CORE_STATE_BIAS);
 
-    instr.SetDecode(is_start & state_bias);
+    instr.SetDecode(is_start & state_bias & run_mac_invalid);
 
     auto is_bias = m.state(PEGetVarName(pe_idx, RNN_LAYER_SIZING_CONFIG_REG_IS_BIAS));
     auto bias_w = Ite(mngr_cntr == 0, m.state(PEGetVarName(pe_idx, MEM_MNGR_FIRST_CONFIG_REG_ADPFLOAT_BIAS_W)),
@@ -352,6 +353,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto output_cntr_next = Ite(last_mngr & last_output,
                                 BvConst(0, PE_CORE_OUTPUT_CNTR_BITWIDTH),
                                 Ite(last_mngr & !last_output, output_cntr + 1, output_cntr));
+    // when is_zero_first & zero_active is valid, the output for the first timestep should all be zero.
     auto is_zero_first_next = Ite(last_mngr & last_output, 
                                   BvConst(0, RNN_LAYER_SIZING_CONFIG_REG_IS_ZERO_FIRST_WIDTH),
                                   is_zero_first);
@@ -360,7 +362,11 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
                           BvConst(PE_CORE_STATE_IDLE, PE_CORE_STATE_BITWIDTH),
                           BvConst(PE_CORE_STATE_PRE, PE_CORE_STATE_BITWIDTH));
     // use the is_start_reg to end the run mac when there is no new pe_start signal pushed into the channel
-    instr.SetUpdate(is_start_reg, BvConst(PE_CORE_INVALID, PE_CORE_IS_START_BITWIDTH));
+    auto is_start_reg_next = Ite(is_output_end,
+                                  BvConst(PE_CORE_INVALID, PE_CORE_STATE_BITWIDTH),
+                                  BvConst(PE_CORE_VALID, PE_CORE_STATE_BITWIDTH));
+
+    instr.SetUpdate(is_start_reg, is_start_reg_next);
 
     instr.SetUpdate(mngr_cntr, mngr_cntr_next);
     instr.SetUpdate(output_cntr, output_cntr_next);
