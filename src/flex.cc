@@ -79,10 +79,10 @@ Ila GetFlexIla(const std::string& model_name) {
   // configuration setting
   DefineGBConfigInstr(m);
 
-  DefinePEConfigInstr(m, 0, TOP_PE0_ADDR_MIN);
-  DefinePEConfigInstr(m, 1, TOP_PE1_ADDR_MIN);
-  DefinePEConfigInstr(m, 2, TOP_PE2_ADDR_MIN);
-  DefinePEConfigInstr(m, 3, TOP_PE3_ADDR_MIN);
+  DefinePEConfigInstr(m, 0, TOP_PE0_ADDR_OFFSET);
+  DefinePEConfigInstr(m, 1, TOP_PE1_ADDR_OFFSET);
+  DefinePEConfigInstr(m, 2, TOP_PE2_ADDR_OFFSET);
+  DefinePEConfigInstr(m, 3, TOP_PE3_ADDR_OFFSET);
 
   // store instructions
   // This instruction have conflicts with other buffer write instructions.
