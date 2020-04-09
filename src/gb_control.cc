@@ -194,6 +194,21 @@ void AddChild_GB_Control(Ila& m) {
 
     auto next_state = BvConst(GB_CONTROL_CHILD_STATE_SEND_PREP, GB_CONTROL_CHILD_STATE_BITWIDTH);
 
+    // auto pe_0_is_valid = m.state(PEGetVarName(0, RNN_LAYER_SIZING_CONFIG_REG_IS_VALID));
+    // auto pe_1_is_valid = m.state(PEGetVarName(1, RNN_LAYER_SIZING_CONFIG_REG_IS_VALID));
+    // auto pe_2_is_valid = m.state(PEGetVarName(2, RNN_LAYER_SIZING_CONFIG_REG_IS_VALID));
+    // auto pe_3_is_valid = m.state(PEGetVarName(3, RNN_LAYER_SIZING_CONFIG_REG_IS_VALID));
+    
+    // hard to implement the scheduler if less than 4 PEs are valid
+    // TODO: implement the scheduler when less than 4 PEs are valid
+    auto pe_valid_num = BvConst(0, PE_VALID_NUM_BITWIDTH);
+    for (auto i = 0; i < 4; i++) {
+      auto current_pe_valid = m.state(PEGetVarName(i, RNN_LAYER_SIZING_CONFIG_REG_IS_VALID));
+      pe_valid_num = Ite(current_pe_valid == GB_CONTROL_VALID, pe_valid_num + 1, pe_valid_num);
+    }
+    // update the valid pe number for PE
+    instr.SetUpdate(m.state(PE_VALID_NUM), pe_valid_num);
+
     // reset the counter value
     instr.SetUpdate(cntr_timestep, BvConst(0, GB_CONTROL_CHILD_TIMESTEP_CNTR_BITWIDTH));
     instr.SetUpdate(cntr_vector, BvConst(0, GB_CONTROL_CHILD_VECTOR_CNTR_BITWIDTH));

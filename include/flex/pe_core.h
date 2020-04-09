@@ -303,6 +303,9 @@ namespace ilang {
 #define PE_CNTR "PE_CNTR"
 #define PE_CNTR_BIWTDTH 3
 
+#define PE_VALID_NUM "PE_VALID_NUM"
+#define PE_VALID_NUM_BITWIDTH 3
+
 #define CORE_STATE "core_state"
 #define PE_CORE_STATE_BITWIDTH 3
 
