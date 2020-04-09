@@ -228,10 +228,12 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto is_input_end = (input_cntr >= num_input - 1);
     auto next_state = Ite(is_input_end, BvConst(PE_CORE_STATE_BIAS, PE_CORE_STATE_BITWIDTH),
                                         BvConst(PE_CORE_STATE_MAC, PE_CORE_STATE_BITWIDTH));
+    auto input_cntr_next = Ite(is_input_end, 
+                                BvConst(0, PE_CORE_INPUT_CNTR_BITWIDTH), input_cntr + 1);
 
     instr.SetUpdate(state, next_state);
     // update input counter
-    instr.SetUpdate(input_cntr, input_cntr + 1);
+    instr.SetUpdate(input_cntr, input_cntr_next);
 
     // calculate the addresses
     auto is_cluster = m.state(PEGetVarName(pe_idx, RNN_LAYER_SIZING_CONFIG_REG_IS_CLUSTER));
@@ -418,8 +420,8 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
                               PE_CORE_RUN_MAC_CHILD_INPUT_BYTE_BITWIDTH);
   }
 
-  {// instruction 0 ---- fetch data from the memory.
-    auto instr = child_run_mac.NewInstr(PEGetInstrName(pe_idx, "CORE_RUN_MAC_FETCH"));
+  {// instruction 0 ---- get data from the memory.
+    auto instr = child_run_mac.NewInstr(PEGetInstrName(pe_idx, "CORE_RUN_MAC_GET_DATA"));
     auto state_fetch = (state == PE_CORE_RUN_MAC_STATE_FETCH);
 
     instr.SetDecode(child_valid & state_fetch);
