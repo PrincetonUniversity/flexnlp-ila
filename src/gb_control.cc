@@ -343,11 +343,11 @@ void AddChild_GB_Control(Ila& m) {
     // auto next_state = Ite(pe_read_done,
     //                         BvConst(GB_CONTROL_CHILD_STATE_RECV_PREP, GB_CONTROL_CHILD_STATE_BITWIDTH),
     //                         BvConst(GB_CONTROL_CHILD_STATE_PE_START, GB_CONTROL_CHILD_STATE_BITWIDTH));
-    // auto pe_start_next = Ite(pe_read_done, 
-    //                           BvConst(GB_CONTROL_VALID, PE_START_SIGNAL_SHARED_BITWIDTH),
-    //                           BvConst(GB_CONTROL_INVALID, PE_START_SIGNAL_SHARED_BITWIDTH));
+    auto pe_start_next = Ite(pe_read_done, 
+                              BvConst(GB_CONTROL_VALID, PE_START_SIGNAL_SHARED_BITWIDTH),
+                              BvConst(GB_CONTROL_INVALID, PE_START_SIGNAL_SHARED_BITWIDTH));
     
-    // instr.SetUpdate(pe_start, pe_start_next);
+    instr.SetUpdate(pe_start, pe_start_next);
     auto next_state = BvConst(GB_CONTROL_CHILD_STATE_RECV_PREP, GB_CONTROL_CHILD_STATE_BITWIDTH);
     instr.SetUpdate(state, next_state);
   }
