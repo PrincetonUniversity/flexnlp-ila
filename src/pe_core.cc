@@ -94,7 +94,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
   
   
   { // instructions 0 ---- read the data from GB
-    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "CORE_READ_GB_0"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "core_read_gb"));
   
     auto pe_not_start = (is_start_reg == PE_CORE_INVALID);
     auto gb_data_valid = (m.state(GB_CONTROL_DATA_OUT_VALID) == PE_CORE_VALID);
@@ -152,7 +152,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
   { // instruction 2 ---- helper instructions for is_start condition
     // updates on the GB_Control: the pe_start valid only after all the PE have read 
     // the last piece of data.
-    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "CORE_IS_START_PREP"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "core_is_start"));
 
     auto pe_start_valid = (m.state(PE_START_SIGNAL_SHARED) == PE_CORE_VALID);
     auto state_idle = (state == PE_CORE_STATE_IDLE);
@@ -180,7 +180,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
   }
 
   { // instruction 3 ---- select next state
-    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "CORE_STATE_PRE"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "core_prep"));
 
     auto is_start = pe_config_is_valid & is_start_reg;
     auto state_pre = (state == PE_CORE_STATE_PRE);
@@ -213,7 +213,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
   }
 
   { // instruction 4 ---- MAC state
-    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "CORE_STATE_MAC"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "core_mac"));
     
     auto is_start = pe_config_is_valid & is_start_reg;
     auto state_mac = (state == PE_CORE_STATE_MAC);
@@ -270,7 +270,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
   }
 
   { // instruction 5 ---- BIAS state
-    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "CORE_STATE_BIAS"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "core_bias"));
 
     auto is_start = pe_config_is_valid & is_start_reg;
     auto run_mac_invalid = (run_mac_flag == PE_CORE_INVALID);
@@ -335,7 +335,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
   }
 
   { // instruction 6 ---- OUT state
-    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "CORE_STATE_OUT"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "core_out"));
 
     auto is_start = pe_config_is_valid & is_start_reg;
     auto state_out = (state == PE_CORE_STATE_OUT);
@@ -421,7 +421,7 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
   }
 
   {// instruction 0 ---- get data from the memory.
-    auto instr = child_run_mac.NewInstr(PEGetInstrName(pe_idx, "CORE_RUN_MAC_GET_DATA"));
+    auto instr = child_run_mac.NewInstr(PEGetInstrName(pe_idx, "core_run_mac_data"));
     auto state_fetch = (state == PE_CORE_RUN_MAC_STATE_FETCH);
 
     instr.SetDecode(child_valid & state_fetch);
@@ -476,7 +476,7 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
   }
 
   {// instruction 1 ---- multiply the weight vector and input vector
-    auto instr = child_run_mac.NewInstr(PEGetInstrName(pe_idx, "CORE_RUN_MAC_MULTIPLY"));
+    auto instr = child_run_mac.NewInstr(PEGetInstrName(pe_idx, "core_run_mac_mul"));
     auto state_mul = (state == PE_CORE_RUN_MAC_STATE_MUL);
 
     instr.SetDecode(child_valid & state_mul);
