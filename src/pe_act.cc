@@ -25,10 +25,13 @@
 // File: pe_act.cc
 
 #include <flex/flex.h>
+#include <flex/util.h>
 
 namespace ilang {
 // declare a child ILA to organize the child instructions of PE Activation unit.
 void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base);
+
+// helper functions
 
 void DefinePEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
   // TODO
@@ -50,6 +53,13 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
         child.NewBvState(PEGetVarName(pe_idx, ACT_INSTR_COUNTER), PE_ACT_INSTR_COUNTER_BITWIDTH);
   auto output_cntr = 
         child.NewBvState(PEGetVarName(pe_idx, ACT_OUTPUT_COUNTER), PE_ACT_OUTPUT_COUNTER_BITWIDTH);
+
+  auto state = 
+        child.NewBvState(PEGetVarName(pe_idx, ACT_STATE), PE_ACT_STATE_BITWIDTH);
+  
+  auto a1 = child.NewBvState(PEGetVarName(pe_idx, ACT_REG_A1), PE_ACT_REG_IDX_BITWIDTH);
+  auto a2 = child.NewBvState(PEGetVarName(pe_idx, ACT_REG_A2), PE_ACT_REG_IDX_BITWIDTH);
+  auto op = child.NewBvState(PEGetVarName(pe_idx, ACT_OP), PE_ACT_OP_BITWIDTH);
   
   auto w_out = child.NewBvState(PEGetVarName(pe_idx, ACT_W_OUT), PE_ACT_FLAG_BITWIDTH);
   auto w_load = child.NewBvState(PEGetVarName(pe_idx, ACT_W_LOAD), PE_ACT_FLAG_BITWIDTH);
@@ -94,22 +104,40 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     // reset the act vector register
     for (auto i = 0; i < ACT_REGS_NUM; i++) {
       for (auto j = 0; j < ACT_SCALAR; j++) {
-        auto entry = child.state(PEGetActRegName(pe_idx, i, j, ACT_REGS);
+        auto entry = child.state(PEGetActRegName(pe_idx, i, j, ACT_REGS));
         instr.SetUpdate(entry, BvConst(0, PE_CORE_ACT_VECTOR_BITWIDTH));
       }
     }
+
+    // set the FSM state to fetch
+    instr.SetUpdate(state, BvConst(PE_ACT_STATE_FETCH, PE_ACT_STATE_BITWIDTH));
   }  
 
   { // instr1 ---- run instruction in the act unit
     auto instr = child.NewInstr(PEGetInstrName(pe_idx, "act_child_run_instr"));
     // TODO: Think about how to separate the instructions decode conditions
     auto is_start = (is_start_reg == PE_ACT_VALID);
+    auto state_fetch = (state == PE_ACT_STATE_FETCH);
     
-    instr.SetDecode(is_start);
+    instr.SetDecode(is_start & state_fetch);
 
-    // fetch instruction from the 
+    // fetch instruction from the instruction register
+    auto current_instr = PEActInstrFetch(m, pe_idx, instr_cntr);
+    auto a1_next = Extract(current_instr, PE_ACT_REG_A1_HI_IDX, PE_ACT_REG_A1_LO_IDX);
+    auto a2_next = Extract(current_instr, PE_ACT_REG_A2_HI_IDX, PE_ACT_REG_A2_LO_IDX);
+    auto op_next = Extract(current_instr, PE_ACT_OP_HI_IDX, PE_ACT_OP_LO_IDX);
+
+    // update opcode and registers
+    instr.SetUpdate(a1, a1_next);
+    instr.SetUpdate(a2, a2_next);
+    instr.SetUpdate(op, op_next);
+
+    // update FSM state
+    instr.SetUpdate(state, BvConst(PE_ACT_STATE_EXEC, PE_ACT_STATE_BITWIDTH));
   }
 }
+
+
 
 
 
