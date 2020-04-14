@@ -211,6 +211,43 @@ namespace ilang {
 #define ACT_VECTOR_16_31_CONFIG_REG_INST15 "act_vector_16_31_Inst15"
 #define ACT_VECTOR_16_31_CONFIG_REG_INST15_WIDTH 8
 
+// PE Act Child instructions 
+
+#define PE_ACT_VALID 1
+#define PE_ACT_INVALID 0
+
+#define ACT_IS_START_REG "act_is_start_reg"
+#define PE_ACT_IS_START_REG_BITWIDTH 1
+
+#define ACT_INSTR_COUNTER "act_instruction_counter"
+#define PE_ACT_INSTR_COUNTER_BITWIDTH 5
+
+#define ACT_OUTPUT_COUNTER "act_output_counter"
+#define PE_ACT_OUTPUT_COUNTER_BITWIDTH 8
+
+// PE Act Register
+#define ACT_REGS_NUM 4
+#define ACT_REGS "act_regs"
+
+// PE Act control flag
+#define ACT_IS_INIT_REG "act_is_init_reg"
+#define PE_ACT_IS_INIT_REG_BITWIDTH 1
+
+#define PE_ACT_FLAG_BITWIDTH 1
+#define ACT_W_OUT "act_w_out"
+#define ACT_W_LOAD "act_w_load"
+#define ACT_W_DONE "act_w_done"
+#define ACT_IS_INCR "act_is_incr"
+
+#define ACT_CHILD_STATE "act_child_state"
+#define ACT_CHILD_STATE_BITWIDTH 3
+#define PE_ACT_CHILD_STATE_IDLE 0
+#define PE_ACT_CHILD_STATE_FETCH 1
+#define PE_ACT_CHILD_STATE_DECODE 2
+#define PE_ACT_CHILD_STATE_EXECUTE 3
+#define PE_ACT_CHILD_STATE_MEM 4
+#define PE_ACT_CHILD_STATE_NEXT 5
+
 }; // namespace ilang
 
 #endif // FLEX_PE_ACT_UNIT_H__

@@ -60,6 +60,11 @@ inline std::string PEGetVarNameVector(const int& pe_idx, const int& v_idx,
   return "PE" + prefix + "_" + var_name + "_" + suffix;
 }
 
+inline std::string PEGetActRegName(const int& pe_idx, const int& reg_idx,
+                                    const int& v_idx, const std::string& var_name) {
+  return PEGetVarNameVector(pe_idx, reg_idx, var_name) + "_" + std::to_string(v_idx);
+}
+
 inline std::string PEGetClusterData(const int& pe_idx, const int& byte_idx,
                                     const std::string& var_name) {
   ILA_ASSERT(pe_idx >= 0 && pe_idx < 4) << "Invalid PE index" << pe_idx;

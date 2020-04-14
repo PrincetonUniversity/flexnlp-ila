@@ -377,6 +377,12 @@ namespace ilang {
 #define CORE_RUN_BIAS_CHILD_CNTR "core_run_bias_child_cntr"
 #define PE_CORE_RUN_BIAS_CHILD_CNTR_BITWIDTH 5
 
+/****** shared states between pe_core and pe_act ********/
+// valid bit for pe_act_reg, immitate the push function,
+#define CORE_ACT_REG_PORT_VALID "act_reg_port_valid"
+#define PE_CORE_ACT_REG_PORT_VALID_BITWIDTH 1
+
+
 }; // namespace ilang
 
 #endif // FLEX_PE_CORE_H__

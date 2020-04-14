@@ -177,6 +177,10 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     instr.SetUpdate(m.state(PE_CNTR), pe_cntr_next);
     instr.SetUpdate(m.state(PE_START_SIGNAL_SHARED), pe_start_next);
 
+    // update 04132020: initialize the shared valid flag for act_port_register
+    instr.SetUpdate(m.state(PEGetVarName(pe_idx, CORE_ACT_REG_PORT_VALID)),
+                      BvConst(PE_CORE_INVALID, PE_CORE_ACT_REG_PORT_VALID_BITWIDTH));
+
   }
 
   { // instruction 3 ---- select next state
@@ -194,7 +198,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto zero_first_cond = (is_zero_first == PE_CORE_VALID) & (zero_active == PE_CORE_VALID);
     auto next_state = Ite(zero_first_cond, BvConst(PE_CORE_STATE_BIAS, PE_CORE_STATE_BITWIDTH),
                                             BvConst(PE_CORE_STATE_MAC, PE_CORE_STATE_BITWIDTH));
-    
+        
     // states updates
     // reset the accumulate registers
     for (auto i = 0; i < CORE_SCALAR; i++) {
@@ -374,6 +378,10 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     instr.SetUpdate(output_cntr, output_cntr_next);
     instr.SetUpdate(is_zero_first, is_zero_first_next);
     instr.SetUpdate(state, next_state);
+
+    // update 04132020: set the act_port_reg valid bit at output stage
+    instr.SetUpdate(m.state(PEGetVarName(pe_idx, CORE_ACT_REG_PORT_VALID)),
+                      BvConst(PE_CORE_VALID, PE_CORE_ACT_REG_PORT_VALID_BITWIDTH));
   }
 
 
