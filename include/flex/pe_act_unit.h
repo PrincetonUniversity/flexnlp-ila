@@ -226,7 +226,8 @@ namespace ilang {
 #define PE_ACT_OUTPUT_COUNTER_BITWIDTH 8
 
 // PE Act Register
-#define ACT_REGS_NUM 4
+#define PE_ACT_REGS_NUM 4
+#define PE_ACT_REGS_ADDR_WIDTH 4 // 16 entries per vector
 #define ACT_REGS "act_regs"
 
 // PE Act control flag
@@ -241,10 +242,12 @@ namespace ilang {
 
 // ACT FSM STATE
 #define ACT_STATE "act_state"
-#define PE_ACT_STATE_BITWIDTH 2
+#define PE_ACT_STATE_BITWIDTH 3
 #define PE_ACT_STATE_FETCH 0
 #define PE_ACT_STATE_EXEC 1
 #define PE_ACT_STATE_INCR 2
+#define PE_ACT_STATE_SEND_DONE 3
+#define PE_ACT_STATE_IDLE 4
 
 // ACT opcode
 #define ACT_OP "act_op"

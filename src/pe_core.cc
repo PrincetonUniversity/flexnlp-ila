@@ -343,8 +343,12 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
 
     auto is_start = pe_config_is_valid & is_start_reg;
     auto state_out = (state == PE_CORE_STATE_OUT);
+    // update 04162020: flexnlp use blocking push on act port, thus if port valid is high, it should halt
+    // this instruction
+    auto act_port_invalid = 
+          (m.state(PEGetVarName(pe_idx, CORE_ACT_REG_PORT_VALID)) == PE_CORE_INVALID);
 
-    instr.SetDecode(is_start & state_out);
+    instr.SetDecode(is_start & state_out & act_port_invalid);
 
     auto num_mngr = m.state(PEGetVarName(pe_idx, RNN_LAYER_SIZING_CONFIG_REG_NUM_MANAGER));
     auto num_output = m.state(PEGetVarName(pe_idx, RNN_LAYER_SIZING_CONFIG_REG_NUM_OUTPUT));
@@ -380,6 +384,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     instr.SetUpdate(state, next_state);
 
     // update 04132020: set the act_port_reg valid bit at output stage
+    // FlexNLP use blocking push on act_port, thus if the port valid is high, it should halt this out instruction
     instr.SetUpdate(m.state(PEGetVarName(pe_idx, CORE_ACT_REG_PORT_VALID)),
                       BvConst(PE_CORE_VALID, PE_CORE_ACT_REG_PORT_VALID_BITWIDTH));
   }
