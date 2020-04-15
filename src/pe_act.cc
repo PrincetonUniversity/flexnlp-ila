@@ -333,9 +333,193 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     instr.SetUpdate(state, next_state);
   }
    
-  {
-    
+  { // instr 8 ---- op 0x4, OUTGB, output result to GB
+    // OUTGB A2 -> Output
+    // TODO: Need to make sequential access to the shared states
+
   }
+
+  { // instr 9 ---- op 0x7, COPY
+    // COPY A1 -> A2
+    auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_op_copy"));
+    auto is_start = (is_start_reg == PE_ACT_VALID);
+    auto state_exec = (state == PE_ACT_STATE_EXEC);
+    auto op_copy = (op == PE_ACT_OP_COPY);
+
+    instr.SetDecode(is_start & state_exec & op_copy);
+
+    auto reg_a1 = PEActGetReg(child, pe_idx, a1);
+    auto reg_a2 = PEActGetReg(child, pe_idx, a2);
+    auto reg_a2_next = reg_a2;
+
+    for (auto i = 0; i < ACT_SCALAR; i++) {
+      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
+      auto data_a1 = Load(reg_a1, reg_addr);
+      reg_a2_next = Store(reg_a2_next, reg_addr, data_a1);
+    }
+
+    instr.SetUpdate(reg_a2, reg_a2_next);
+
+    auto next_state = BvConst(PE_ACT_STATE_INCR, PE_ACT_STATE_BITWIDTH);
+    instr.SetUpdate(state, next_state);
+  }
+
+  { // instr 10 ---- op 0x8, EADD, A2 = A2 + A1
+    auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_op_eadd"));
+    auto is_start = (is_start_reg == PE_ACT_VALID);
+    auto state_exec = (state == PE_ACT_STATE_EXEC);
+    auto op_eadd = (op == PE_ACT_OP_EADD);
+
+    instr.SetUpdate(is_start & state_exec & op_eadd);
+
+    auto reg_a1 = PEActGetReg(child, pe_idx, a1);
+    auto reg_a2 = PEActGetReg(child, pe_idx, a2);
+    auto reg_a2_next = reg_a2;
+
+    for (auto i = 0; i < ACT_SCALAR; i++) {
+      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
+      auto data_a1 = Load(reg_a1, reg_addr);
+      auto data_a2 = Load(reg_a2, reg_addr);
+      auto result = data_a1 + data_a2;
+      reg_a2_next = Store(reg_a2_next, reg_addr, result);
+    }
+
+    instr.SetUpdate(reg_a2, reg_a2_next);
+
+    auto next_state = BvConst(PE_ACT_STATE_INCR, PE_ACT_STATE_BITWIDTH);
+    instr.SetUpdate(state, next_state);
+  }
+
+  { // instr 11 ---- op 0x9, EMUL, A2 = A2 * A1
+    auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_op_emul"));
+    auto is_start = (is_start_reg == PE_ACT_VALID);
+    auto state_exec = (state == PE_ACT_STATE_EXEC);
+    auto op_emul = (op == PE_ACT_OP_EADD);
+
+    instr.SetUpdate(is_start & state_exec & op_emul);
+
+    auto reg_a1 = PEActGetReg(child, pe_idx, a1);
+    auto reg_a2 = PEActGetReg(child, pe_idx, a2);
+    auto reg_a2_next = reg_a2;
+
+    for (auto i = 0; i < ACT_SCALAR; i++) {
+      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
+      auto data_a1 = Load(reg_a1, reg_addr);
+      auto data_a2 = Load(reg_a2, reg_addr);
+      // TODO: implement the EMUL function
+      auto result = PEActEmul(data_a1, data_a2);
+      reg_a2_next = Store(reg_a2_next, reg_addr, result);
+    }
+
+    instr.SetUpdate(reg_a2, reg_a2_next);
+
+    auto next_state = BvConst(PE_ACT_STATE_INCR, PE_ACT_STATE_BITWIDTH);
+    instr.SetUpdate(state, next_state);
+  }
+
+  { // instr 12 ---- op 0xA, SIGM, A2 = Sigmoid(A2)
+    auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_op_sigm"));
+    auto is_start = (is_start_reg == PE_ACT_VALID);
+    auto state_exec = (state == PE_ACT_STATE_EXEC);
+    auto op_sigm = (op == PE_ACT_OP_SIGM);
+
+    instr.SetDecode(is_start & state_exec & op_sigm);
+
+    // sigmoid is also element-wise
+    auto reg = PEActGetReg(child, pe_idx, a2);
+    auto reg_next = reg;
+
+    for (auto i = 0; i < ACT_SCALAR; i++) {
+      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
+      auto data = Load(reg, reg_addr);
+      // TODO: implement the sigmoid function
+      auto result = PEActSigmoid(data);
+      reg_next = Store(reg_next, reg_addr, result); 
+    }
+
+    instr.SetUpdate(reg, reg_next);
+
+    auto next_state = BvConst(PE_ACT_STATE_INCR, PE_ACT_STATE_BITWIDTH);
+    instr.SetUpdate(state, next_state);
+  }
+
+  { // instr 13 ---- op 0xB, TANH, A2 = TANH(A2)
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "act_child_op_tanh"));
+    auto is_start = (is_start_reg == PE_ACT_VALID);
+    auto state_exec = (state == PE_ACT_STATE_EXEC);
+    auto op_tanh = (op == PE_ACT_OP_TANH);
+
+    instr.SetUpdate(is_start & state_exec & op_tanh);
+
+    // tanh is also element-wise
+    auto reg = PEActGetReg(child, pe_idx, a2);
+    auto reg_next = reg;
+
+    for (auto i = 0; i < ACT_SCALAR; i++) {
+      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
+      auto data = Load(reg, reg_addr);
+      // TODO: implement the tanh function
+      auto result = PEActTanh(data);
+      reg_next = Store(reg_next, reg_addr, result);
+    }
+
+    instr.SetUpdate(reg, reg_next);
+
+    auto next_state = BvConst(PE_ACT_STATE_INCR, PE_ACT_STATE_BITWIDTH);
+    instr.SetUpdate(state, next_state);
+  }
+
+  { // instr 14 ---- op 0xC, RELU, A2 = RELU(A2)
+    auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_op_relu"));
+    auto is_start = (is_start_reg == PE_ACT_VALID);
+    auto state_exec = (state == PE_ACT_STATE_EXEC);
+    auto op_relu = (op == PE_ACT_OP_RELU);
+
+    instr.SetDecode(is_start & state_exec & op_relu);
+
+    auto reg = PEActGetReg(child, pe_idx, a2);
+    auto reg_next = reg;
+
+    for (auto i = 0; i < ACT_SCALAR; i++) {
+      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
+      auto data = Load(reg, reg_addr);
+      // TODO: implement the relu function
+      auto result = PEActRelu(data);
+      reg_next = Store(reg_next, reg_addr, result);
+    }
+
+    instr.SetUpdate(reg, reg_next);
+
+    auto next_state = BvConst(PE_ACT_STATE_INCR, PE_ACT_STATE_BITWIDTH);
+    instr.SetUpdate(state, next_state);
+  }
+
+  { // instr 15 ---- op 0xD, ONEX, A2 = 1 - A2
+    auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_op_onex"));
+    auto is_start = (is_start_reg == PE_ACT_VALID);
+    auto state_exec = (state == PE_ACT_STATE_EXEC);
+    auto op_onex = (op == PE_ACT_OP_ONEX);
+
+    instr.SetUpdate(is_start & state_exec & op_onex);
+
+    auto reg = PEActGetReg(child, pe_idx, a2);
+    auto reg_next = reg;
+
+    for (auto i = 0; i < ACT_SCALAR; i++) {
+      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
+      auto data = Load(reg, reg_addr);
+      // TODO: implement the ONEX function
+      auto result = PEActOnex(data);
+      reg_next = Store(reg_next, reg_addr, result);
+    }
+
+    instr.SetUpdate(reg, reg_next);
+
+    auto next_state = BvConst(PE_ACT_STATE_INCR, PE_ACT_STATE_BITWIDTH);
+    instr.SetUpdate(state, next_state);
+
+  }
+
 }
 
 /****** helper function for PE Act child instructions **********/
