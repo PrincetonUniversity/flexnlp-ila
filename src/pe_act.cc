@@ -33,6 +33,11 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base);
 
 // helper functions
 ExprRef PEActGetReg(Ila& child, const int& pe_idx, const ExprRef& reg_idx);
+ExprRef PEActEmul(const ExprRef& data1, const ExprRef& data2);
+ExprRef PEActSigmoid(const ExprRef& data);
+ExprRef PEActTanh(const ExprRef& data);
+ExprRef PEActRelu(const ExprRef& data);
+ExprRef PEActOnex(const ExprRef& data);
 
 void DefinePEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
   // TODO
@@ -197,18 +202,18 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     // use a scheduler here to force sequential access to the shared states
     auto instr = child.NewInstr(PEGetInstrName(pe_idx, "act_child_send_done"));
     auto state_sd = (state == PE_ACT_STATE_SEND_DONE);
-    auto cntr_valid = (m.state(PE_CNTR) == pe_idx);
+    auto cntr_valid = (m.state(PE_ACT_DONE_CNTR) == pe_idx);
 
     instr.SetDecode(state_sd & cntr_valid & (is_start_reg == PE_ACT_INVALID));
 
-    auto all_pe_cond = (m.state(PE_CNTR) >= 3);
-    auto pe_cntr_next = Ite(all_pe_cond, BvConst(0, PE_CNTR_BIWTDTH),
-                                          m.state(PE_CNTR) + 1);
+    auto all_pe_cond = (m.state(PE_ACT_DONE_CNTR) >= 3);
+    auto pe_cntr_next = Ite(all_pe_cond, BvConst(0, PE_ACT_DONE_CNTR_BITWIDTH),
+                                          m.state(PE_ACT_DONE_CNTR) + 1);
 
     auto next_state = BvConst(PE_ACT_STATE_IDLE, PE_ACT_STATE_BITWIDTH);
 
     instr.SetUpdate(state, next_state);
-    instr.SetUpdate(m.state(PE_CNTR), pe_cntr_next);
+    instr.SetUpdate(m.state(PE_ACT_DONE_CNTR), pe_cntr_next);
     // push pe_done when all of the four PEs are finish
     instr.SetUpdate(m.state(PE_DONE_SIGNAL_SHARED),
                       Ite(all_pe_cond, BvConst(PE_ACT_VALID, PE_DONE_SIGNAL_SHARED_BITWIDTH),
@@ -334,9 +339,40 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
   }
    
   { // instr 8 ---- op 0x4, OUTGB, output result to GB
-    // OUTGB A2 -> Output
+    // OUTGB A2 -> Output A2 to GB
     // TODO: Need to make sequential access to the shared states
+    auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_op_outgb"));
+    auto is_start = (is_start_reg == PE_ACT_VALID);
+    auto state_exec = (state == PE_ACT_STATE_EXEC);
+    auto op_outgb = (op == PE_ACT_OP_OUTGB);
+    // need to schedule the sequential access 
+    // need to check whether gb has popped the previous data
+    auto data_out_invalid = (m.state(GB_CONTROL_DATA_IN_VALID) == PE_ACT_INVALID);
+    auto cntr_valid = (m.state(PE_ACT_OUTGB_CNTR) == pe_idx);
 
+    instr.SetDecode(is_start & state_exec & op_outgb & data_out_invalid & cntr_valid);
+
+    auto all_pe_cond = (m.state(PE_ACT_OUTGB_CNTR) >= 3);
+    auto pe_cntr_next = Ite(all_pe_cond, BvConst(0, PE_ACT_OUTGB_CNTR_BITWIDTH),
+                                          m.state(PE_ACT_OUTGB_CNTR) + 1);
+    
+    auto reg = PEActGetReg(child, pe_idx, a2);
+    auto output_base_addr = m.state(PEGetVarName(pe_idx, ACT_MNGR_CONFIG_REG_OUTPUT_ADDR_BASE));
+    auto data_out_addr = output_cntr + output_base_addr;
+
+    instr.SetUpdate(m.state(GB_CONTROL_DATA_IN_ADDR), data_out_addr);
+
+    for (auto i = 0; i < ACT_SCALAR; i++) {
+      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
+      auto result = Load(reg, reg_addr);
+      instr.SetUpdate(m.state(PEGetGBDataInName(i, "GB_CONTROL_DATA_IN")), result);
+    }
+
+    auto next_state = BvConst(PE_ACT_STATE_INCR, PE_ACT_STATE_BITWIDTH);
+    instr.SetUpdate(state, next_state);
+
+    // update pe counter
+    instr.SetUpdate(m.state(PE_ACT_OUTGB_CNTR), pe_cntr_next);
   }
 
   { // instr 9 ---- op 0x7, COPY
@@ -370,7 +406,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto state_exec = (state == PE_ACT_STATE_EXEC);
     auto op_eadd = (op == PE_ACT_OP_EADD);
 
-    instr.SetUpdate(is_start & state_exec & op_eadd);
+    instr.SetDecode(is_start & state_exec & op_eadd);
 
     auto reg_a1 = PEActGetReg(child, pe_idx, a1);
     auto reg_a2 = PEActGetReg(child, pe_idx, a2);
@@ -396,7 +432,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto state_exec = (state == PE_ACT_STATE_EXEC);
     auto op_emul = (op == PE_ACT_OP_EADD);
 
-    instr.SetUpdate(is_start & state_exec & op_emul);
+    instr.SetDecode(is_start & state_exec & op_emul);
 
     auto reg_a1 = PEActGetReg(child, pe_idx, a1);
     auto reg_a2 = PEActGetReg(child, pe_idx, a2);
@@ -449,7 +485,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto state_exec = (state == PE_ACT_STATE_EXEC);
     auto op_tanh = (op == PE_ACT_OP_TANH);
 
-    instr.SetUpdate(is_start & state_exec & op_tanh);
+    instr.SetDecode(is_start & state_exec & op_tanh);
 
     // tanh is also element-wise
     auto reg = PEActGetReg(child, pe_idx, a2);
@@ -500,7 +536,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto state_exec = (state == PE_ACT_STATE_EXEC);
     auto op_onex = (op == PE_ACT_OP_ONEX);
 
-    instr.SetUpdate(is_start & state_exec & op_onex);
+    instr.SetDecode(is_start & state_exec & op_onex);
 
     auto reg = PEActGetReg(child, pe_idx, a2);
     auto reg_next = reg;

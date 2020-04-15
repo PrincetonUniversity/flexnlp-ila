@@ -80,6 +80,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
 
   // state holding valid pe numbers
   auto pe_valid_num = m.state(PE_VALID_NUM);
+  
 
   // core accumulator registers
   for (auto i = 0; i < PE_CORE_ACCUM_VECTOR_LANES; i++) {
@@ -99,7 +100,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto pe_not_start = (is_start_reg == PE_CORE_INVALID);
     auto gb_data_valid = (m.state(GB_CONTROL_DATA_OUT_VALID) == PE_CORE_VALID);
 
-    auto cntr_valid = (m.state(PE_CNTR) == pe_idx);
+    auto cntr_valid = (m.state(PE_CORE_CNTR) == pe_idx);
     auto state_idle = (state == PE_CORE_STATE_IDLE);
 
     instr.SetDecode(pe_config_is_valid & pe_not_start & gb_data_valid & cntr_valid & state_idle);
@@ -138,13 +139,13 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
 
     // update the control parameters
     auto all_pe_cond = BoolConst(pe_idx >= 3);
-    auto pe_cntr_next = Ite(all_pe_cond, BvConst(0, PE_CNTR_BIWTDTH),
-                                         BvConst(pe_idx + 1, PE_CNTR_BIWTDTH));
+    auto pe_cntr_next = Ite(all_pe_cond, BvConst(0, PE_CORE_CNTR_BIWTDTH),
+                                         BvConst(pe_idx + 1, PE_CORE_CNTR_BIWTDTH));
     auto gb_control_data_out_valid_next =
             Ite(all_pe_cond, BvConst(PE_CORE_INVALID, GB_CONTROL_DATA_OUT_VALID_BITWIDTH),
                               BvConst(PE_CORE_VALID, GB_CONTROL_DATA_OUT_VALID_BITWIDTH));
 
-    instr.SetUpdate(m.state(PE_CNTR), pe_cntr_next);    
+    instr.SetUpdate(m.state(PE_CORE_CNTR), pe_cntr_next);    
     instr.SetUpdate(m.state(GB_CONTROL_DATA_OUT_VALID), gb_control_data_out_valid_next);
     
   }
@@ -158,14 +159,14 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto state_idle = (state == PE_CORE_STATE_IDLE);
     auto is_start = pe_config_is_valid & pe_start_valid;
     // this instruction access the shared states, thus needs scheduling
-    auto cntr_valid = (m.state(PE_CNTR) == pe_idx);
+    auto cntr_valid = (m.state(PE_CORE_CNTR) == pe_idx);
     // only need the pe_start_valid here because the d
     instr.SetDecode(is_start & state_idle & cntr_valid);
 
     auto next_state = BvConst(PE_CORE_STATE_PRE, PE_CORE_STATE_BITWIDTH);
     auto all_pe_cond = BoolConst(pe_idx >= 3);
-    auto pe_cntr_next = Ite(all_pe_cond, BvConst(0, PE_CNTR_BIWTDTH),
-                                         BvConst(pe_idx + 1, PE_CNTR_BIWTDTH));
+    auto pe_cntr_next = Ite(all_pe_cond, BvConst(0, PE_CORE_CNTR_BIWTDTH),
+                                         BvConst(pe_idx + 1, PE_CORE_CNTR_BIWTDTH));
     auto pe_start_next = Ite(all_pe_cond, BvConst(PE_CORE_INVALID, PE_START_SIGNAL_SHARED_BITWIDTH),
                                           m.state(PE_START_SIGNAL_SHARED));
 
@@ -174,7 +175,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     // immitate the behavior of the pop operation
     // NEED TO BE CAREFUL ABOUT THE 4 PE CORES ACCESSES TO THE SHARED STATES!!!!!
     instr.SetUpdate(is_start_reg, BvConst(PE_CORE_VALID, PE_CORE_IS_START_BITWIDTH));
-    instr.SetUpdate(m.state(PE_CNTR), pe_cntr_next);
+    instr.SetUpdate(m.state(PE_CORE_CNTR), pe_cntr_next);
     instr.SetUpdate(m.state(PE_START_SIGNAL_SHARED), pe_start_next);
 
     // update 04132020: initialize the shared valid flag for act_port_register

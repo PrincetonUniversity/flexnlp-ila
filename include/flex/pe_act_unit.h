@@ -212,6 +212,12 @@ namespace ilang {
 #define ACT_VECTOR_16_31_CONFIG_REG_INST15_WIDTH 8
 
 // PE Act Child instructions 
+// used to schedule PE sending data back to GB
+#define PE_ACT_OUTGB_CNTR "pe_act_outgb_cntr"
+#define PE_ACT_OUTGB_CNTR_BITWIDTH 3
+// used to schedule PE sending PE_DONE back to GB
+#define PE_ACT_DONE_CNTR "pe_act_done_cntr"
+#define PE_ACT_DONE_CNTR_BITWIDTH 3
 
 #define PE_ACT_VALID 1
 #define PE_ACT_INVALID 0

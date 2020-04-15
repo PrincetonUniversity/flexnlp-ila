@@ -39,5 +39,8 @@ namespace ilang {
 #define ACT_WORD_MAX 0x7FFFF
 #define ACT_WORD_MIN - ACT_WORD_MAX
 
+ExprRef Adptflow2Fixed(const ExprRef& data);
+ExprRef Fixed2Adptflow(const ExprRef& data);
+
 } // namespace ilang
 #endif

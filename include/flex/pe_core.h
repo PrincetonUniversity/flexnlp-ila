@@ -300,10 +300,10 @@ namespace ilang {
 #define CORE_IS_START "core_is_start"
 #define PE_CORE_IS_START_BITWIDTH 1
 
-#define PE_CNTR "PE_CNTR"
-#define PE_CNTR_BIWTDTH 3
+#define PE_CORE_CNTR "pe_core_cntr"
+#define PE_CORE_CNTR_BIWTDTH 3
 
-#define PE_VALID_NUM "PE_VALID_NUM"
+#define PE_VALID_NUM "pe_valid_num"
 #define PE_VALID_NUM_BITWIDTH 3
 
 #define CORE_STATE "core_state"
