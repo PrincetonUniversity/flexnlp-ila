@@ -141,7 +141,8 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
       auto reg_next = reg;
       for (auto j = 0; j < ACT_SCALAR; j++) {
         auto addr = BvConst(j, PE_ACT_REGS_ADDR_WIDTH);
-        reg_next = Store(reg_next, addr, BvConst(0, PE_CORE_ACT_VECTOR_BITWIDTH));
+        auto zero = BvConst(0, PE_CORE_ACT_VECTOR_BITWIDTH);
+        reg_next = Store(reg_next, addr, zero + zero);
       }
       instr.SetUpdate(reg, reg_next);
     }
@@ -246,8 +247,9 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
 
     auto reg_next_v = PEActGetRegNext(child, pe_idx);
     for (auto i = 0; i < ACT_SCALAR; i++) {
-      auto addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
-      auto data = BvConst(0, PE_CORE_ACT_VECTOR_BITWIDTH);
+      auto addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH) + BvConst(0, PE_ACT_REGS_ADDR_WIDTH);
+      auto zero = BvConst(0, PE_CORE_ACT_VECTOR_BITWIDTH);
+      auto data = zero + zero;
       PEActRegStore_v(reg_next_v, a2, addr, data);
     }
     PEActRegUpdate_v(child, pe_idx, instr, reg_next_v); 
@@ -280,7 +282,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     for (auto i = 0; i < ACT_SCALAR; i++) {
       auto data_buf = Load(buffer, rd_addr + i);
       auto data_fixed = Adptflow2Fixed(data_buf, adptflow_bias);
-      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
+      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH) + BvConst(0, PE_ACT_REGS_ADDR_WIDTH);
       PEActRegStore_v(reg_next_v, a2, reg_addr, data_fixed);
     }
 
@@ -314,7 +316,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     // don't need to use the vector method for it only reads from the registers
     for (auto i = 0; i < ACT_SCALAR; i++) {
       // TODO: implement the Fixed2Adptflow function
-      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
+      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH) + BvConst(0, PE_ACT_REGS_ADDR_WIDTH);
       auto data_reg = PEActRegLoad_v(child, pe_idx, a2, reg_addr);
       auto data_adptflow = Fixed2Adptflow(data_reg, adptflow_bias);
       buffer_next = Store(buffer_next, wr_addr + i, data_adptflow);
@@ -340,7 +342,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
 
     auto reg_next_v = PEActGetRegNext(child, pe_idx);
     for (auto i = 0; i < ACT_SCALAR; i++) {
-      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
+      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH) + BvConst(0, PE_ACT_REGS_ADDR_WIDTH);
       auto data = m.state(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECOTR));
       PEActRegStore_v(reg_next_v, a2, reg_addr, data);
     }
@@ -376,7 +378,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     instr.SetUpdate(m.state(GB_CONTROL_DATA_IN_ADDR), data_out_addr);
 
     for (auto i = 0; i < ACT_SCALAR; i++) {
-      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
+      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH) + BvConst(0, PE_ACT_REGS_ADDR_WIDTH);
       auto result = PEActRegLoad_v(child, pe_idx, a2, reg_addr);
       instr.SetUpdate(m.state(PEGetGBDataInName(i, GB_CONTROL_DATA_IN)), result);
     }
@@ -398,7 +400,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto reg_next_v = PEActGetRegNext(child, pe_idx);
     
     for (auto i = 0; i < ACT_SCALAR; i++) {
-      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
+      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH) + BvConst(0, PE_ACT_REGS_ADDR_WIDTH);
       auto data = PEActRegLoad_v(child, pe_idx, a1, reg_addr);
       PEActRegStore_v(reg_next_v, a2, reg_addr, data);
     }
@@ -419,7 +421,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
 
     auto reg_next_v = PEActGetRegNext(child, pe_idx);
     for (auto i = 0; i < ACT_SCALAR; i++) {
-      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
+      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH) + BvConst(0, PE_ACT_REGS_ADDR_WIDTH);
       auto data_a1 = PEActRegLoad_v(child, pe_idx, a1, reg_addr);
       auto data_a2 = PEActRegLoad_v(child, pe_idx, a2, reg_addr);
 
@@ -444,7 +446,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
 
     auto reg_next_v = PEActGetRegNext(child, pe_idx);
     for (auto i = 0; i < ACT_SCALAR; i++) {
-      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
+      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH) + BvConst(0, PE_ACT_REGS_ADDR_WIDTH);
       auto data_a1 = PEActRegLoad_v(child, pe_idx, a1, reg_addr);
       auto data_a2 = PEActRegLoad_v(child, pe_idx, a2, reg_addr);
 
@@ -470,7 +472,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     // sigmoid is also element-wise
     auto reg_next_v = PEActGetRegNext(child, pe_idx);
     for (auto i = 0; i < ACT_SCALAR; i++) {
-      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
+      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH) + BvConst(0, PE_ACT_REGS_ADDR_WIDTH);
       auto data = PEActRegLoad_v(child, pe_idx, a2, reg_addr);
 
       auto result = PEActSigmoid(data);
@@ -496,7 +498,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     // tanh is also element-wise
     auto reg_next_v = PEActGetRegNext(child, pe_idx);
     for (auto i = 0; i < ACT_SCALAR; i++) {
-      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
+      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH) + BvConst(0, PE_ACT_REGS_ADDR_WIDTH);
       auto data = PEActRegLoad_v(child, pe_idx, a2, reg_addr);
 
       auto result = PEActTanh(data);
@@ -521,7 +523,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     // Relu is also element wise
     auto reg_next_v = PEActGetRegNext(child, pe_idx);
     for (auto i = 0; i < ACT_SCALAR; i++) {
-      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
+      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH) + BvConst(0, PE_ACT_REGS_ADDR_WIDTH);
       auto data = PEActRegLoad_v(child, pe_idx, a2, reg_addr);
 
       auto result = PEActRelu(data);
@@ -547,7 +549,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     // Onex is also element wise
     auto reg_next_v = PEActGetRegNext(child, pe_idx);
     for (auto i = 0; i < ACT_SCALAR; i++) {
-      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
+      auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH) + BvConst(0, PE_ACT_REGS_ADDR_WIDTH);
       auto data = PEActRegLoad_v(child, pe_idx, a2, reg_addr);
 
       auto result = PEActOnex(data);
