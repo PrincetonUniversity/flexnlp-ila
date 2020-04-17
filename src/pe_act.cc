@@ -389,7 +389,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     for (auto i = 0; i < ACT_SCALAR; i++) {
       auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
       auto result = Load(reg, reg_addr);
-      instr.SetUpdate(m.state(PEGetGBDataInName(i, "GB_CONTROL_DATA_IN")), result);
+      instr.SetUpdate(m.state(PEGetGBDataInName(i, GB_CONTROL_DATA_IN)), result);
     }
 
     auto next_state = BvConst(PE_ACT_STATE_INCR, PE_ACT_STATE_BITWIDTH);
