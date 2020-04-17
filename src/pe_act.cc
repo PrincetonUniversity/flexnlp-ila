@@ -32,12 +32,35 @@ namespace ilang {
 void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base);
 
 // helper functions
+// FIXME: all operations is signed.
 ExprRef PEActGetReg(Ila& child, const int& pe_idx, const ExprRef& reg_idx);
-ExprRef PEActEmul(const ExprRef& data1, const ExprRef& data2);
-ExprRef PEActSigmoid(const ExprRef& data);
-ExprRef PEActTanh(const ExprRef& data);
-ExprRef PEActRelu(const ExprRef& data);
-ExprRef PEActOnex(const ExprRef& data);
+
+// ExprRef Adptflow2Fixed(const ExprRef& data);
+// ExprRef Fixed2Adptflow(const ExprRef& data);
+
+// declare uninterpreted function here;
+auto uf_act_in1 = SortRef::BV(PE_CORE_ACT_VECTOR_BITWIDTH);
+auto uf_act_in2 = SortRef::BV(PE_CORE_ACT_VECTOR_BITWIDTH);
+auto uf_act_out = SortRef::BV(PE_CORE_ACT_VECTOR_BITWIDTH);
+
+auto uf_scalar_type = SortRef::BV(TOP_DATA_IN_WIDTH);
+auto uf_act_type = SortRef::BV(PE_CORE_ACT_VECTOR_BITWIDTH);
+auto uf_adpbias_type = SortRef::BV(ACT_MNGR_CONFIG_REG_ADPFLOAT_BIAS_WIDTH);
+
+FuncRef Adptflow2Fixed("Adptflow2Fixed", uf_act_type, uf_scalar_type, uf_adpbias_type);
+FuncRef Fixed2Adptflow("Fixed2Adaptflow", uf_scalar_type, uf_act_type, uf_adpbias_type);
+
+FuncRef PEActEmul("PEActEmul", uf_act_out, uf_act_in1, uf_act_in2);
+FuncRef PEActSigmoid("PEActSigmoid", uf_act_out, uf_act_in1);
+FuncRef PEActTanh("PEActTanh", uf_act_out, uf_act_in1);
+FuncRef PEActRelu("PEActRelu", uf_act_out, uf_act_in1);
+FuncRef PEActOnex("PEActOnex", uf_act_out, uf_act_in1);
+
+// auto PEActEmul(const ExprRef& data1, const ExprRef& data2);
+// auto PEActSigmoid(const ExprRef& data);
+// auto PEActTanh(const ExprRef& data);
+// auto PEActRelu(const ExprRef& data);
+// auto PEActOnex(const ExprRef& data);
 
 void DefinePEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
   // TODO
@@ -140,7 +163,6 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
 
   { // instr1 ---- fetch instruction in the act unit
     auto instr = child.NewInstr(PEGetInstrName(pe_idx, "act_child_run_instr"));
-    // TODO: Think about how to separate the instructions decode conditions
     auto is_start = (is_start_reg == PE_ACT_VALID);
     auto state_fetch = (state == PE_ACT_STATE_FETCH);
     
@@ -262,11 +284,12 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto reg = PEActGetReg(child, pe_idx, a2);
     auto reg_next = reg;
     auto buffer = m.state(PEGetVarName(pe_idx, ACT_BUFFER));
+    auto adptflow_bias = m.state(PEGetVarName(pe_idx, ACT_MNGR_CONFIG_REG_ADPFLOAT_BIAS));
 
     for (auto i = 0; i < ACT_SCALAR; i++) {
       // TODO: implement the adptflow2fixed function
       auto data_buf = Load(buffer, rd_addr + i);
-      auto data_fixed = Adptflow2Fixed(data_buf);
+      auto data_fixed = Adptflow2Fixed(data_buf, adptflow_bias);
       // store the fixed format data into the register
       auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
       reg_next = Store(reg_next, reg_addr, data_fixed);
@@ -296,12 +319,13 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto reg = PEActGetReg(child, pe_idx, a2);
     auto buffer = m.state(PEGetVarName(pe_idx, ACT_BUFFER));
     auto buffer_next = buffer;
+    auto adptflow_bias = m.state(PEGetVarName(pe_idx, ACT_MNGR_CONFIG_REG_ADPFLOAT_BIAS));
 
     for (auto i = 0; i < ACT_SCALAR; i++) {
       // TODO: implement the Fixed2Adptflow function
       auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
       auto data_reg = Load(reg, reg_addr);
-      auto data_adptflow = Fixed2Adptflow(data_reg);
+      auto data_adptflow = Fixed2Adptflow(data_reg, adptflow_bias);
       buffer_next = Store(buffer_next, wr_addr + i, data_adptflow);
     }
 
@@ -559,6 +583,8 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
 }
 
 /****** helper function for PE Act child instructions **********/
+// using uninterpreted functions for now
+// challenge is how to deal with signed operations
 
 // This function help return the ExprRef pointer to the register memory state
 ExprRef PEActGetReg(Ila& child, const int& pe_idx, const ExprRef& reg_idx) {
@@ -568,6 +594,63 @@ ExprRef PEActGetReg(Ila& child, const int& pe_idx, const ExprRef& reg_idx) {
                                     child.state(PEGetVarNameVector(pe_idx, 3, ACT_REGS)))));
   return result;
 }
+
+// // This function calculate element-wise multiplication
+// // return result = data1 * data2
+// // FIXME: This multiplication is signed!
+// auto PEActEmul(const ExprRef& data1, ExprRef& data2) {
+//   // auto data_1_ext = Concat(BvConst(0, data1.bit_width()), data1);  
+//   // auto data_2_ext = Concat(BvConst(0, data2.bit_width()), data2);
+//   // auto result = data_1_ext * data_2_ext;
+//   auto uf_in1 = SortRef::BV(data1.bit_width());
+//   auto uf_in2 = SortRef::BV(data2.bit_width());
+//   auto uf_out = SortRef::BV(data1.bit_width());
+
+//   FuncRef Emul("Emul", uf_out, uf_in1, uf_in2);
+
+//   return uf_out;
+// }
+
+// auto PEActSigmoid(const ExprRef& in) {
+//   // use uninterpreted function for now
+//   auto uf_in = SortRef::BV(in.bit_width());
+//   auto uf_out = SortRef::BV(in.bit_width());
+
+//   FuncRef Sigmoid("Sigmoid", uf_out, uf_in);
+
+//   return uf_out;
+// }
+
+// auto PEActTanh(const ExprRef& in) {
+//   // use uninterpreted function for now
+//   auto uf_in = SortRef::BV(in.bit_width());
+//   auto uf_out = SortRef::BV(in.bit_width());
+
+//   FuncRef Tanh("Tanh", uf_out, uf_in);
+
+//   return uf_out;
+// }
+
+// auto PEActRelu(const ExprRef& in) {
+//   // use uninterpreted function for now
+//   auto uf_in = SortRef::BV(in.bit_width());
+//   auto uf_out = SortRef::BV(in.bit_width());
+
+//   FuncRef Relu("Relu", uf_out, uf_in);
+
+//   return uf_out;
+// }
+
+// auto PEActOnex(const ExprRef& in) {
+//   // use uninterpreted function for now
+//   auto uf_in = SortRef::BV(in.bit_width());
+//   auto uf_out = SortRef::BV(in.bit_width());
+
+//   FuncRef Onex("Onex", uf_out, uf_in);
+
+//   return uf_out;
+// }
+
 
 
 

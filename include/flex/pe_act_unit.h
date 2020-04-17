@@ -226,7 +226,7 @@ namespace ilang {
 #define PE_ACT_IS_START_REG_BITWIDTH 1
 
 #define ACT_INSTR_COUNTER "act_instruction_counter"
-#define PE_ACT_INSTR_COUNTER_BITWIDTH 5
+#define PE_ACT_INSTR_COUNTER_BITWIDTH ACT_MNGR_CONFIG_REG_NUM_INST_WIDTH
 
 #define ACT_OUTPUT_COUNTER "act_output_counter"
 #define PE_ACT_OUTPUT_COUNTER_BITWIDTH 8

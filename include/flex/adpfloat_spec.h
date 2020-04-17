@@ -24,6 +24,8 @@
 
 // File: adpflow_spec.h
 
+#include <ilang/ilang++.h>
+
 #ifndef FLEX_ADPFLOAT_SPEC__
 #define FLEX_ADPFLOAT_SPEC__
 
@@ -38,9 +40,6 @@ namespace ilang {
 #define ACT_NUM_FRAC 14
 #define ACT_WORD_MAX 0x7FFFF
 #define ACT_WORD_MIN - ACT_WORD_MAX
-
-ExprRef Adptflow2Fixed(const ExprRef& data);
-ExprRef Fixed2Adptflow(const ExprRef& data);
 
 } // namespace ilang
 #endif
