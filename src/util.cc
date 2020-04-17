@@ -92,5 +92,43 @@ ExprRef FetchClusterLUT_Second(Ila& m, const int& pe_idx, const ExprRef& index) 
   return result;
 }
 
+ExprRef PEActInstrFetch(Ila&m, const int& pe_idx, const ExprRef& instr_cntr) {
+  auto result = 
+    Ite(instr_cntr == 0, m.state(PEGetVarName(pe_idx, ACT_VECTOR_0_15_CONFIG_REG_INST0)),
+      Ite(instr_cntr == 1, m.state(PEGetVarName(pe_idx, ACT_VECTOR_0_15_CONFIG_REG_INST1)),
+      Ite(instr_cntr == 2, m.state(PEGetVarName(pe_idx, ACT_VECTOR_0_15_CONFIG_REG_INST2)),
+      Ite(instr_cntr == 3, m.state(PEGetVarName(pe_idx, ACT_VECTOR_0_15_CONFIG_REG_INST3)),
+      Ite(instr_cntr == 4, m.state(PEGetVarName(pe_idx, ACT_VECTOR_0_15_CONFIG_REG_INST4)),
+      Ite(instr_cntr == 5, m.state(PEGetVarName(pe_idx, ACT_VECTOR_0_15_CONFIG_REG_INST5)),
+      Ite(instr_cntr == 6, m.state(PEGetVarName(pe_idx, ACT_VECTOR_0_15_CONFIG_REG_INST6)),
+      Ite(instr_cntr == 7, m.state(PEGetVarName(pe_idx, ACT_VECTOR_0_15_CONFIG_REG_INST7)),
+      Ite(instr_cntr == 8, m.state(PEGetVarName(pe_idx, ACT_VECTOR_0_15_CONFIG_REG_INST8)),
+      Ite(instr_cntr == 9, m.state(PEGetVarName(pe_idx, ACT_VECTOR_0_15_CONFIG_REG_INST9)),
+      Ite(instr_cntr == 10, m.state(PEGetVarName(pe_idx, ACT_VECTOR_0_15_CONFIG_REG_INST10)),
+      Ite(instr_cntr == 11, m.state(PEGetVarName(pe_idx, ACT_VECTOR_0_15_CONFIG_REG_INST11)),
+      Ite(instr_cntr == 12, m.state(PEGetVarName(pe_idx, ACT_VECTOR_0_15_CONFIG_REG_INST12)),
+      Ite(instr_cntr == 13, m.state(PEGetVarName(pe_idx, ACT_VECTOR_0_15_CONFIG_REG_INST13)),
+      Ite(instr_cntr == 14, m.state(PEGetVarName(pe_idx, ACT_VECTOR_0_15_CONFIG_REG_INST14)),
+      Ite(instr_cntr == 15, m.state(PEGetVarName(pe_idx, ACT_VECTOR_0_15_CONFIG_REG_INST15)),
+      Ite(instr_cntr == 16, m.state(PEGetVarName(pe_idx, ACT_VECTOR_16_31_CONFIG_REG_INST0)),
+      Ite(instr_cntr == 17, m.state(PEGetVarName(pe_idx, ACT_VECTOR_16_31_CONFIG_REG_INST1)),
+      Ite(instr_cntr == 18, m.state(PEGetVarName(pe_idx, ACT_VECTOR_16_31_CONFIG_REG_INST2)),
+      Ite(instr_cntr == 19, m.state(PEGetVarName(pe_idx, ACT_VECTOR_16_31_CONFIG_REG_INST3)),
+      Ite(instr_cntr == 20, m.state(PEGetVarName(pe_idx, ACT_VECTOR_16_31_CONFIG_REG_INST4)),
+      Ite(instr_cntr == 21, m.state(PEGetVarName(pe_idx, ACT_VECTOR_16_31_CONFIG_REG_INST5)),
+      Ite(instr_cntr == 22, m.state(PEGetVarName(pe_idx, ACT_VECTOR_16_31_CONFIG_REG_INST6)),
+      Ite(instr_cntr == 23, m.state(PEGetVarName(pe_idx, ACT_VECTOR_16_31_CONFIG_REG_INST7)),
+      Ite(instr_cntr == 24, m.state(PEGetVarName(pe_idx, ACT_VECTOR_16_31_CONFIG_REG_INST8)),
+      Ite(instr_cntr == 25, m.state(PEGetVarName(pe_idx, ACT_VECTOR_16_31_CONFIG_REG_INST9)),
+      Ite(instr_cntr == 26, m.state(PEGetVarName(pe_idx, ACT_VECTOR_16_31_CONFIG_REG_INST10)),
+      Ite(instr_cntr == 27, m.state(PEGetVarName(pe_idx, ACT_VECTOR_16_31_CONFIG_REG_INST11)),
+      Ite(instr_cntr == 28, m.state(PEGetVarName(pe_idx, ACT_VECTOR_16_31_CONFIG_REG_INST12)),
+      Ite(instr_cntr == 29, m.state(PEGetVarName(pe_idx, ACT_VECTOR_16_31_CONFIG_REG_INST13)),
+      Ite(instr_cntr == 30, m.state(PEGetVarName(pe_idx, ACT_VECTOR_16_31_CONFIG_REG_INST14)),
+                            m.state(PEGetVarName(pe_idx, ACT_VECTOR_16_31_CONFIG_REG_INST15))
+                            )))))))))))))))))))))))))))))));
+  return result;
+}
+
 
 }; // namespace ilang

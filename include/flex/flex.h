@@ -57,7 +57,7 @@ void DefinePEConfigInstr(Ila& m, const int& pe_idx, const uint64_t& base);
 
 void DefineGBCoreStore(Ila& m);
 
-void DefinePECoreStore(Ila& m, const int& pe_idx, const uint64_t& base);
+void DefinePEStore(Ila& m, const int& pe_idx, const uint64_t& base);
 
 void DefinePECore(Ila& m, const int& pe_idx, const uint64_t& base);
 void DefinePEAct(Ila& m, const int& pe_idx, const uint64_t& base);

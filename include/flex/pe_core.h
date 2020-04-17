@@ -300,10 +300,10 @@ namespace ilang {
 #define CORE_IS_START "core_is_start"
 #define PE_CORE_IS_START_BITWIDTH 1
 
-#define PE_CNTR "PE_CNTR"
-#define PE_CNTR_BIWTDTH 3
+#define PE_CORE_CNTR "pe_core_cntr"
+#define PE_CORE_CNTR_BIWTDTH 3
 
-#define PE_VALID_NUM "PE_VALID_NUM"
+#define PE_VALID_NUM "pe_valid_num"
 #define PE_VALID_NUM_BITWIDTH 3
 
 #define CORE_STATE "core_state"
@@ -376,6 +376,12 @@ namespace ilang {
 #define PE_CORE_RUN_BIAS_CHILD_FLAG_BITWIDTH 1
 #define CORE_RUN_BIAS_CHILD_CNTR "core_run_bias_child_cntr"
 #define PE_CORE_RUN_BIAS_CHILD_CNTR_BITWIDTH 5
+
+/****** shared states between pe_core and pe_act ********/
+// valid bit for pe_act_reg, immitate the push function,
+#define CORE_ACT_REG_PORT_VALID "act_reg_port_valid"
+#define PE_CORE_ACT_REG_PORT_VALID_BITWIDTH 1
+
 
 }; // namespace ilang
 
