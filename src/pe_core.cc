@@ -80,6 +80,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
 
   // state holding valid pe numbers
   auto pe_valid_num = m.state(PE_VALID_NUM);
+  
 
   // core accumulator registers
   for (auto i = 0; i < PE_CORE_ACCUM_VECTOR_LANES; i++) {
@@ -94,12 +95,12 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
   
   
   { // instructions 0 ---- read the data from GB
-    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "CORE_READ_GB_0"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "core_read_gb"));
   
     auto pe_not_start = (is_start_reg == PE_CORE_INVALID);
     auto gb_data_valid = (m.state(GB_CONTROL_DATA_OUT_VALID) == PE_CORE_VALID);
 
-    auto cntr_valid = (m.state(PE_CNTR) == pe_idx);
+    auto cntr_valid = (m.state(PE_CORE_CNTR) == pe_idx);
     auto state_idle = (state == PE_CORE_STATE_IDLE);
 
     instr.SetDecode(pe_config_is_valid & pe_not_start & gb_data_valid & cntr_valid & state_idle);
@@ -138,13 +139,13 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
 
     // update the control parameters
     auto all_pe_cond = BoolConst(pe_idx >= 3);
-    auto pe_cntr_next = Ite(all_pe_cond, BvConst(0, PE_CNTR_BIWTDTH),
-                                         BvConst(pe_idx + 1, PE_CNTR_BIWTDTH));
+    auto pe_cntr_next = Ite(all_pe_cond, BvConst(0, PE_CORE_CNTR_BIWTDTH),
+                                         BvConst(pe_idx + 1, PE_CORE_CNTR_BIWTDTH));
     auto gb_control_data_out_valid_next =
             Ite(all_pe_cond, BvConst(PE_CORE_INVALID, GB_CONTROL_DATA_OUT_VALID_BITWIDTH),
                               BvConst(PE_CORE_VALID, GB_CONTROL_DATA_OUT_VALID_BITWIDTH));
 
-    instr.SetUpdate(m.state(PE_CNTR), pe_cntr_next);    
+    instr.SetUpdate(m.state(PE_CORE_CNTR), pe_cntr_next);    
     instr.SetUpdate(m.state(GB_CONTROL_DATA_OUT_VALID), gb_control_data_out_valid_next);
     
   }
@@ -152,20 +153,20 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
   { // instruction 2 ---- helper instructions for is_start condition
     // updates on the GB_Control: the pe_start valid only after all the PE have read 
     // the last piece of data.
-    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "CORE_IS_START_PREP"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "core_is_start"));
 
     auto pe_start_valid = (m.state(PE_START_SIGNAL_SHARED) == PE_CORE_VALID);
     auto state_idle = (state == PE_CORE_STATE_IDLE);
     auto is_start = pe_config_is_valid & pe_start_valid;
     // this instruction access the shared states, thus needs scheduling
-    auto cntr_valid = (m.state(PE_CNTR) == pe_idx);
+    auto cntr_valid = (m.state(PE_CORE_CNTR) == pe_idx);
     // only need the pe_start_valid here because the d
     instr.SetDecode(is_start & state_idle & cntr_valid);
 
     auto next_state = BvConst(PE_CORE_STATE_PRE, PE_CORE_STATE_BITWIDTH);
     auto all_pe_cond = BoolConst(pe_idx >= 3);
-    auto pe_cntr_next = Ite(all_pe_cond, BvConst(0, PE_CNTR_BIWTDTH),
-                                         BvConst(pe_idx + 1, PE_CNTR_BIWTDTH));
+    auto pe_cntr_next = Ite(all_pe_cond, BvConst(0, PE_CORE_CNTR_BIWTDTH),
+                                         BvConst(pe_idx + 1, PE_CORE_CNTR_BIWTDTH));
     auto pe_start_next = Ite(all_pe_cond, BvConst(PE_CORE_INVALID, PE_START_SIGNAL_SHARED_BITWIDTH),
                                           m.state(PE_START_SIGNAL_SHARED));
 
@@ -174,13 +175,17 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     // immitate the behavior of the pop operation
     // NEED TO BE CAREFUL ABOUT THE 4 PE CORES ACCESSES TO THE SHARED STATES!!!!!
     instr.SetUpdate(is_start_reg, BvConst(PE_CORE_VALID, PE_CORE_IS_START_BITWIDTH));
-    instr.SetUpdate(m.state(PE_CNTR), pe_cntr_next);
+    instr.SetUpdate(m.state(PE_CORE_CNTR), pe_cntr_next);
     instr.SetUpdate(m.state(PE_START_SIGNAL_SHARED), pe_start_next);
+
+    // update 04132020: initialize the shared valid flag for act_port_register
+    instr.SetUpdate(m.state(PEGetVarName(pe_idx, CORE_ACT_REG_PORT_VALID)),
+                      BvConst(PE_CORE_INVALID, PE_CORE_ACT_REG_PORT_VALID_BITWIDTH));
 
   }
 
   { // instruction 3 ---- select next state
-    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "CORE_STATE_PRE"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "core_prep"));
 
     auto is_start = pe_config_is_valid & is_start_reg;
     auto state_pre = (state == PE_CORE_STATE_PRE);
@@ -194,7 +199,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto zero_first_cond = (is_zero_first == PE_CORE_VALID) & (zero_active == PE_CORE_VALID);
     auto next_state = Ite(zero_first_cond, BvConst(PE_CORE_STATE_BIAS, PE_CORE_STATE_BITWIDTH),
                                             BvConst(PE_CORE_STATE_MAC, PE_CORE_STATE_BITWIDTH));
-    
+        
     // states updates
     // reset the accumulate registers
     for (auto i = 0; i < CORE_SCALAR; i++) {
@@ -213,7 +218,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
   }
 
   { // instruction 4 ---- MAC state
-    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "CORE_STATE_MAC"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "core_mac"));
     
     auto is_start = pe_config_is_valid & is_start_reg;
     auto state_mac = (state == PE_CORE_STATE_MAC);
@@ -270,7 +275,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
   }
 
   { // instruction 5 ---- BIAS state
-    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "CORE_STATE_BIAS"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "core_bias"));
 
     auto is_start = pe_config_is_valid & is_start_reg;
     auto run_mac_invalid = (run_mac_flag == PE_CORE_INVALID);
@@ -335,12 +340,16 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
   }
 
   { // instruction 6 ---- OUT state
-    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "CORE_STATE_OUT"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "core_out"));
 
     auto is_start = pe_config_is_valid & is_start_reg;
     auto state_out = (state == PE_CORE_STATE_OUT);
+    // update 04162020: flexnlp use blocking push on act port, thus if port valid is high, it should halt
+    // this instruction
+    auto act_port_invalid = 
+          (m.state(PEGetVarName(pe_idx, CORE_ACT_REG_PORT_VALID)) == PE_CORE_INVALID);
 
-    instr.SetDecode(is_start & state_out);
+    instr.SetDecode(is_start & state_out & act_port_invalid);
 
     auto num_mngr = m.state(PEGetVarName(pe_idx, RNN_LAYER_SIZING_CONFIG_REG_NUM_MANAGER));
     auto num_output = m.state(PEGetVarName(pe_idx, RNN_LAYER_SIZING_CONFIG_REG_NUM_OUTPUT));
@@ -374,6 +383,11 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     instr.SetUpdate(output_cntr, output_cntr_next);
     instr.SetUpdate(is_zero_first, is_zero_first_next);
     instr.SetUpdate(state, next_state);
+
+    // update 04132020: set the act_port_reg valid bit at output stage
+    // FlexNLP use blocking push on act_port, thus if the port valid is high, it should halt this out instruction
+    instr.SetUpdate(m.state(PEGetVarName(pe_idx, CORE_ACT_REG_PORT_VALID)),
+                      BvConst(PE_CORE_VALID, PE_CORE_ACT_REG_PORT_VALID_BITWIDTH));
   }
 
 
@@ -421,7 +435,7 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
   }
 
   {// instruction 0 ---- get data from the memory.
-    auto instr = child_run_mac.NewInstr(PEGetInstrName(pe_idx, "CORE_RUN_MAC_GET_DATA"));
+    auto instr = child_run_mac.NewInstr(PEGetInstrName(pe_idx, "core_run_mac_data"));
     auto state_fetch = (state == PE_CORE_RUN_MAC_STATE_FETCH);
 
     instr.SetDecode(child_valid & state_fetch);
@@ -476,7 +490,7 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
   }
 
   {// instruction 1 ---- multiply the weight vector and input vector
-    auto instr = child_run_mac.NewInstr(PEGetInstrName(pe_idx, "CORE_RUN_MAC_MULTIPLY"));
+    auto instr = child_run_mac.NewInstr(PEGetInstrName(pe_idx, "core_run_mac_mul"));
     auto state_mul = (state == PE_CORE_RUN_MAC_STATE_MUL);
 
     instr.SetDecode(child_valid & state_mul);

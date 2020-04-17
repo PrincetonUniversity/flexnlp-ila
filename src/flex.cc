@@ -88,10 +88,11 @@ Ila GetFlexIla(const std::string& model_name) {
   // This instruction have conflicts with other buffer write instructions.
   DefineGBCoreStore(m);
   // define PE core store instructions for 4 PE cores
-  DefinePECoreStore(m, 0, TOP_PE0_ADDR_MIN);
-  DefinePECoreStore(m, 1, TOP_PE1_ADDR_MIN);
-  DefinePECoreStore(m, 2, TOP_PE2_ADDR_MIN);
-  DefinePECoreStore(m, 3, TOP_PE3_ADDR_MIN);
+  // update: change the PECoreStore to PEStore to include the store instruction for Act buffer
+  DefinePEStore(m, 0, TOP_PE0_ADDR_MIN);
+  DefinePEStore(m, 1, TOP_PE1_ADDR_MIN);
+  DefinePEStore(m, 2, TOP_PE2_ADDR_MIN);
+  DefinePEStore(m, 3, TOP_PE3_ADDR_MIN);
 
   // Define PE core instructions for 4 PE Cores
   DefinePECore(m, 0, TOP_PE0_ADDR_MIN);

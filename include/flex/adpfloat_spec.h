@@ -24,6 +24,8 @@
 
 // File: adpflow_spec.h
 
+#include <ilang/ilang++.h>
+
 #ifndef FLEX_ADPFLOAT_SPEC__
 #define FLEX_ADPFLOAT_SPEC__
 
