@@ -74,6 +74,7 @@ namespace ilang {
 
 // data_in has data (128 bit) and data_addr (8 bit: vector index in the timestep)
 // divided into 16 states because ILA doesn't support 128 bit long state.
+#define GB_CONTROL_DATA_IN "gb_control_data_in"
 #define GB_CONTROL_DATA_IN_0 "gb_control_data_in_0"
 #define GB_CONTROL_DATA_IN_1 "gb_control_data_in_1"
 #define GB_CONTROL_DATA_IN_2 "gb_control_data_in_2"
@@ -96,6 +97,7 @@ namespace ilang {
 #define GB_CONTROL_DATA_IN_ADDR "gb_control_data_in_addr"
 #define GB_CONTROL_DATA_IN_ADDR_BITWIDTH GB_CONTROL_CONFIG_REG_NUM_VECTOR_1_WIDTH
 
+#define GB_CONTROL_DATA_OUT "gb_control_data_out"
 #define GB_CONTROL_DATA_OUT_0 "gb_control_data_out_0"
 #define GB_CONTROL_DATA_OUT_1 "gb_control_data_out_1"
 #define GB_CONTROL_DATA_OUT_2 "gb_control_data_out_2"
