@@ -150,7 +150,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
   }  
 
   { // instr1 ---- fetch instruction in the act unit
-    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "act_child_run_instr"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "act_child_fetch"));
     auto is_start = (is_start_reg == PE_ACT_VALID);
     auto state_fetch = (state == PE_ACT_STATE_FETCH);
     
@@ -395,6 +395,9 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     // update FSM state
     auto next_state = BvConst(PE_ACT_STATE_INCR, PE_ACT_STATE_BITWIDTH);
     instr.SetUpdate(state, next_state);
+    // set the gb_control_data_in to be valid
+    instr.SetUpdate(m.state(GB_CONTROL_DATA_IN_VALID),
+                      BvConst(PE_ACT_VALID, GB_CONTROL_DATA_IN_VALID_BITWIDTH));
         
     auto output_base_addr = m.state(PEGetVarName(pe_idx, ACT_MNGR_CONFIG_REG_OUTPUT_ADDR_BASE));
     auto data_out_addr = output_cntr + output_base_addr;
@@ -477,7 +480,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_op_emul"));
     auto is_start = (is_start_reg == PE_ACT_VALID);
     auto state_exec = (state == PE_ACT_STATE_EXEC);
-    auto op_emul = (op == PE_ACT_OP_EADD);
+    auto op_emul = (op == PE_ACT_OP_EMUL);
 
     instr.SetDecode(is_start & state_exec & op_emul);
     // Next FSM state
@@ -654,9 +657,9 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
   // 04172020 update: add a new state for register file store, decrease the time to generate systemc
   // models 
   { // instr 16 ---- store data into the register file
-    auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_state_mem"));
+    auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_reg_store"));
     auto is_start = (is_start_reg == PE_ACT_VALID);
-    auto state_mem = (state == PE_ACT_VALID);
+    auto state_mem = (state == PE_ACT_STATE_MEM);
     
     instr.SetDecode(is_start & state_mem);
 
