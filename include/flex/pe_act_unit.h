@@ -254,6 +254,7 @@ namespace ilang {
 #define PE_ACT_STATE_INCR 2
 #define PE_ACT_STATE_SEND_DONE 3
 #define PE_ACT_STATE_IDLE 4
+#define PE_ACT_STATE_MEM 5
 
 // ACT opcode
 #define ACT_OP "act_op"
@@ -286,6 +287,9 @@ namespace ilang {
 #define PE_ACT_REG_A2 PE_ACT_REG_IDX_BITWIDTH
 #define PE_ACT_REG_A2_HI_IDX 3
 #define PE_ACT_REG_A2_LO_IDX 2
+
+// temp registers for holding intermediate results for storing into the memory
+#define ACT_REG_TEMP "act_reg_temp"
 
 
 
