@@ -34,16 +34,16 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base);
 
 // helper functions
 // help declare a vector of ExprRef holding the next state variables of PE registers
-std::vector<ExprRef> PEActGetRegNext(Ila& child, const int& pe_idx);
+// std::vector<ExprRef> PEActGetRegNext(Ila& child, const int& pe_idx);
 // function to load the data from the PE Act Register
 ExprRef PEActRegLoad_v(Ila& child, const int& pe_idx, const ExprRef& reg_idx,
                         const ExprRef& addr);
-// function to link store ast
-void PEActRegStore_v(std::vector<ExprRef>& reg_next_v, const ExprRef& reg_idx,
-                          const ExprRef& addr, const ExprRef& data);
-// function to set instruction update for the corresponding memory states
-void PEActRegUpdate_v(Ila& child, const int& pe_idx, InstrRef& instr,
-                        std::vector<ExprRef>& reg_next_v);
+// // function to link store ast
+// void PEActRegStore_v(std::vector<ExprRef>& reg_next_v, const ExprRef& reg_idx,
+//                           const ExprRef& addr, const ExprRef& data);
+// // function to set instruction update for the corresponding memory states
+// void PEActRegUpdate_v(Ila& child, const int& pe_idx, InstrRef& instr,
+//                         std::vector<ExprRef>& reg_next_v);
 
 
 // declare uninterpreted function here;
@@ -541,7 +541,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     // }
     // PEActRegUpdate_v(child, pe_idx, instr, reg_next_v);
 
-    auto reg_next_v = PEActGetRegNext(child, pe_idx);
+    // auto reg_next_v = PEActGetRegNext(child, pe_idx);
     for (auto i = 0; i < ACT_SCALAR; i++) {
       auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH) + BvConst(0, PE_ACT_REGS_ADDR_WIDTH);
       auto data = PEActRegLoad_v(child, pe_idx, a2, reg_addr);
@@ -578,7 +578,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     // }
     // PEActRegUpdate_v(child, pe_idx, instr, reg_next_v);
 
-    auto reg_next_v = PEActGetRegNext(child, pe_idx);
+    // auto reg_next_v = PEActGetRegNext(child, pe_idx);
     for (auto i = 0; i < ACT_SCALAR; i++) {
       auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH) + BvConst(0, PE_ACT_REGS_ADDR_WIDTH);
       auto data = PEActRegLoad_v(child, pe_idx, a2, reg_addr);
@@ -689,22 +689,22 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
 // challenge is how to deal with signed operations
 
 // This function help return the ExprRef pointer to the register memory state
-ExprRef PEActGetReg(Ila& child, const int& pe_idx, const ExprRef& reg_idx) {
-  auto result = Ite(reg_idx == 0, child.state(PEGetVarNameVector(pe_idx, 0, ACT_REGS)),
-                  Ite(reg_idx == 1, child.state(PEGetVarNameVector(pe_idx, 1, ACT_REGS)),
-                  Ite(reg_idx == 2, child.state(PEGetVarNameVector(pe_idx, 2, ACT_REGS)),
-                                    child.state(PEGetVarNameVector(pe_idx, 3, ACT_REGS)))));
-  return result;
-}
+// ExprRef PEActGetReg(Ila& child, const int& pe_idx, const ExprRef& reg_idx) {
+//   auto result = Ite(reg_idx == 0, child.state(PEGetVarNameVector(pe_idx, 0, ACT_REGS)),
+//                   Ite(reg_idx == 1, child.state(PEGetVarNameVector(pe_idx, 1, ACT_REGS)),
+//                   Ite(reg_idx == 2, child.state(PEGetVarNameVector(pe_idx, 2, ACT_REGS)),
+//                                     child.state(PEGetVarNameVector(pe_idx, 3, ACT_REGS)))));
+//   return result;
+// }
 
-std::vector<ExprRef> PEActGetRegNext(Ila& child, const int& pe_idx) {
-  std::vector<ExprRef> reg_next_v;
-  for (auto i = 0; i < PE_ACT_REGS_NUM; i++) {
-    auto reg = child.state(PEGetVarNameVector(pe_idx, i, ACT_REGS));
-    reg_next_v.push_back(reg);
-  }
-  return reg_next_v;
-}
+// std::vector<ExprRef> PEActGetRegNext(Ila& child, const int& pe_idx) {
+//   std::vector<ExprRef> reg_next_v;
+//   for (auto i = 0; i < PE_ACT_REGS_NUM; i++) {
+//     auto reg = child.state(PEGetVarNameVector(pe_idx, i, ACT_REGS));
+//     reg_next_v.push_back(reg);
+//   }
+//   return reg_next_v;
+// }
 
 ExprRef PEActRegLoad_v(Ila& child, const int& pe_idx, const ExprRef& reg_idx,
                         const ExprRef& addr) {
@@ -716,24 +716,24 @@ ExprRef PEActRegLoad_v(Ila& child, const int& pe_idx, const ExprRef& reg_idx,
   return result;
 }
 
-void PEActRegStore_v(std::vector<ExprRef>& reg_next_v, const ExprRef& reg_idx,
-                          const ExprRef& addr, const ExprRef& data) {
-  ILA_ASSERT(reg_next_v.size() == PE_ACT_REGS_NUM) 
-    << "PEActRegStore: PE_ACT reg vector number is not equal to PE_ACT_REGS_NUM";
-  for (auto i = 0; i < reg_next_v.size(); i++) {
-    reg_next_v[i] = Ite(reg_idx == i, Store(reg_next_v[i], addr, data), reg_next_v[i]);
-  }
-}
+// void PEActRegStore_v(std::vector<ExprRef>& reg_next_v, const ExprRef& reg_idx,
+//                           const ExprRef& addr, const ExprRef& data) {
+//   ILA_ASSERT(reg_next_v.size() == PE_ACT_REGS_NUM) 
+//     << "PEActRegStore: PE_ACT reg vector number is not equal to PE_ACT_REGS_NUM";
+//   for (auto i = 0; i < reg_next_v.size(); i++) {
+//     reg_next_v[i] = Ite(reg_idx == i, Store(reg_next_v[i], addr, data), reg_next_v[i]);
+//   }
+// }
 
-void PEActRegUpdate_v(Ila& child, const int& pe_idx, InstrRef& instr,
-                        std::vector<ExprRef>& reg_next_v) {
-  ILA_ASSERT(reg_next_v.size() == PE_ACT_REGS_NUM) 
-    << "PEActRegUpdate_v: PE_ACT reg vector number is not equal to PE_ACT_REGS_NUM";
-  for (auto i = 0; i < reg_next_v.size(); i++) {
-    auto reg = child.state(PEGetVarNameVector(pe_idx, i, ACT_REGS));
-    auto reg_next = reg_next_v[i];
-    instr.SetUpdate(reg, reg_next);
-  }
-}
+// void PEActRegUpdate_v(Ila& child, const int& pe_idx, InstrRef& instr,
+//                         std::vector<ExprRef>& reg_next_v) {
+//   ILA_ASSERT(reg_next_v.size() == PE_ACT_REGS_NUM) 
+//     << "PEActRegUpdate_v: PE_ACT reg vector number is not equal to PE_ACT_REGS_NUM";
+//   for (auto i = 0; i < reg_next_v.size(); i++) {
+//     auto reg = child.state(PEGetVarNameVector(pe_idx, i, ACT_REGS));
+//     auto reg_next = reg_next_v[i];
+//     instr.SetUpdate(reg, reg_next);
+//   }
+// }
 
 }; // namespace ilang
