@@ -66,7 +66,10 @@ namespace ilang {
 
 
 /************* SHARED STATES WITH PE *****************/
-#define PE_START_SIGNAL_SHARED "pe_start_signal_shared"
+// #define PE_START_SIGNAL_SHARED "pe_start_signal_shared"
+#define PE_CORE_START_SIGNAL "pe_core_start_signal"
+#define PE_ACT_START_SIGNAL "pe_act_start_signal"
+#define ACT_START_SIGNAL "act_start_signal"
 #define PE_START_SIGNAL_SHARED_BITWIDTH 1
 
 #define PE_DONE_SIGNAL_SHARED "pe_done_signal_shared"

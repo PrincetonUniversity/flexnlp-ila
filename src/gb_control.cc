@@ -78,7 +78,11 @@ void AddChild_GB_Control(Ila& m) {
   auto num_vector_2 = m.state(GB_CONTROL_CONFIG_REG_NUM_VECTOR_2);
   auto num_timestep = m.state(GB_CONTROL_CONFIG_REG_NUM_TIMESTEP_1);
   // parent shared state
-  auto pe_start = m.state(PE_START_SIGNAL_SHARED);
+  // auto pe_start = m.state(PE_START_SIGNAL_SHARED);
+
+  auto pe_core_start = m.state(PE_CORE_START_SIGNAL);
+  auto pe_act_start = m.state(PE_ACT_START_SIGNAL);
+
   auto pe_done = m.state(PE_DONE_SIGNAL_SHARED);
 
   auto data_in_0 = m.state(GB_CONTROL_DATA_IN_0);
@@ -214,8 +218,13 @@ void AddChild_GB_Control(Ila& m) {
     instr.SetUpdate(cntr_vector, BvConst(0, GB_CONTROL_CHILD_VECTOR_CNTR_BITWIDTH));
     // reset the valid bits for the shared states with PE
     instr.SetUpdate(data_out_valid_bit, BvConst(GB_CONTROL_INVALID, GB_CONTROL_DATA_OUT_VALID_BITWIDTH));
-    instr.SetUpdate(pe_start, BvConst(GB_CONTROL_INVALID, PE_START_SIGNAL_SHARED_BITWIDTH));
 
+    instr.SetUpdate(pe_core_start, BvConst(GB_CONTROL_INVALID, PE_START_SIGNAL_SHARED_BITWIDTH));
+    for (auto i = 0; i < PE_ACT_REGS_NUM; i++) {
+      instr.SetUpdate(m.state(PEGetVarName(i, ACT_START_SIGNAL)), 
+                        BvConst(GB_CONTROL_INVALID, PE_START_SIGNAL_SHARED_BITWIDTH));
+    }
+    
     instr.SetUpdate(state, next_state);
   }
 
@@ -362,7 +371,13 @@ void AddChild_GB_Control(Ila& m) {
                               BvConst(GB_CONTROL_VALID, PE_START_SIGNAL_SHARED_BITWIDTH),
                               BvConst(GB_CONTROL_INVALID, PE_START_SIGNAL_SHARED_BITWIDTH));
     
-    instr.SetUpdate(pe_start, pe_start_next);
+    instr.SetUpdate(pe_core_start, pe_start_next);
+    // instr.SetUpdate(pe_act_start, pe_start_next);
+    for(auto i = 0; i < PE_ACT_REGS_NUM; i++) {
+      instr.SetUpdate(m.state(PEGetVarName(i, ACT_START_SIGNAL)),
+                        BvConst(GB_CONTROL_VALID, PE_START_SIGNAL_SHARED_BITWIDTH));
+    }
+
     auto next_state = BvConst(GB_CONTROL_CHILD_STATE_RECV_PREP, GB_CONTROL_CHILD_STATE_BITWIDTH);
     instr.SetUpdate(state, next_state);
   }
