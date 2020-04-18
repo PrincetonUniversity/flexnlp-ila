@@ -558,6 +558,9 @@ void AddChild_GB_Control(Ila& m) {
                         BvConst(GB_CONTROL_CHILD_STATE_RECV, GB_CONTROL_CHILD_STATE_BITWIDTH));
 
     instr.SetUpdate(state, next_state);
+
+    // set the pe_done to be invalid, immitate the push operation
+    instr.SetUpdate(pe_done, BvConst(GB_CONTROL_INVALID, PE_DONE_SIGNAL_SHARED_BITWIDTH));
   }
 
   { // instruction 6 ---- send back prep, set the parameters needed for the send back state
