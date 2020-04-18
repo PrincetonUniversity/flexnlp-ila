@@ -94,11 +94,6 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
   auto a2 = child.NewBvState(PEGetVarName(pe_idx, ACT_REG_A2), PE_ACT_REG_IDX_BITWIDTH);
   auto op = child.NewBvState(PEGetVarName(pe_idx, ACT_OP), PE_ACT_OP_BITWIDTH);
   
-  auto w_out = child.NewBvState(PEGetVarName(pe_idx, ACT_W_OUT), PE_ACT_FLAG_BITWIDTH);
-  auto w_load = child.NewBvState(PEGetVarName(pe_idx, ACT_W_LOAD), PE_ACT_FLAG_BITWIDTH);
-  auto w_done = child.NewBvState(PEGetVarName(pe_idx, ACT_W_DONE), PE_ACT_FLAG_BITWIDTH);
-  auto is_incr = child.NewBvState(PEGetVarName(pe_idx, ACT_IS_INCR), PE_ACT_FLAG_BITWIDTH);
-
   // define the register array as memory here
   for (auto i = 0; i < PE_ACT_REGS_NUM; i++) {
     child.NewMemState(PEGetVarNameVector(pe_idx, i, ACT_REGS), 
@@ -112,7 +107,8 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
   }
   
   // parent states
-  auto pe_start = m.state(PE_START_SIGNAL_SHARED);
+  // auto pe_start = m.state(PE_ACT_START_SIGNAL);
+  auto pe_start = m.state(PEGetVarName(pe_idx, ACT_START_SIGNAL));
 
   // child initial conditions
   child.AddInit(is_start_reg == PE_ACT_INVALID);
@@ -129,12 +125,8 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     instr.SetDecode(config_valid & not_start_cond & pe_start_active & state_idle);
 
     // state updates
-    instr.SetUpdate(w_out, BvConst(PE_ACT_INVALID, PE_ACT_FLAG_BITWIDTH));
-    instr.SetUpdate(w_load, BvConst(PE_ACT_INVALID, PE_ACT_FLAG_BITWIDTH));
-    instr.SetUpdate(w_done, BvConst(PE_ACT_INVALID, PE_ACT_FLAG_BITWIDTH));
-    instr.SetUpdate(is_incr, BvConst(PE_ACT_VALID, PE_ACT_FLAG_BITWIDTH));
-
     instr.SetUpdate(is_start_reg, BvConst(PE_ACT_VALID, PE_ACT_IS_START_REG_BITWIDTH));
+    instr.SetUpdate(pe_start, BvConst(PE_ACT_INVALID, PE_START_SIGNAL_SHARED_BITWIDTH));
 
     // reset counter
     instr.SetUpdate(instr_cntr, BvConst(0, PE_ACT_INSTR_COUNTER_BITWIDTH));

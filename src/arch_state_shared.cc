@@ -26,6 +26,7 @@
 // This file defines the shared states between PE and GB
 
 #include <flex/gb_config.h>
+#include <flex/pe_config.h>
 #include <flex/top_config.h>
 
 #include <ilang/ilang++.h>
@@ -35,7 +36,15 @@ namespace ilang {
 void DefineSharedState(Ila& m) {
 
   // shared states that are used in gb_control instructions between PE and GB
-  m.NewBvState(PE_START_SIGNAL_SHARED, PE_START_SIGNAL_SHARED_BITWIDTH);
+  // update 04182020: Need to have two copy of pe_start, one for pe_act
+  m.NewBvState(PE_CORE_START_SIGNAL, PE_START_SIGNAL_SHARED_BITWIDTH);
+  // can define one start signal for each PE cores to avoid using scheduler
+  for (auto i = 0; i < PE_ACT_REGS_NUM; i++) {
+    m.NewBvState(PEGetVarName(i,ACT_START_SIGNAL), PE_START_SIGNAL_SHARED_BITWIDTH);
+  }
+
+  // m.NewBvState(PE_ACT_START_SIGNAL, PE_START_SIGNAL_SHARED_BITWIDTH);
+
   m.NewBvState(PE_DONE_SIGNAL_SHARED, PE_DONE_SIGNAL_SHARED_BITWIDTH);
   
   m.NewBvState(GB_CONTROL_DATA_IN_0, GB_CONTROL_DATA_IN_BITWIDTH);

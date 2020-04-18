@@ -155,7 +155,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     // the last piece of data.
     auto instr = child.NewInstr(PEGetInstrName(pe_idx, "core_is_start"));
 
-    auto pe_start_valid = (m.state(PE_START_SIGNAL_SHARED) == PE_CORE_VALID);
+    auto pe_start_valid = (m.state(PE_CORE_START_SIGNAL) == PE_CORE_VALID);
     auto state_idle = (state == PE_CORE_STATE_IDLE);
     auto is_start = pe_config_is_valid & pe_start_valid;
     // this instruction access the shared states, thus needs scheduling
@@ -168,7 +168,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto pe_cntr_next = Ite(all_pe_cond, BvConst(0, PE_CORE_CNTR_BIWTDTH),
                                          BvConst(pe_idx + 1, PE_CORE_CNTR_BIWTDTH));
     auto pe_start_next = Ite(all_pe_cond, BvConst(PE_CORE_INVALID, PE_START_SIGNAL_SHARED_BITWIDTH),
-                                          m.state(PE_START_SIGNAL_SHARED));
+                                          m.state(PE_CORE_START_SIGNAL));
 
     instr.SetUpdate(state, next_state);
     // set the is_start_reg to be valid, and set the shared start state to be invalid,
@@ -176,7 +176,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     // NEED TO BE CAREFUL ABOUT THE 4 PE CORES ACCESSES TO THE SHARED STATES!!!!!
     instr.SetUpdate(is_start_reg, BvConst(PE_CORE_VALID, PE_CORE_IS_START_BITWIDTH));
     instr.SetUpdate(m.state(PE_CORE_CNTR), pe_cntr_next);
-    instr.SetUpdate(m.state(PE_START_SIGNAL_SHARED), pe_start_next);
+    instr.SetUpdate(m.state(PE_CORE_START_SIGNAL), pe_start_next);
 
     // update 04132020: initialize the shared valid flag for act_port_register
     instr.SetUpdate(m.state(PEGetVarName(pe_idx, CORE_ACT_REG_PORT_VALID)),
