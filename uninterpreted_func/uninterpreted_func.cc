@@ -29,39 +29,39 @@ sc_biguint<20> flex_sim::PEActEadd(sc_biguint<20> arg_0, sc_biguint<20> arg_1) {
   return arg_0;
 }
 
-sc_biguint<20> PEActEmul(sc_biguint<20> arg_0, sc_biguint<20> arg_1) {
+sc_biguint<20> flex_sim::PEActEmul(sc_biguint<20> arg_0, sc_biguint<20> arg_1) {
   // TODO: implement signed multiply
   return arg_0;
 }
 
-sc_biguint<20> PEActSigmoid(sc_biguint<20> arg_0) {
+sc_biguint<20> flex_sim::PEActSigmoid(sc_biguint<20> arg_0) {
   // TODO: implement Sigmoid
   return arg_0;
 }
 
-sc_biguint<20> PEActTanh(sc_biguint<20> arg_0) {
+sc_biguint<20> flex_sim::PEActTanh(sc_biguint<20> arg_0) {
   // TODO: implement Tanh
   return arg_0;
 }
 
-sc_biguint<20> PEActRelu(sc_biguint<20> arg_0) {
+sc_biguint<20> flex_sim::PEActRelu(sc_biguint<20> arg_0) {
   // TODO: implement Relu
   return arg_0;
 }
 
-sc_biguint<20> PEActOnex(sc_biguint<20> arg_0) {
+sc_biguint<20> flex_sim::PEActOnex(sc_biguint<20> arg_0) {
   // TODO: implement Onex
   return arg_0;
 }
 
-sc_biguint<20> Adptflow2Fixed(sc_biguint<8> arg_0, sc_biguint<3> arg_1) {
+sc_biguint<20> flex_sim::Adptflow2Fixed(sc_biguint<8> arg_0, sc_biguint<3> arg_1) {
   // TODO: implement adptflow to fixed
   sc_biguint<20> result = 0xabcd;
-  
+
   return result;
 }
 
-sc_biguint<8> Fixed2Adaptflow(sc_biguint<20> arg_0, sc_biguint<3> arg_1) {
+sc_biguint<8> flex_sim::Fixed2Adaptflow(sc_biguint<20> arg_0, sc_biguint<3> arg_1) {
   // TODO: implement fixed to adaptflow
   sc_biguint<8> result = 0xab;
 
