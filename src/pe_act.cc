@@ -150,7 +150,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
   }  
 
   { // instr1 ---- fetch instruction in the act unit
-    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "act_child_run_instr"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "act_child_fetch"));
     auto is_start = (is_start_reg == PE_ACT_VALID);
     auto state_fetch = (state == PE_ACT_STATE_FETCH);
     
@@ -654,9 +654,9 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
   // 04172020 update: add a new state for register file store, decrease the time to generate systemc
   // models 
   { // instr 16 ---- store data into the register file
-    auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_state_mem"));
+    auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_reg_store"));
     auto is_start = (is_start_reg == PE_ACT_VALID);
-    auto state_mem = (state == PE_ACT_VALID);
+    auto state_mem = (state == PE_ACT_STATE_MEM);
     
     instr.SetDecode(is_start & state_mem);
 
