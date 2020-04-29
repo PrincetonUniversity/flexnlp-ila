@@ -39,7 +39,10 @@ auto uf_accum_scalar = SortRef::BV(PE_CORE_ACCUMSCALAR_BITWIDTH);
 FuncRef PECoreAccumRightShift("PECoreAccumRightShift", uf_accum_scalar, uf_accum_scalar);
 
 auto uf_accum_bias = SortRef::BV(PE_CORE_SCALAR_BITWIDTH);
-FuncRef PECoreAccumGetBiasOut("PECoreAccumGetBiasOut", uf_accum_scalar, uf_accum_bias);
+auto uf_accum_bias_bias = SortRef::BV(PE_CORE_ADPFLOAT_BIAS_B_BITWIDTH);
+FuncRef PECoreAccumGetBiasOut("PECoreAccumGetBiasOut", uf_accum_scalar, 
+                                uf_accum_bias, uf_accum_bias_bias);
+
 FuncRef PECoreAccumOverflowCheck("PECoreAccumOverflowCheck", uf_accum_scalar, uf_accum_scalar);
 
 auto uf_act_reg_scalar = SortRef::BV(PE_CORE_ACTSCALAR_BITWIDTH);
