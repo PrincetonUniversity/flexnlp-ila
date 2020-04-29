@@ -331,7 +331,7 @@ namespace ilang {
 #define PE_CORE_ACCUM_VECTOR_LANES CORE_SCALAR
 
 // core activation vector type
-#define CORE_ACT_VECOTR "core_act_vector"
+#define CORE_ACT_VECTOR "core_act_vector"
 #define PE_CORE_ACT_VECTOR_BITWIDTH 20
 #define PE_CORE_ACT_VECTOR_LANES CORE_SCALAR
 
@@ -382,6 +382,12 @@ namespace ilang {
 #define CORE_ACT_REG_PORT_VALID "act_reg_port_valid"
 #define PE_CORE_ACT_REG_PORT_VALID_BITWIDTH 1
 
+
+/****** uninterpreted function ******/
+#define PE_CORE_SCALAR_BITWIDTH 8
+#define PE_CORE_ACCUMSCALAR_BITWIDTH 32
+#define PE_CORE_ACTSCALAR_BITWIDTH 20
+#define PE_CORE_ADPFLOAT_BIAS_B_BITWIDTH 3
 
 }; // namespace ilang
 
