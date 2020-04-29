@@ -42,8 +42,9 @@ FuncRef PECoreAccumRightShift("PECoreAccumRightShift", uf_accum_scalar, right_sh
 
 auto uf_accum_bias_input = SortRef::BV(PE_CORE_SCALAR_BITWIDTH);
 auto uf_accum_bias_bias = SortRef::BV(PE_CORE_ADPFLOAT_BIAS_B_BITWIDTH);
-FuncRef PECoreAccumGetBiasOut("PECoreAccumGetBiasOut", uf_accum_scalar, 
-                                uf_accum_bias_input, uf_accum_bias_bias);
+std::vector<SortRef> get_bias_input = {uf_accum_scalar, uf_accum_bias_input, 
+                                        uf_accum_bias_bias};
+FuncRef PECoreAccumGetBiasOut("PECoreAccumGetBiasOut", uf_accum_scalar, get_bias_input);
 
 FuncRef PECoreAccumOverflowCheck("PECoreAccumOverflowCheck", uf_accum_scalar, uf_accum_scalar);
 
@@ -331,7 +332,8 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
             PECoreAccumRightShift(rs_input);
       // auto accum_vector_out = PECoreAccumRightShift(accum_vector);
       auto bias = Load(input_mem, bias_addr_base + i);
-      auto accum_vector_out_with_bias = PECoreAccumGetBiasOut(bias, adpfloat_bias_bias);
+      std::vector<ExprRef> get_bias_input = {accum_vector, bias, adpfloat_bias_bias};
+      auto accum_vector_out_with_bias = PECoreAccumGetBiasOut(get_bias_input); 
 
       accum_vector_out = Ite(is_bias == 1, accum_vector_out_with_bias, accum_vector_out);
       accum_vector_out = PECoreAccumOverflowCheck(accum_vector_out);
