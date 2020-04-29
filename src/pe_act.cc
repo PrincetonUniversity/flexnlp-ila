@@ -55,8 +55,8 @@ auto uf_scalar_type = SortRef::BV(TOP_DATA_IN_WIDTH);
 auto uf_act_type = SortRef::BV(PE_CORE_ACT_VECTOR_BITWIDTH);
 auto uf_adpbias_type = SortRef::BV(ACT_MNGR_CONFIG_REG_ADPFLOAT_BIAS_WIDTH);
 
-FuncRef Adptflow2Fixed("Adptflow2Fixed", uf_act_type, uf_scalar_type, uf_adpbias_type);
-FuncRef Fixed2Adptflow("Fixed2Adaptflow", uf_scalar_type, uf_act_type, uf_adpbias_type);
+FuncRef Adptfloat2Fixed("Adptfloat2Fixed", uf_act_type, uf_scalar_type, uf_adpbias_type);
+FuncRef Fixed2Adptfloat("Fixed2Adaptfloat", uf_scalar_type, uf_act_type, uf_adpbias_type);
 
 FuncRef PEActEadd("PEActEadd", uf_act_out, uf_act_in1, uf_act_in2);
 FuncRef PEActEmul("PEActEmul", uf_act_out, uf_act_in1, uf_act_in2);
@@ -298,7 +298,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
 
     for (auto i = 0; i < ACT_SCALAR; i++) {
       auto data_buf = Load(buffer, rd_addr + i);
-      auto data_fixed = Adptflow2Fixed(data_buf, adptflow_bias);
+      auto data_fixed = Adptfloat2Fixed(data_buf, adptflow_bias);
       auto reg_tmp = child.state(PEGetVarNameVector(pe_idx, i, ACT_REG_TEMP));
       instr.SetUpdate(reg_tmp, data_fixed);
     }
@@ -332,7 +332,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
       // TODO: implement the Fixed2Adptflow function
       auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH) + BvConst(0, PE_ACT_REGS_ADDR_WIDTH);
       auto data_reg = PEActRegLoad_v(child, pe_idx, a2, reg_addr);
-      auto data_adptflow = Fixed2Adptflow(data_reg, adptflow_bias);
+      auto data_adptflow = Fixed2Adptfloat(data_reg, adptflow_bias);
       buffer_next = Store(buffer_next, wr_addr + i, data_adptflow);
     }
 
@@ -368,7 +368,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     // PEActRegUpdate_v(child, pe_idx, instr, reg_next_v);
 
     for (auto i = 0; i < ACT_SCALAR; i++) {
-      auto data = m.state(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECOTR));
+      auto data = m.state(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECTOR));
       instr.SetUpdate(child.state(PEGetVarNameVector(pe_idx, i, ACT_REG_TEMP)), data);
     }
   }

@@ -63,7 +63,7 @@ void DefinePEOtherState(Ila& m, const int& pe_idx) {
   // core activation vector
   // act register needs to be defined at the top level, which are accessed by act child model.
   for (auto i = 0; i < PE_CORE_ACT_VECTOR_LANES; i++) {
-    m.NewBvState(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECOTR), PE_CORE_ACT_VECTOR_BITWIDTH);
+    m.NewBvState(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECTOR), PE_CORE_ACT_VECTOR_BITWIDTH);
   }
   // valid bit for core act register, which are accessed by both pe_core and pe_act
   // use it to immitate push function
