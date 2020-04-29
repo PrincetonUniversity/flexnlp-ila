@@ -36,12 +36,15 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx);
 
 // uninterpreted functions
 auto uf_accum_scalar = SortRef::BV(PE_CORE_ACCUMSCALAR_BITWIDTH);
-FuncRef PECoreAccumRightShift("PECoreAccumRightShift", uf_accum_scalar, uf_accum_scalar);
+auto uf_accum_bias = SortRef::BV(PE_CORE_ADPFLOAT_BIAS_BITWIDTH);
+std::vector<SortRef> right_shift_input = {uf_accum_scalar, uf_accum_bias, uf_accum_bias};
+FuncRef PECoreAccumRightShift("PECoreAccumRightShift", uf_accum_scalar, right_shift_input);
 
-auto uf_accum_bias = SortRef::BV(PE_CORE_SCALAR_BITWIDTH);
+auto uf_accum_bias_input = SortRef::BV(PE_CORE_SCALAR_BITWIDTH);
 auto uf_accum_bias_bias = SortRef::BV(PE_CORE_ADPFLOAT_BIAS_B_BITWIDTH);
-FuncRef PECoreAccumGetBiasOut("PECoreAccumGetBiasOut", uf_accum_scalar, 
-                                uf_accum_bias, uf_accum_bias_bias);
+std::vector<SortRef> get_bias_input = {uf_accum_scalar, uf_accum_bias_input, 
+                                        uf_accum_bias_bias};
+FuncRef PECoreAccumGetBiasOut("PECoreAccumGetBiasOut", uf_accum_scalar, get_bias_input);
 
 FuncRef PECoreAccumOverflowCheck("PECoreAccumOverflowCheck", uf_accum_scalar, uf_accum_scalar);
 
@@ -299,14 +302,14 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto bias_i = Ite(mngr_cntr == 0, m.state(PEGetVarName(pe_idx, MEM_MNGR_FIRST_CONFIG_REG_ADPFLOAT_BIAS_I)),
                                       m.state(PEGetVarName(pe_idx, MEM_MNGR_SECOND_CONFIG_REG_ADPFLOAT_BIAS_I)));
 
-    auto bias_w_32 = Concat(BvConst(0, 32 - bias_w.bit_width()), bias_w);
-    auto bias_i_32 = Concat(BvConst(0, 32 - bias_i.bit_width()), bias_i);
-    // FIXME: BvConst cannot set negative number..
-    // NVUINT5 right_shift = -2*spec::kAdpfloatOffset + 2*spec::kAdpfloatManWidth - spec::kActNumFrac
-    //                         - pe_manager[m_index].adplfloat_bias_weight
-    //                         - pe_manager[m_index].adplfloat_bias_input;
-    auto right_shift = BvConst(ADPTFLOW_MAN_WIDTH, 32) * 2 + BvConst(ADPTFLOW_OFFSET_NEG, 32) * 2
-                        - BvConst(ACT_NUM_FRAC, 32) - bias_w_32 - bias_i_32;
+    // Hand over to the uninterpreted function to deal with the right shrift values
+    // auto bias_w_32 = Concat(BvConst(0, 32 - bias_w.bit_width()), bias_w);
+    // auto bias_i_32 = Concat(BvConst(0, 32 - bias_i.bit_width()), bias_i);
+    // // NVUINT5 right_shift = -2*spec::kAdpfloatOffset + 2*spec::kAdpfloatManWidth - spec::kActNumFrac
+    // //                         - pe_manager[m_index].adplfloat_bias_weight
+    // //                         - pe_manager[m_index].adplfloat_bias_input;
+    // auto right_shift = BvConst(ADPTFLOW_MAN_WIDTH, 32) * 2 + BvConst(ADPTFLOW_OFFSET_NEG, 32) * 2
+    //                     - BvConst(ACT_NUM_FRAC, 32) - bias_w_32 - bias_i_32;
 
     auto base_bias = Ite(mngr_cntr == 0, m.state(PEGetVarName(pe_idx, MEM_MNGR_FIRST_CONFIG_REG_BASE_BIAS)),
                                       m.state(PEGetVarName(pe_idx, MEM_MNGR_SECOND_CONFIG_REG_BASE_BIAS)));
@@ -323,10 +326,14 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     
     for (auto i = 0; i < CORE_SCALAR; i++) {
       auto accum_vector = child.state(PEGetVarNameVector(pe_idx, i, CORE_ACCUM_VECTOR));
+      std::vector<ExprRef> rs_input = {accum_vector, bias_w, bias_i};
       //TODO: Uninterpreted function: Right Shift, Get Bias
-      auto accum_vector_out = PECoreAccumRightShift(accum_vector);
+      auto accum_vector_out = 
+            PECoreAccumRightShift(rs_input);
+      // auto accum_vector_out = PECoreAccumRightShift(accum_vector);
       auto bias = Load(input_mem, bias_addr_base + i);
-      auto accum_vector_out_with_bias = PECoreAccumGetBiasOut(bias, adpfloat_bias_bias);
+      std::vector<ExprRef> get_bias_input = {accum_vector, bias, adpfloat_bias_bias};
+      auto accum_vector_out_with_bias = PECoreAccumGetBiasOut(get_bias_input); 
 
       accum_vector_out = Ite(is_bias == 1, accum_vector_out_with_bias, accum_vector_out);
       accum_vector_out = PECoreAccumOverflowCheck(accum_vector_out);

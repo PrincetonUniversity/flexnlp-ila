@@ -388,6 +388,7 @@ namespace ilang {
 #define PE_CORE_ACCUMSCALAR_BITWIDTH 32
 #define PE_CORE_ACTSCALAR_BITWIDTH 20
 #define PE_CORE_ADPFLOAT_BIAS_B_BITWIDTH 3
+#define PE_CORE_ADPFLOAT_BIAS_BITWIDTH 3
 
 }; // namespace ilang
 
