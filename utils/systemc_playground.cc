@@ -14,9 +14,10 @@ int sc_main(int, char* []) {
     sc_biguint<8> out_u = in_1 + in_2;
     sc_bigint<8> out_s = in_1_s + in_2_s;
     sc_biguint<8> out_u_s = out_s;
+    sc_bigint<8> out_s_u_s = out_u_s;
 
     cout << "unsigned add: " << dec << out_u << endl;
-    cout << "signed add: " << dec << out_s << '\t' << out_u_s << endl;
+    cout << "signed add: " << dec << out_s << '\t' << out_u_s << '\t' << out_s_u_s << endl;
 
     sc_biguint<8> t_u = 0x80;
     sc_bigint<8> t_s = 0x80;

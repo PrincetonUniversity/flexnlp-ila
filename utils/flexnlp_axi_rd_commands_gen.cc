@@ -36,12 +36,20 @@ int main() {
     for (i = start_addr; i <= end_addr; i+=16) {
         fs << "2,R,0x" << hex << i << ",0x0\n";
     }
+    
+    cout << "please enter the source file name" << endl;
+    string src_file;
+    cin >> src_file;
+
+    cout << "please enter the output file name" << endl;
+    string out_file;
+    cin >> out_file;
 
     ifstream fin;
-    fin.open("./axi_commands_for_maxpool.csv", ios::in);
+    fin.open(src_file, ios::in);
 
     ofstream fout;
-    fout.open("./axi_commands_for_maxpool_with_read_commands.txt", ofstream::out | ofstream::trunc);
+    fout.open(out_file, ofstream::out | ofstream::trunc);
     fout << fin.rdbuf();
     fout << "2,Q,0x00000000,0x0\n";
     fout << fs.rdbuf();
