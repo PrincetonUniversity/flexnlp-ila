@@ -34,10 +34,17 @@ namespace ilang {
 void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base);
 void AddChild_PECoreRunMac(Ila& m, const int& pe_idx);
 
-// helper function
-ExprRef to_adpflow(ExprRef& in);
-ExprRef adpflow_mul(ExprRef& in_0, ExprRef& in_1);
-ExprRef GetBiasTmp(ExprRef& in, ExprRef& bias_bias);
+// uninterpreted functions
+auto uf_accum_scalar = SortRef::BV(PE_CORE_ACCUMSCALAR_BITWIDTH);
+FuncRef PECoreAccumRightShift("PECoreAccumRightShift", uf_accum_scalar, uf_accum_scalar);
+
+auto uf_accum_bias = SortRef::BV(PE_CORE_SCALAR_BITWIDTH);
+FuncRef PECoreAccumGetBiasOut("PECoreAccumGetBiasOut", uf_accum_scalar, uf_accum_bias);
+FuncRef PECoreAccumOverflowCheck("PECoreAccumOverflowCheck", uf_accum_scalar, uf_accum_scalar);
+
+auto uf_act_reg_scalar = SortRef::BV(PE_CORE_ACTSCALAR_BITWIDTH);
+FuncRef PECoreAccum2ActReg("PECoreAccum2ActReg", uf_act_reg_scalar, uf_accum_scalar);
+
 
 void DefinePECore(Ila& m, const int& pe_idx, const uint64_t& base) {
 
@@ -205,7 +212,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     for (auto i = 0; i < CORE_SCALAR; i++) {
       instr.SetUpdate(child.state(PEGetVarNameVector(pe_idx, i, CORE_ACCUM_VECTOR)),
                         BvConst(0, PE_CORE_ACCUM_VECTOR_BITWIDTH));
-      instr.SetUpdate(m.state(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECOTR)),
+      instr.SetUpdate(m.state(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECTOR)),
                         BvConst(0, PE_CORE_ACT_VECTOR_BITWIDTH));
     }
     
@@ -310,30 +317,46 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     auto adpfloat_bias_bias = Ite(mngr_cntr == 0,
                                   m.state(PEGetVarName(pe_idx, MEM_MNGR_FIRST_CONFIG_REG_ADPFLOAT_BIAS_B)),
                                   m.state(PEGetVarName(pe_idx, MEM_MNGR_SECOND_CONFIG_REG_ADPFLOAT_BIAS_B)));
-
+    
     for (auto i = 0; i < CORE_SCALAR; i++) {
       auto accum_vector = child.state(PEGetVarNameVector(pe_idx, i, CORE_ACCUM_VECTOR));
-      auto tmp = accum_vector >> right_shift;
-
+      //TODO: Uninterpreted function: Right Shift, Get Bias
+      auto accum_vector_out = PECoreAccumRightShift(accum_vector);
       auto bias = Load(input_mem, bias_addr_base + i);
-      // TODO: implement function GetBiasTmp(bias)
-      auto bias_tmp = GetBiasTmp(bias, adpfloat_bias_bias);
+      auto accum_vector_out_with_bias = PECoreAccumGetBiasOut(bias, adpfloat_bias_bias);
 
-      tmp = Ite(is_bias == 1, tmp + bias_tmp, tmp);
-      // overflow checking and cutting
-      // TODO: have to implement negative BvConst?
-      // FIXME: careful with the negative number here!!
-      // current implementation is definitely wrong.
-      auto act_word_max = BvConst(ACT_WORD_MAX, PE_CORE_ACCUM_VECTOR_BITWIDTH);
-      auto act_word_min = -act_word_max;
-      tmp = Ite(tmp > act_word_max, act_word_max, tmp);
-      tmp = Ite(tmp < act_word_min, act_word_min, tmp);
-      
-      auto act_reg = Extract(tmp, PE_CORE_ACT_VECTOR_BITWIDTH - 1, 0);
-      auto act_vector = m.state(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECOTR));
-      // update the activation vector registers 
-      instr.SetUpdate(act_vector, act_reg);
+      accum_vector_out = Ite(is_bias == 1, accum_vector_out_with_bias, accum_vector_out);
+      accum_vector_out = PECoreAccumOverflowCheck(accum_vector_out);
+
+      auto act_reg_tmp = PECoreAccum2ActReg(accum_vector_out);
+      auto act_vector = m.state(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECTOR));
+
+      //update the activation vector registers
+      instr.SetUpdate(act_vector, act_reg_tmp);
     }
+    /****************************************/
+    // for (auto i = 0; i < CORE_SCALAR; i++) {
+    //   auto accum_vector = child.state(PEGetVarNameVector(pe_idx, i, CORE_ACCUM_VECTOR));
+    //   auto tmp = accum_vector >> right_shift;
+
+    //   auto bias = Load(input_mem, bias_addr_base + i);
+    //   // TODO: implement function GetBiasTmp(bias)
+    //   auto bias_tmp = GetBiasTmp(bias, adpfloat_bias_bias);
+
+    //   tmp = Ite(is_bias == 1, tmp + bias_tmp, tmp);
+    //   // overflow checking and cutting
+
+    //   // current implementation is definitely wrong.
+    //   auto act_word_max = BvConst(ACT_WORD_MAX, PE_CORE_ACCUM_VECTOR_BITWIDTH);
+    //   auto act_word_min = -act_word_max;
+    //   tmp = Ite(tmp > act_word_max, act_word_max, tmp);
+    //   tmp = Ite(tmp < act_word_min, act_word_min, tmp);
+      
+    //   auto act_reg = Extract(tmp, PE_CORE_ACT_VECTOR_BITWIDTH - 1, 0);
+    //   auto act_vector = m.state(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECTOR));
+    //   // update the activation vector registers 
+    //   instr.SetUpdate(act_vector, act_reg);
+    // }
 
     auto next_state = BvConst(PE_CORE_STATE_OUT, PE_CORE_STATE_BITWIDTH);
     instr.SetUpdate(state, next_state);
@@ -396,6 +419,17 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
 // *************************************************************//
 // ************ child model : PECoreRunMac *********************//
 // *************************************************************//
+auto uf_product_sum_in_1 = SortRef::BV(PE_CORE_SCALAR_BITWIDTH);
+auto uf_product_sum_in_2 = SortRef::BV(PE_CORE_SCALAR_BITWIDTH);
+auto uf_product_sum_out = SortRef::BV(PE_CORE_ACCUMSCALAR_BITWIDTH);
+
+FuncRef ProductSum("ProductSum", uf_product_sum_out, uf_product_sum_in_1, uf_product_sum_in_2);
+
+auto uf_accum_add_in_1 = SortRef::BV(PE_CORE_ACCUMSCALAR_BITWIDTH);
+auto uf_accum_add_in_2 = SortRef::BV(PE_CORE_ACCUMSCALAR_BITWIDTH);
+auto uf_accum_add_out = SortRef::BV(PE_CORE_ACCUMSCALAR_BITWIDTH);
+
+FuncRef AccumAdd("AccumAdd", uf_accum_add_out, uf_accum_add_in_1, uf_accum_add_in_2);
 
 void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
   auto child_pe_core = m.child(PEGetChildName(pe_idx, "CORE_CHILD"));
@@ -508,11 +542,16 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
       auto weight_byte = child_run_mac.state(PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_WEIGHT_BYTE));
       auto input_byte = child_run_mac.state(PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_INPUT_BYTE));
       // TODO: check the input is already adaptive flow format?
-      auto input_byte_adpflow = to_adpflow(weight_byte);
-      auto weight_byte_adpflow = to_adpflow(input_byte);
+      // FIXME: implement uninterpreted function here
+      // auto input_byte_adpflow = to_adpflow(weight_byte);
+      // auto weight_byte_adpflow = to_adpflow(input_byte);
 
-      auto result = adpflow_mul(weight_byte_adpflow, input_byte_adpflow);
-      accum = accum + result;
+      // auto result = adpflow_mul(weight_byte_adpflow, input_byte_adpflow);
+      // accum = accum + result;
+      
+      // Need two uninterpreted functions here, one for product sum, one for signed add
+      auto result = ProductSum(weight_byte, input_byte);
+      accum = AccumAdd(accum, result);  
     }
 
     // update the corresponding accummulated values in the accum array.
@@ -531,70 +570,6 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
     instr.SetUpdate(run_mac_cntr, run_mac_cntr + 1);
     instr.SetUpdate(run_mac_flag, run_mac_flag_next);
   }  
-}
-
-//////////////////////////////////////////
-//        Helper functions
-//////////////////////////////////////////
-// it seems that the data given is already in adaptiveflow format
-ExprRef to_adpflow(ExprRef& in) {
-  return in;
-}
-// adaptive flow mul function
-ExprRef adpflow_mul(ExprRef& in_0, ExprRef& in_1) {
-  auto is_zero_0 = (Extract(in_0, ADPTFLOW_SIGN_BIT_IDX - 1, 0) == 0);
-  auto is_zero_1 = (Extract(in_1, ADPTFLOW_SIGN_BIT_IDX - 1, 0) == 0);
-
-  auto sign_0 = SelectBit(in_0, ADPTFLOW_SIGN_BIT_IDX);
-  auto sign_1 = SelectBit(in_1, ADPTFLOW_SIGN_BIT_IDX);
-
-  auto exp_0 = Extract(in_0, ADPTFLOW_MAN_WIDTH + ADPTFLOW_EXP_WIDTH - 1, ADPTFLOW_MAN_WIDTH);
-  auto exp_1 = Extract(in_1, ADPTFLOW_MAN_WIDTH + ADPTFLOW_EXP_WIDTH - 1, ADPTFLOW_MAN_WIDTH);
-
-  auto man_0 = Extract(in_0, ADPTFLOW_MAN_WIDTH - 1, 0);
-  auto man_1 = Extract(in_1, ADPTFLOW_MAN_WIDTH - 1, 0);
-
-  auto exp_sum = Concat(BvConst(0,1), exp_0) + Concat(BvConst(0,1), exp_1);
-  auto in_0_temp = Ite(is_zero_0, Concat(BvConst(0,1), man_0),
-                                  Concat(BvConst(1,1), man_0));
-  auto in_1_temp = Ite(is_zero_1, Concat(BvConst(0,1), man_1),
-                                  Concat(BvConst(1,1), man_1));
-  // extend the bit width for multiplication.
-  in_0_temp = Concat(BvConst(0, in_0_temp.bit_width() + 1), in_0_temp);
-  in_1_temp = Concat(BvConst(0, in_1_temp.bit_width() + 1), in_1_temp);
-  auto man_mul = in_0_temp * in_1_temp;
-
-  // TODO: check if the ilang bitvector negation "-" is the same as the flexnlp
-  auto is_neg = ((sign_0 ^ sign_1) == 1);
-  man_mul = Ite(is_neg, -man_mul, man_mul);
-
-  auto output_tmp = Concat(BvConst(0, PE_CORE_ACCUM_VECTOR_BITWIDTH - man_mul.bit_width()), man_mul);
-  auto exp_sum_extend = Concat(BvConst(0, PE_CORE_ACCUM_VECTOR_BITWIDTH - exp_sum.bit_width()), exp_sum);
-  auto result = output_tmp << exp_sum_extend;
-  
-  return result;
-}
-
-ExprRef GetBiasTmp(ExprRef& in, ExprRef& bias_bias) {
-  auto sign = SelectBit(in, ADPTFLOW_SIGN_BIT_IDX);
-  auto man = Extract(in, ADPTFLOW_MAN_WIDTH - 1, 0);
-  auto exp = Extract(in, ADPTFLOW_MAN_WIDTH + ADPTFLOW_EXP_WIDTH - 1, ADPTFLOW_MAN_WIDTH);
-
-  auto man_plus1 = Concat(BvConst(1,1), man);
-  auto out = Concat(BvConst(0, PE_CORE_ACCUM_VECTOR_BITWIDTH - man_plus1.bit_width()), man_plus1);
-  // CHECK THE CORRECTNESS OF ADPTFLOW OFFSET!
-  // CHANGE THE adptflow_offset to adptflow_ffset_neg
-  auto exp_32 = Concat(BvConst(0, 32 - exp.bit_width()), exp);
-  auto bias_bias_32 = Concat(BvConst(0, 32 - bias_bias.bit_width()), bias_bias);
-  // exp + adpfloat_bias + spec::kAdpfloatOffset - M + F1
-  auto left_shift = exp_32 + bias_bias_32
-                    - BvConst(ADPTFLOW_OFFSET_NEG, 32) - BvConst(ADPTFLOW_MAN_WIDTH, 32) 
-                    + BvConst(ACT_NUM_FRAC, 32);
-  out = out << left_shift;
-
-  auto result = Ite(sign == 0, out, -out);
-
-  return result;
 }
 
 }; // namespace ilang
