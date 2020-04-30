@@ -500,7 +500,10 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
     }
     // fetch the clustered weight values
     for (auto i = 0; i < 16; i++) {
-      auto addr_offset = (run_mac_cntr / BvConst(2, run_mac_cntr.bit_width())) * CORE_SCALAR + i;
+      // auto addr_offset = (run_mac_cntr / BvConst(2, run_mac_cntr.bit_width())) * CORE_SCALAR + i;
+      // Update 04302020, the clustering fetching index is different: it will get the lower half of all
+      // the weight in the weight matrix than get the upper half.
+      auto addr_offset = run_mac_cntr * (CORE_SCALAR/2) + i/2;
       auto addr = weight_base_b + 
             Concat(BvConst(0, weight_base_b.bit_width() - addr_offset.bit_width()), addr_offset);
       auto data = Load(weight_buffer, addr);
