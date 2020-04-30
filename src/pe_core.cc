@@ -508,8 +508,9 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
             Concat(BvConst(0, weight_base_b.bit_width() - addr_offset.bit_width()), addr_offset);
       auto data = Load(weight_buffer, addr);
       // get the index after splitting the data for clustered mode.
-      auto ind = Ite(URem(run_mac_cntr, BvConst(2, run_mac_cntr.bit_width())) == 0,
-                     Extract(data, 3, 0), Extract(data, 7, 4));
+      auto ind = Ite(BoolConst(i%2 == 0), Extract(data, 3, 0), Extract(data, 7, 4));
+      // auto ind = Ite(URem(run_mac_cntr, BvConst(2, run_mac_cntr.bit_width())) == 0,
+      //                Extract(data, 3, 0), Extract(data, 7, 4));
                      
       // get the cluster lut result
       auto mgnr_cntr = child_pe_core.state(PEGetVarName(pe_idx, CORE_MNGR_CNTR));
@@ -541,12 +542,6 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
     auto state_mul = (state == PE_CORE_RUN_MAC_STATE_MUL);
 
     instr.SetDecode(child_valid & state_mul);
-
-    std::vector<ExprRef> weight_vector_adpflow;
-    std::vector<ExprRef> input_vector_adpflow;
-
-    weight_vector_adpflow.clear();
-    input_vector_adpflow.clear();
 
     auto accum = BvConst(0, PE_CORE_ACCUM_VECTOR_BITWIDTH);
 
