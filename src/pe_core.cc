@@ -440,6 +440,7 @@ auto uf_accum_add_in_2 = SortRef::BV(PE_CORE_ACCUMSCALAR_BITWIDTH);
 auto uf_accum_add_out = SortRef::BV(PE_CORE_ACCUMSCALAR_BITWIDTH);
 
 FuncRef AccumAdd("AccumAdd", uf_accum_add_out, uf_accum_add_in_1, uf_accum_add_in_2);
+FuncRef AccumAdd2("AccumAdd2", uf_accum_add_out, uf_accum_add_in_1, uf_accum_add_in_2);
 
 void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
   auto child_pe_core = m.child(PEGetChildName(pe_idx, "CORE_CHILD"));
@@ -563,9 +564,11 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
     }
 
     // update the corresponding accummulated values in the accum array.
+    // update 04302020: there is an add operation on data, which needs uninterpreted function
     for (auto i = 0; i < 16; i++) {
-      auto tmp = child_pe_core.state(PEGetVarNameVector(pe_idx, i, CORE_ACCUM_VECTOR));
-      instr.SetUpdate(tmp, Ite(run_mac_cntr == i, tmp + accum, tmp));
+      auto accum_state = child_pe_core.state(PEGetVarNameVector(pe_idx, i, CORE_ACCUM_VECTOR));
+      auto tmp = AccumAdd2(accum_state, accum);
+      instr.SetUpdate(accum_state, Ite(run_mac_cntr == i, tmp, accum_state));
     }
 
     auto next_state = BvConst(PE_CORE_RUN_MAC_STATE_FETCH, PE_CORE_RUN_MAC_CHILD_STATE_BITWIDTH);
