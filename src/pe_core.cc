@@ -328,14 +328,14 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
       auto accum_vector = child.state(PEGetVarNameVector(pe_idx, i, CORE_ACCUM_VECTOR));
       std::vector<ExprRef> rs_input = {accum_vector, bias_w, bias_i};
       //TODO: Uninterpreted function: Right Shift, Get Bias
-      auto accum_vector_out = 
+      auto accum_vector_shifted = 
             PECoreAccumRightShift(rs_input);
       // auto accum_vector_out = PECoreAccumRightShift(accum_vector);
       auto bias = Load(input_mem, bias_addr_base + i);
-      std::vector<ExprRef> get_bias_input = {accum_vector, bias, adpfloat_bias_bias};
+      std::vector<ExprRef> get_bias_input = {accum_vector_shifted, bias, adpfloat_bias_bias};
       auto accum_vector_out_with_bias = PECoreAccumGetBiasOut(get_bias_input); 
 
-      accum_vector_out = Ite(is_bias == 1, accum_vector_out_with_bias, accum_vector_out);
+      auto accum_vector_out = Ite(is_bias == 1, accum_vector_out_with_bias, accum_vector_shifted);
       accum_vector_out = PECoreAccumOverflowCheck(accum_vector_out);
 
       auto act_reg_tmp = PECoreAccum2ActReg(accum_vector_out);
