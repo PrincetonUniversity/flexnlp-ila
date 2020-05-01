@@ -503,9 +503,10 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
     // fetch the non-clustered weigth values.
     // update: 05012020: extend the run_mac_cntr bitwidth to hold values larger than 31..
     // Always keep in mind that the result of muliplication is bounded by the parameter bitwidth!!!
-    for (auto i = 0; i < 16; i++) {
-      auto run_mac_cntr_32 = 
+    auto run_mac_cntr_32 = 
             Concat(BvConst(0, weight_base_b.bit_width() - run_mac_cntr.bit_width()), run_mac_cntr);
+
+    for (auto i = 0; i < 16; i++) {
       auto addr_offset = run_mac_cntr_32 * CORE_SCALAR + i;
       auto addr = weight_base_b + addr_offset;
       // auto addr = weight_base_b + 
@@ -517,9 +518,11 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
     for (auto i = 0; i < 16; i++) {
       // Update 04302020, the clustering fetching index is different: it will get the lower half of all
       // the weight in the weight matrix than get the upper half.
-      auto addr_offset = run_mac_cntr * (CORE_SCALAR/2) + i/2;
-      auto addr = weight_base_b + 
-            Concat(BvConst(0, weight_base_b.bit_width() - addr_offset.bit_width()), addr_offset);
+      
+      auto addr_offset = run_mac_cntr_32 * (CORE_SCALAR/2) + i/2;
+      auto addr = weight_base_b + addr_offset;
+      // auto addr = weight_base_b + 
+      //       Concat(BvConst(0, weight_base_b.bit_width() - addr_offset.bit_width()), addr_offset);
       auto data = Load(weight_buffer, addr);
       // get the index after splitting the data for clustered mode.
       auto ind = Ite(BoolConst(i%2 == 0), Extract(data, 3, 0), Extract(data, 7, 4));
