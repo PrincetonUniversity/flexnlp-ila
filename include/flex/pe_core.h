@@ -330,10 +330,9 @@ namespace ilang {
 #define PE_CORE_ACCUM_VECTOR_BITWIDTH 32
 #define PE_CORE_ACCUM_VECTOR_LANES CORE_SCALAR
 
-// core activation vector type
-#define CORE_ACT_VECTOR "core_act_vector"
-#define PE_CORE_ACT_VECTOR_BITWIDTH 20
-#define PE_CORE_ACT_VECTOR_LANES CORE_SCALAR
+#define CORE_ACT_VECTOR_REG "core_act_vector_reg"
+#define PE_CORE_ACT_VECTOR_REG_BITWIDTH 32
+#define PE_CORE_ACT_VECTOR_REG_LANES CORE_SCALAR
 
 // core input counter
 #define CORE_INPUT_CNTR "core_input_counter"
@@ -381,6 +380,11 @@ namespace ilang {
 // valid bit for pe_act_reg, immitate the push function,
 #define CORE_ACT_REG_PORT_VALID "act_reg_port_valid"
 #define PE_CORE_ACT_REG_PORT_VALID_BITWIDTH 1
+
+// core activation vector type
+#define CORE_ACT_VECTOR "core_act_vector"
+#define PE_CORE_ACT_VECTOR_BITWIDTH 20
+#define PE_CORE_ACT_VECTOR_LANES CORE_SCALAR
 
 
 /****** uninterpreted function ******/

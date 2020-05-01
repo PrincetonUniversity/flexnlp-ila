@@ -98,6 +98,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
   // core accumulator registers
   for (auto i = 0; i < PE_CORE_ACCUM_VECTOR_LANES; i++) {
     child.NewBvState(PEGetVarNameVector(pe_idx, i, CORE_ACCUM_VECTOR), PE_CORE_ACCUM_VECTOR_BITWIDTH);
+    child.NewBvState(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECTOR_REG), PE_CORE_ACT_VECTOR_REG_BITWIDTH);
   }
 
   // add initial condition
@@ -218,8 +219,8 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     for (auto i = 0; i < CORE_SCALAR; i++) {
       instr.SetUpdate(child.state(PEGetVarNameVector(pe_idx, i, CORE_ACCUM_VECTOR)),
                         BvConst(0, PE_CORE_ACCUM_VECTOR_BITWIDTH));
-      instr.SetUpdate(m.state(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECTOR)),
-                        BvConst(0, PE_CORE_ACT_VECTOR_BITWIDTH));
+      instr.SetUpdate(child.state(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECTOR_REG)),
+                        BvConst(0, PE_CORE_ACT_VECTOR_REG_BITWIDTH));
     }
     
     instr.SetUpdate(state, next_state);
@@ -339,10 +340,10 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
       accum_vector_out = PECoreAccumOverflowCheck(accum_vector_out);
 
       auto act_reg_tmp = PECoreAccum2ActReg(accum_vector_out);
-      auto act_vector = m.state(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECTOR));
+      auto act_vector_reg = child.state(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECTOR_REG));
 
       //update the activation vector registers
-      instr.SetUpdate(act_vector, act_reg_tmp);
+      instr.SetUpdate(act_vector_reg, act_reg_tmp);
     }
     /****************************************/
     // for (auto i = 0; i < CORE_SCALAR; i++) {
@@ -421,6 +422,14 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     // FlexNLP use blocking push on act_port, thus if the port valid is high, it should halt this out instruction
     instr.SetUpdate(m.state(PEGetVarName(pe_idx, CORE_ACT_REG_PORT_VALID)),
                       BvConst(PE_CORE_VALID, PE_CORE_ACT_REG_PORT_VALID_BITWIDTH));
+
+    // update 05012020: add act_port_reg to hold the result from RunBias for act_port, in accordance to the FlexNLP
+    // implementation
+    for (auto i = 0; i < PE_CORE_ACT_VECTOR_LANES; i++) {
+      auto act_vector_reg = child.state(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECTOR_REG));
+      auto act_vector = m.state(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECTOR));
+      instr.SetUpdate(act_vector, act_vector_reg);
+    }
   }
 
 
@@ -492,16 +501,20 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
     weight_vector_not_cluster.clear();
 
     // fetch the non-clustered weigth values.
+    // update: 05012020: extend the run_mac_cntr bitwidth to hold values larger than 31..
+    // Always keep in mind that the result of muliplication is bounded by the parameter bitwidth!!!
     for (auto i = 0; i < 16; i++) {
-      auto addr_offset = run_mac_cntr * CORE_SCALAR + i;
-      auto addr = weight_base_b + 
-            Concat(BvConst(0, weight_base_b.bit_width() - addr_offset.bit_width()), addr_offset);
+      auto run_mac_cntr_32 = 
+            Concat(BvConst(0, weight_base_b.bit_width() - run_mac_cntr.bit_width()), run_mac_cntr);
+      auto addr_offset = run_mac_cntr_32 * CORE_SCALAR + i;
+      auto addr = weight_base_b + addr_offset;
+      // auto addr = weight_base_b + 
+      //       Concat(BvConst(0, weight_base_b.bit_width() - addr_offset.bit_width()), addr_offset);
       auto data = Load(weight_buffer, addr);
       weight_vector_not_cluster.push_back(data);
     }
     // fetch the clustered weight values
     for (auto i = 0; i < 16; i++) {
-      // auto addr_offset = (run_mac_cntr / BvConst(2, run_mac_cntr.bit_width())) * CORE_SCALAR + i;
       // Update 04302020, the clustering fetching index is different: it will get the lower half of all
       // the weight in the weight matrix than get the upper half.
       auto addr_offset = run_mac_cntr * (CORE_SCALAR/2) + i/2;
@@ -524,11 +537,15 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
 
     // update the weight data and input data
     for (auto i = 0; i < 16; i++) {
+      // load the weight data
       instr.SetUpdate(child_run_mac.state(PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_WEIGHT_BYTE)),
                       Ite(is_cluster, weight_vector_cluster[i], weight_vector_not_cluster[i]));
-      auto input_addr_offset = run_mac_cntr * CORE_SCALAR + i;
-      auto input_addr = input_base_b + 
-            Concat(BvConst(0, input_base_b.bit_width() - input_addr_offset.bit_width()), input_addr_offset);
+      // load the input data
+      // FIXME: input_addr_offset is wrong!
+      auto input_addr_offset = i;
+      // auto input_addr = input_base_b + 
+      //       Concat(BvConst(0, input_base_b.bit_width() - input_addr_offset.bit_width()), input_addr_offset);
+      auto input_addr = input_base_b + i;
 
       instr.SetUpdate(child_run_mac.state(PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_INPUT_BYTE)),
                       Load(input_buffer, input_addr));

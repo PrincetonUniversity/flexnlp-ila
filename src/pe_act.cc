@@ -307,7 +307,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
 
   { // instr 6 ---- op 0x2, STORE instruction
     // STORE SRAM <- A2 Store address is determined by the output_counter + buffer_addr_base
-    auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_op_store"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "act_child_op_store"));
     auto is_start = (is_start_reg == PE_ACT_VALID);
     auto state_exec = (state == PE_ACT_STATE_EXEC);
     auto op_store = (op == PE_ACT_OP_STORE);
@@ -341,7 +341,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
 
   { // instr 7 ---- op 0x3, INPE instruction
     // INPE act_port -> A2 Do not increment instruction if nothing recieved
-    auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_op_inpe"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "act_child_op_inpe"));
     auto is_start = (is_start_reg == PE_ACT_VALID);
     auto state_exec = (state == PE_ACT_STATE_EXEC);
     auto op_inpe = (op == PE_ACT_OP_INPE);
@@ -376,7 +376,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
   { // instr 8 ---- op 0x4, OUTGB, output result to GB
     // OUTGB A2 -> Output A2 to GB
     // TODO: Need to make sequential access to the shared states
-    auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_op_outgb"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "act_child_op_outgb"));
     auto is_start = (is_start_reg == PE_ACT_VALID);
     auto state_exec = (state == PE_ACT_STATE_EXEC);
     auto op_outgb = (op == PE_ACT_OP_OUTGB);
@@ -413,7 +413,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
 
   { // instr 9 ---- op 0x7, COPY
     // COPY A1 -> A2
-    auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_op_copy"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "act_child_op_copy"));
     auto is_start = (is_start_reg == PE_ACT_VALID);
     auto state_exec = (state == PE_ACT_STATE_EXEC);
     auto op_copy = (op == PE_ACT_OP_COPY);
@@ -441,7 +441,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
   }
 
   { // instr 10 ---- op 0x8, EADD, A2 = A2 + A1
-    auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_op_eadd"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "act_child_op_eadd"));
     auto is_start = (is_start_reg == PE_ACT_VALID);
     auto state_exec = (state == PE_ACT_STATE_EXEC);
     auto op_eadd = (op == PE_ACT_OP_EADD);
@@ -477,7 +477,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
   }
 
   { // instr 11 ---- op 0x9, EMUL, A2 = A2 * A1
-    auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_op_emul"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "act_child_op_emul"));
     auto is_start = (is_start_reg == PE_ACT_VALID);
     auto state_exec = (state == PE_ACT_STATE_EXEC);
     auto op_emul = (op == PE_ACT_OP_EMUL);
@@ -512,7 +512,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
   }
 
   { // instr 12 ---- op 0xA, SIGM, A2 = Sigmoid(A2)
-    auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_op_sigm"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "act_child_op_sigm"));
     auto is_start = (is_start_reg == PE_ACT_VALID);
     auto state_exec = (state == PE_ACT_STATE_EXEC);
     auto op_sigm = (op == PE_ACT_OP_SIGM);
@@ -585,7 +585,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
   }
 
   { // instr 14 ---- op 0xC, RELU, A2 = RELU(A2)
-    auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_op_relu"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "act_child_op_relu"));
     auto is_start = (is_start_reg == PE_ACT_VALID);
     auto state_exec = (state == PE_ACT_STATE_EXEC);
     auto op_relu = (op == PE_ACT_OP_RELU);
@@ -620,7 +620,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
   }
 
   { // instr 15 ---- op 0xD, ONEX, A2 = 1 - A2
-    auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_op_onex"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "act_child_op_onex"));
     auto is_start = (is_start_reg == PE_ACT_VALID);
     auto state_exec = (state == PE_ACT_STATE_EXEC);
     auto op_onex = (op == PE_ACT_OP_ONEX);
@@ -657,7 +657,7 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
   // 04172020 update: add a new state for register file store, decrease the time to generate systemc
   // models 
   { // instr 16 ---- store data into the register file
-    auto instr = child.NewInstr(PEGetVarName(pe_idx, "act_child_reg_store"));
+    auto instr = child.NewInstr(PEGetInstrName(pe_idx, "act_child_reg_store"));
     auto is_start = (is_start_reg == PE_ACT_VALID);
     auto state_mem = (state == PE_ACT_STATE_MEM);
     
