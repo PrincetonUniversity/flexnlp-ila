@@ -404,12 +404,14 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
 
     instr.SetUpdate(m.state(GB_CONTROL_DATA_IN_ADDR), data_out_addr);
 
+    auto adptflow_bias = m.state(PEGetVarName(pe_idx, ACT_MNGR_CONFIG_REG_ADPFLOAT_BIAS));
+
     for (auto i = 0; i < ACT_SCALAR; i++) {
       auto reg_addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH) + BvConst(0, PE_ACT_REGS_ADDR_WIDTH);
       auto result = PEActRegLoad_v(child, pe_idx, a2, reg_addr);
       // update 05012020: Need to transform the result from fixed point to adaptive float when
       // sending back to gb.
-      auto result_adpfloat = Fixed2Adptfloat(result);
+      auto result_adpfloat = Fixed2Adptfloat(result, adptflow_bias);
       instr.SetUpdate(m.state(PEGetGBDataInName(i, GB_CONTROL_DATA_IN)), result_adpfloat);
     }
   }
