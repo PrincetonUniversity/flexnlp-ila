@@ -345,29 +345,6 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
       //update the activation vector registers
       instr.SetUpdate(act_vector_reg, act_reg_tmp);
     }
-    /****************************************/
-    // for (auto i = 0; i < CORE_SCALAR; i++) {
-    //   auto accum_vector = child.state(PEGetVarNameVector(pe_idx, i, CORE_ACCUM_VECTOR));
-    //   auto tmp = accum_vector >> right_shift;
-
-    //   auto bias = Load(input_mem, bias_addr_base + i);
-    //   // TODO: implement function GetBiasTmp(bias)
-    //   auto bias_tmp = GetBiasTmp(bias, adpfloat_bias_bias);
-
-    //   tmp = Ite(is_bias == 1, tmp + bias_tmp, tmp);
-    //   // overflow checking and cutting
-
-    //   // current implementation is definitely wrong.
-    //   auto act_word_max = BvConst(ACT_WORD_MAX, PE_CORE_ACCUM_VECTOR_BITWIDTH);
-    //   auto act_word_min = -act_word_max;
-    //   tmp = Ite(tmp > act_word_max, act_word_max, tmp);
-    //   tmp = Ite(tmp < act_word_min, act_word_min, tmp);
-      
-    //   auto act_reg = Extract(tmp, PE_CORE_ACT_VECTOR_BITWIDTH - 1, 0);
-    //   auto act_vector = m.state(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECTOR));
-    //   // update the activation vector registers 
-    //   instr.SetUpdate(act_vector, act_reg);
-    // }
 
     auto next_state = BvConst(PE_CORE_STATE_OUT, PE_CORE_STATE_BITWIDTH);
     instr.SetUpdate(state, next_state);
@@ -570,13 +547,6 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
     for (auto i = 0; i < CORE_SCALAR; i++) {
       auto weight_byte = child_run_mac.state(PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_WEIGHT_BYTE));
       auto input_byte = child_run_mac.state(PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_INPUT_BYTE));
-      // TODO: check the input is already adaptive flow format?
-      // FIXME: implement uninterpreted function here
-      // auto input_byte_adpflow = to_adpflow(weight_byte);
-      // auto weight_byte_adpflow = to_adpflow(input_byte);
-
-      // auto result = adpflow_mul(weight_byte_adpflow, input_byte_adpflow);
-      // accum = accum + result;
       
       // Need two uninterpreted functions here, one for product sum, one for signed add
       auto result = ProductSum(weight_byte, input_byte);
