@@ -119,7 +119,8 @@ void AddChild_ZeroPadding(Ila& m) {
     auto group_index_20 = Concat(BvConst(0, 4), group_index);
     auto group_offset_20 = Concat(BvConst(0, 4), group_offset);
 
-    auto start_addr_offset = group_index_20 * group_size + group_offset_20;
+    // udpate 05022020: The group offset should be multiplied by gb_core_scalar!!!
+    auto start_addr_offset = group_index_20 * group_size + group_offset_20 * GB_CORE_SCALAR;
     auto next_state = BvConst(GB_ZERO_PADDING_CHILD_STATE_VECTOR, GB_ZERO_PADDING_CHILD_STATE_BITWIDTH);
 
     instr.SetUpdate(start_addr, start_addr + start_addr_offset);
