@@ -80,8 +80,6 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
   // child states
   auto is_start_reg = 
         child.NewBvState(PEGetVarName(pe_idx, ACT_IS_START_REG), PE_ACT_IS_START_REG_BITWIDTH);
-  auto is_init_reg = 
-        child.NewBvState(PEGetVarName(pe_idx, ACT_IS_INIT_REG), PE_ACT_IS_INIT_REG_BITWIDTH);
   auto instr_cntr = 
         child.NewBvState(PEGetVarName(pe_idx, ACT_INSTR_COUNTER), PE_ACT_INSTR_COUNTER_BITWIDTH);
   auto output_cntr = 
@@ -112,12 +110,11 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
 
   // child initial conditions
   child.AddInit(is_start_reg == PE_ACT_INVALID);
-  child.AddInit(is_init_reg == PE_ACT_INVALID);
   child.AddInit(state == PE_ACT_STATE_IDLE);
 
   { // instr0 ---- initiate the act unit when receiving pe_start, reset states
     auto instr = child.NewInstr(PEGetInstrName(pe_idx, "act_child_initiate"));
-    // auto not_init_cond = (is_init_reg == PE_ACT_INVALID);
+
     auto not_start_cond = (is_start_reg == PE_ACT_INVALID);
     auto pe_start_active = (pe_start == PE_ACT_VALID);
     auto state_idle = (state == PE_ACT_STATE_IDLE);

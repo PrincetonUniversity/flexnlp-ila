@@ -149,6 +149,8 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
     instr.SetDecode(child_valid & state_ts);
 
     // state updates
+    // FIXME: 05022020: the base addr offset for the timestep is wrong!!!!
+    // found through a similar mistake from gb_control
     auto timestep_size = Concat(BvConst(0, 8), num_vector) * GB_CORE_SCALAR;
     auto base_addr_offset = Concat(BvConst(0,4), timestep_size * counter_ts);
 

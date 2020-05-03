@@ -254,7 +254,10 @@ void AddChild_GB_Control(Ila& m) {
     auto group_index_20 = Concat(BvConst(0, 4), group_index);
     auto group_offset_20 = Concat(BvConst(0, 4), group_offset);
 
-    auto timestep_base_addr_offset = group_index_20 * group_size + group_offset_20;
+    // update 05022020: The group_offset should multiply gb_scalar!!!!
+    // bitwidth is enough: 20 bit is enought for 1MB large buffer
+    auto timestep_base_addr_offset = group_index_20 * group_size + group_offset_20 * GB_CORE_SCALAR;
+
     auto timestep_base_addr_tmp = memory_base_addr_1 + timestep_base_addr_offset;
     // next state function
     auto next_state = BvConst(GB_CONTROL_CHILD_STATE_SEND, GB_CONTROL_CHILD_STATE_BITWIDTH);
@@ -396,7 +399,8 @@ void AddChild_GB_Control(Ila& m) {
     auto group_index_20 = Concat(BvConst(0, 4), group_index);
     auto group_offset_20 = Concat(BvConst(0, 4), group_offset);
 
-    auto timestep_base_addr_offset = group_index_20 * group_size + group_offset_20;
+    // update: 05022020, the group offset should be multiplied by gb_core_scalar
+    auto timestep_base_addr_offset = group_index_20 * group_size + group_offset_20 * GB_CORE_SCALAR;
     auto timestep_base_addr_tmp = memory_base_addr_2 + timestep_base_addr_offset;
 
     auto next_state = BvConst(GB_CONTROL_CHILD_STATE_RECV, GB_CONTROL_CHILD_STATE_BITWIDTH);
@@ -583,7 +587,8 @@ void AddChild_GB_Control(Ila& m) {
     auto group_index_20 = Concat(BvConst(0, 4), group_index);
     auto group_offset_20 = Concat(BvConst(0, 4), group_offset);
 
-    auto timestep_base_addr_offset = group_index_20 * group_size + group_offset_20;
+    // update 05022020: The group_offset should be multiplied by gb_core_scalar!!
+    auto timestep_base_addr_offset = group_index_20 * group_size + group_offset_20 * GB_CORE_SCALAR;
     auto timestep_base_addr_tmp = memory_base_addr_2 + timestep_base_addr_offset;
 
     auto next_state = BvConst(GB_CONTROL_CHILD_STATE_SEND_BACK, GB_CONTROL_CHILD_STATE_BITWIDTH);
