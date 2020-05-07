@@ -65,6 +65,12 @@ sc_biguint<32> flex_sim::AccumAdd(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
   return result;
 }
 
+sc_biguint<32> flex_sim::AccumAdd2(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
+
+    sc_biguint<32> result = 0;
+    return result;
+}
+
 // Function: PEActEadd
 // element-wise add, used in PE_Act
 sc_biguint<20> flex_sim::PEActEadd(sc_biguint<20> arg_0, sc_biguint<20> arg_1) {

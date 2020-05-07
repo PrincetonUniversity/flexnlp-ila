@@ -53,7 +53,9 @@ sc_biguint<32> flex_sim::PECoreAccumRightShift(sc_biguint<32> arg_0,
 
   NVUINT5 right_shift = -2*spec::kAdpfloatOffset + 2*spec::kAdpfloatManWidth - spec::kActNumFrac
                         - bias_weight - bias_input;
+  //std::cout << "right_shift: " << right_shift << '\t';
   spec::AccumScalarType result_tmp = accum_vector >> right_shift;
+  //std::cout << "shifted value: " << result_tmp << std::endl;
 
   sc_bigint<32> result_s = result_tmp.to_int();
   sc_biguint<32> result = result_s;
@@ -163,6 +165,27 @@ sc_biguint<32> flex_sim::AccumAdd(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
   return result;
 }
 
+// Function: AccumAdd2
+// used to update values in accumulator vector registers
+sc_biguint<32> flex_sim::AccumAdd2(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
+
+  sc_bigint<32> arg_0_s = arg_0;
+  sc_bigint<32> arg_1_s = arg_1;
+  
+  ac_int<32,true> arg_0_ac = arg_0_s.to_int();
+  ac_int<32,true> arg_1_ac = arg_1_s.to_int();
+
+  spec::AccumScalarType out_tmp = arg_0_ac;
+  spec::AccumScalarType acc_tmp = arg_1_ac;
+
+  out_tmp += acc_tmp;
+
+  sc_bigint<32> result_s = out_tmp.to_int();
+  sc_biguint<32> result = result_s;
+
+  return result;
+}
+
 // Function: PEActEadd
 // element-wise add, used in PE_Act
 sc_biguint<20> flex_sim::PEActEadd(sc_biguint<20> arg_0, sc_biguint<20> arg_1) {
@@ -178,9 +201,9 @@ sc_biguint<20> flex_sim::PEActEadd(sc_biguint<20> arg_0, sc_biguint<20> arg_1) {
   sc_bigint<20> result_s = out_tmp.to_int();
   sc_biguint<20> result = result_s;
   
-  std::cout << dec << "No." << counter << " " << "PEActEadd: ";
-  std::cout << hex << "arg_0: " << arg_0 << '\t' << "arg_1: " << arg_1 << '\t';
-  std::cout << "result: " << result << std::endl;
+  //std::cout << dec << "No." << counter << " " << "PEActEadd: ";
+ // std::cout << hex << "arg_0: " << arg_0 << '\t' << "arg_1: " << arg_1 << '\t';
+  //std::cout << "result: " << result << std::endl;
   counter++;
   return result;
 }
@@ -203,9 +226,9 @@ sc_biguint<20> flex_sim::PEActEmul(sc_biguint<20> arg_0, sc_biguint<20> arg_1) {
   sc_bigint<20> result_s = out_tmp.to_int();
   sc_biguint<20> result = result_s;
 
-  std::cout << dec << "No." << counter << " " << "PEActEmul: ";
-  std::cout << hex << "arg_0: " << arg_0 << '\t' << "arg_1: " << arg_1 << '\t';
-  std::cout << "result: " << result << std::endl;
+  //std::cout << dec << "No." << counter << " " << "PEActEmul: ";
+  //std::cout << hex << "arg_0: " << arg_0 << '\t' << "arg_1: " << arg_1 << '\t';
+  //std::cout << "result: " << result << std::endl;
   counter++;
   return result;
 }
@@ -215,35 +238,36 @@ sc_biguint<20> flex_sim::PEActEmul(sc_biguint<20> arg_0, sc_biguint<20> arg_1) {
 sc_biguint<20> flex_sim::PEActSigmoid(sc_biguint<20> arg_0) {
 
   sc_bigint<20> arg_0_s = arg_0;
-  std::cout << "arg_0_s" << arg_0_s << '\t';
+  //std::cout << "arg_0_s" << arg_0_s << '\t';
   
   spec::ActScalarType arg_0_ac = arg_0_s.to_int();
   spec::ActScalarType out_tmp;
 
-  std::cout << "arg_0_ac: " << arg_0_ac << '\t';
+  //std::cout << "arg_0_ac: " << arg_0_ac << '\t';
 
   ac_fixed<spec::kActWordWidth, spec::kActNumInt, true, AC_TRN, AC_WRAP> in_ac; 
   ac_fixed<spec::kActWordWidth, spec::kActNumInt, false, AC_TRN, AC_WRAP> out_ac;
   
   in_ac.set_slc(0, arg_0_ac);
 
-  std::cout << "in_ac: " << in_ac << '\t';
+  //std::cout << "in_ac: " << in_ac << '\t';
 
   out_ac = ac_math::ac_sigmoid_pwl
             <ac_fixed<spec::kActWordWidth, spec::kActNumInt, false, AC_TRN, AC_WRAP> >(in_ac);
 
-  std::cout << "out ac: " << out_ac << '\t';
+  //std::cout << "out ac: " << out_ac << '\t';
 
   out_tmp.set_slc(0, nvhls::get_slc<spec::kActWordWidth>(out_ac, 0));
 
-  std::cout << "out_tmp: " << out_tmp << '\t';
+  //std::cout << "out_tmp: " << out_tmp << '\t';
 
   sc_bigint<20> result_s = out_tmp.to_int();
   sc_biguint<20> result = result_s;
 
-  std::cout << dec << "No." << counter << " " << "PEActSigmoid: ";
-  std::cout << hex << "arg_0: " << arg_0 << '\t';
-  std::cout << "result: " << result << std::endl;
+  //std::cout << dec << "No." << counter << " " << "PEActSigmoid: ";
+  //std::cout << hex << "in " << in_ac << '\t';
+  //std::cout << "out_tmp: " << out_tmp << '\t';
+  //std::cout << "result: " << result << std::endl;
   counter++;
   return result;
 }
@@ -253,35 +277,36 @@ sc_biguint<20> flex_sim::PEActSigmoid(sc_biguint<20> arg_0) {
 sc_biguint<20> flex_sim::PEActTanh(sc_biguint<20> arg_0) {
 
   sc_bigint<20> arg_0_s = arg_0;
-  std::cout << "arg_0_s" << arg_0_s << '\t';
+//  std::cout << "arg_0_s" << arg_0_s << '\t';
 
   spec::ActScalarType arg_0_ac = arg_0_s.to_int();
   spec::ActScalarType out_tmp;
 
-  std::cout << "arg_0_ac: " << arg_0_ac << '\t';
+//  std::cout << "arg_0_ac: " << arg_0_ac << '\t';
 
   ac_fixed<spec::kActWordWidth, spec::kActNumInt, true, AC_TRN, AC_WRAP> in_ac;
   ac_fixed<spec::kActWordWidth, spec::kActNumInt, false, AC_TRN, AC_WRAP> out_ac;
 
   in_ac.set_slc(0, arg_0_ac);
 
-  std::cout << "in_ac: " << in_ac << '\t';
+//  std::cout << "in_ac: " << in_ac << '\t';
 
   out_ac = ac_math::ac_tanh_pwl
              <ac_fixed<spec::kActWordWidth, spec::kActNumInt, false, AC_TRN, AC_WRAP> >(in_ac);
 
-  std::cout << "out ac: " << out_ac << '\t';
+//  std::cout << "out ac: " << out_ac << '\t';
 
   out_tmp.set_slc(0, nvhls::get_slc<spec::kActWordWidth>(out_ac, 0));
 
-  std::cout << "out_tmp: " << out_tmp << std::endl;
+//  std::cout << "out_tmp: " << out_tmp << std::endl;
   
   sc_bigint<20> result_s = out_tmp.to_int();
   sc_biguint<20> result = result_s;
 
-  std::cout << dec << "No." << counter << " " << "PEActTanh: ";
-  std::cout << hex << "arg_0: " << arg_0 << '\t';
-  std::cout << "result: " << result << std::endl;
+  //std::cout << dec << "No." << counter << " " << "PEActTanh: ";
+  //std::cout << hex << "in: " << in_ac << '\t';
+  //std::cout << "out_tmp: " << out_tmp << '\t';
+  //std::cout << "result: " << result << std::endl;
   counter++;
   return result;
 }
@@ -303,9 +328,9 @@ sc_biguint<20> flex_sim::PEActRelu(sc_biguint<20> arg_0) {
   sc_bigint<20> result_s = out_tmp.to_int();
   sc_biguint<20> result = result_s;
 
-  std::cout << dec << "No." << counter << " " << "PEActRelu: ";
-  std::cout << hex << "arg_0: " << arg_0 << '\t';
-  std::cout << "result: " << result << std::endl;
+  //std::cout << dec << "No." << counter << " " << "PEActRelu: ";
+  //std::cout << hex << "arg_0: " << arg_0 << '\t';
+  //std::cout << "result: " << result << std::endl;
   counter++;
   return result;
 }
@@ -324,9 +349,9 @@ sc_biguint<20> flex_sim::PEActOnex(sc_biguint<20> arg_0) {
   sc_bigint<20> result_s = out_tmp.to_int();
   sc_biguint<20> result = result_s;
 
-  std::cout << dec << "No." << counter << " " << "PEActOnex: ";
-  std::cout << hex << "arg_0: " << arg_0 << '\t';
-  std::cout << "result: " << result << std::endl;
+  //std::cout << dec << "No." << counter << " " << "PEActOnex: ";
+  //std::cout << hex << "arg_0: " << arg_0 << '\t';
+  //std::cout << "result: " << result << std::endl;
   counter++;
   return result;
 }
@@ -346,9 +371,9 @@ sc_biguint<20> flex_sim::Adptfloat2Fixed(sc_biguint<8> arg_0, sc_biguint<3> arg_
   sc_bigint<20> result_s = out_tmp.to_int();
   sc_bigint<20> result = result_s;
 
-  std::cout << dec << "No." << counter << " " << "PEAdptfloat2Fixed: ";
-  std::cout << hex << "arg_0: " << arg_0 << '\t' << "arg_1: " << arg_1 << '\t';
-  std::cout << "result: " << result << std::endl;
+  //std::cout << dec << "No." << counter << " " << "PEAdptfloat2Fixed: ";
+  //std::cout << hex << "arg_0: " << arg_0 << '\t' << "arg_1: " << arg_1 << '\t';
+  //std::cout << "result: " << result << std::endl;
   counter++;
 
   return result;
@@ -370,9 +395,9 @@ sc_biguint<8> flex_sim::Fixed2Adaptfloat(sc_biguint<20> arg_0, sc_biguint<3> arg
 
   sc_biguint<8> result = out_tmp.to_uint();
 
-  std::cout << dec << "No." << counter << " " << "PEFixed2Adpfloat: ";
-  std::cout << hex << "arg_0: " << arg_0 << '\t' << "arg_1: " << arg_1 << '\t';
-  std::cout << "result: " << result << std::endl;
+  //std::cout << dec << "No." << counter << " " << "PEFixed2Adpfloat: ";
+  //std::cout << hex << "arg_0: " << arg_0 << '\t' << "arg_1: " << arg_1 << '\t';
+  //std::cout << "result: " << result << std::endl;
   counter++;
   return result;
 }
