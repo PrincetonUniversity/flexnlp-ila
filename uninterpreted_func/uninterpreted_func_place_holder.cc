@@ -26,21 +26,21 @@ sc_biguint<20> flex_sim::SInvSqrt(sc_biguint<20> arg_0) {
 }
 
 // adpfloat_max used in Maxpooling of LayerReduce
-sc_biguint<8> flex_sim::adpfloat_max(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
+sc_biguint<8> flex_sim::GBAdpfloat_max(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
   
     sc_biguint<8> result = 0;
   return result;
 }
 
 // adpfloat_mean in LayerReduce
-sc_biguint<8> flex_sim::adpfloat_mean(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
+sc_biguint<8> flex_sim::GBAdpfloat_mean(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
   
     sc_biguint<8> result = 0;
   return result;
 }
 
 // adpfloat_add in LayerReduce
-sc_biguint<8> flex_sim::adpfloat_add(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
+sc_biguint<8> flex_sim::GBAdpfloat_add(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
   
     sc_biguint<8> result = 0;
   return result;

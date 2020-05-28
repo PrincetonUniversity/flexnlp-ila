@@ -81,7 +81,7 @@ sc_biguint<20> flex_sim::SInvSqrt(sc_biguint<20> arg_0) {
 }
 
 // adpfloat_max used in Maxpooling of LayerReduce
-sc_biguint<8> flex_sim::adpfloat_max(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
+sc_biguint<8> flex_sim::GBAdpfloat_max(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
 
   ac_int<8,false> arg_0_ac = arg_0.to_uint();
   ac_int<8,false> arg_1_ac = arg_1.to_uint();
@@ -97,7 +97,7 @@ sc_biguint<8> flex_sim::adpfloat_max(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
 }
 
 // adpfloat_mean used in LayerReduce
-sc_biguint<8> flex_sim::adpfloat_mean(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
+sc_biguint<8> flex_sim::GBAdpfloat_mean(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
   ac_int<8,false> arg_0_ac = arg_0.to_uint();
   ac_int<8,false> arg_1_ac = arg_1.to_uint();
   AdpfloatType<spec::kAdpfloatWordWidth,spec::kAdpfloatExpWidth> in_a = arg_0_ac;
@@ -112,7 +112,7 @@ sc_biguint<8> flex_sim::adpfloat_mean(sc_biguint<8> arg_0, sc_biguint<8> arg_1) 
 }
 
 // adpfloat_add used in LayerReduce
-sc_biguint<8> flex_sim::adpfloat_add(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
+sc_biguint<8> flex_sim::GBAdpfloat_add(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
   ac_int<8,false> arg_0_ac = arg_0.to_uint();
   ac_int<8,false> arg_1_ac = arg_1.to_uint();
   AdpfloatType<spec::kAdpfloatWordWidth,spec::kAdpfloatExpWidth> in_a = arg_0_ac;
