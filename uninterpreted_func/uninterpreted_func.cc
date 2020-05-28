@@ -21,8 +21,67 @@
 
 static int counter = 0;
 
-// signed_gt used in Maxpooling of LayerReduce
-sc_biguint<8> flex_sim::signed_gt(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
+// GBNormAdd used in LayerNorm
+sc_biguint<24> flex_sim::GBNormAdd_24(sc_biguint<24> arg_0, sc_biguint<24> arg_1) {
+  sc_bigint<24> arg_0_s = arg_0;
+  sc_bigint<24> arg_1_s = arg_1;
+  spec::LayerNormSumType in_0 = arg_0_s.to_int();
+  spec::LayerNormSumType in_1 = arg_1_s.to_int();
+  spec::LayerNormSumType out = in_0 + in_1;
+  sc_bigint<24> result_s = out.to_int();
+  sc_biguint<24> result = result_s;
+
+  return result;
+}
+
+// GBNormDivide
+sc_biguint<20> flex_sim::GBNormDivide_24(sc_biguint<24> arg_0, sc_biguint<24> arg_1) {
+  sc_bigint<24> arg_0_s = arg_0;
+  sc_bigint<24> arg_1_s = arg_1;
+  spec::LayerNormSumType in_0 = arg_0_s.to_int();
+  spec::LayerNormSumType in_1 = arg_1_s.to_int();
+  spec::ActScalarType out = in_0 / in_1;
+  sc_bigint<20> result_s = out.to_int();
+  sc_biguint<20> result = result_s;
+
+  return result;
+}
+
+// ActSignedMinus
+sc_biguint<20> flex_sim::ActSignedMinus(sc_biguint<20> arg_0, sc_biguint<20> arg_1) {
+  sc_bigint<20> arg_0_s = arg_0;
+  sc_bigint<20> arg_1_s = arg_1;
+  spec::ActScalarType in_0 = arg_0_s.to_int();
+  spec::ActScalarType in_1 = arg_1_s.to_int();
+  spec::ActScalarType out = in_0 - in_1;
+  sc_bigint<20> result_s = out.to_int();
+  sc_biguint<20> result = result_s;
+
+  return result;
+}
+
+// SInvSqrt
+sc_biguint<20> flex_sim::SInvSqrt(sc_biguint<20> arg_0) {
+  
+  sc_bigint<20> arg_0_s = arg_0;
+  spec::ActScalarType in = arg_0_s.to_int();
+
+  spec::ActScalarType out_tmp;
+  
+  ac_fixed<spec::kActWordWidth, spec::kActNumInt, false, AC_TRN, AC_WRAP> in_ac; 
+  ac_fixed<spec::kActWordWidth, spec::kActNumInt, false, AC_TRN, AC_WRAP> out_ac;  
+  in_ac.set_slc(0, in);
+  ac_math::ac_inverse_sqrt_pwl(in_ac, out_ac);
+  out_tmp.set_slc(0, nvhls::get_slc<spec::kActWordWidth>(out_ac, 0));
+  
+  sc_bigint<20> result_s = out_tmp.to_int();
+  sc_biguint<20> result = result_s;
+
+  return result;
+}
+
+// adpfloat_max used in Maxpooling of LayerReduce
+sc_biguint<8> flex_sim::adpfloat_max(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
 
   ac_int<8,false> arg_0_ac = arg_0.to_uint();
   ac_int<8,false> arg_1_ac = arg_1.to_uint();
@@ -30,6 +89,36 @@ sc_biguint<8> flex_sim::signed_gt(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
   AdpfloatType<spec::kAdpfloatWordWidth,spec::kAdpfloatExpWidth> in_b = arg_1_ac;
   AdpfloatType<spec::kAdpfloatWordWidth,spec::kAdpfloatExpWidth> out_tmp;
   adpfloat_max(in_a, in_b, out_tmp);
+
+  ac_int<8,false> result_ac = out_tmp.to_rawbits();
+  sc_biguint<8> result = result_ac.to_uint();
+
+  return result;
+}
+
+// adpfloat_mean used in LayerReduce
+sc_biguint<8> flex_sim::adpfloat_mean(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
+  ac_int<8,false> arg_0_ac = arg_0.to_uint();
+  ac_int<8,false> arg_1_ac = arg_1.to_uint();
+  AdpfloatType<spec::kAdpfloatWordWidth,spec::kAdpfloatExpWidth> in_a = arg_0_ac;
+  AdpfloatType<spec::kAdpfloatWordWidth,spec::kAdpfloatExpWidth> in_b = arg_1_ac;
+  AdpfloatType<spec::kAdpfloatWordWidth,spec::kAdpfloatExpWidth> out_tmp;
+  adpfloat_mean(in_a, in_b, out_tmp);
+
+  ac_int<8,false> result_ac = out_tmp.to_rawbits();
+  sc_biguint<8> result = result_ac.to_uint();
+
+  return result;
+}
+
+// adpfloat_add used in LayerReduce
+sc_biguint<8> flex_sim::adpfloat_add(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
+  ac_int<8,false> arg_0_ac = arg_0.to_uint();
+  ac_int<8,false> arg_1_ac = arg_1.to_uint();
+  AdpfloatType<spec::kAdpfloatWordWidth,spec::kAdpfloatExpWidth> in_a = arg_0_ac;
+  AdpfloatType<spec::kAdpfloatWordWidth,spec::kAdpfloatExpWidth> in_b = arg_1_ac;
+  AdpfloatType<spec::kAdpfloatWordWidth,spec::kAdpfloatExpWidth> out_tmp;
+  adpfloat_add(in_a, in_b, out_tmp);
 
   ac_int<8,false> result_ac = out_tmp.to_rawbits();
   sc_biguint<8> result = result_ac.to_uint();
