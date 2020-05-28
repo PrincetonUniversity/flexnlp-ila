@@ -37,9 +37,13 @@ namespace ilang {
 #define ADPTFLOW_SIGN_BIT_IDX (ADPTFLOW_WIDTH - 1)
 #define ADPTFLOW_OFFSET -10
 #define ADPTFLOW_OFFSET_NEG 10
+
+#define ACT_WORD_WIDTH 20
+#define ACCUM_WORD_WIDTH 32
 #define ACT_NUM_FRAC 14
 #define ACT_WORD_MAX 0x7FFFF
-#define ACT_WORD_MIN - ACT_WORD_MAX
 
+#define ATTENTION_WORD_WIDTH 32
+#define ATTENTION_NUM_FRAC 20
 } // namespace ilang
 #endif
