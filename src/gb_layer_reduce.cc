@@ -425,9 +425,9 @@ void AddChild_Byte_Level(Ila& m) {
 
 		// TODO: add pooling is not correct!
 		// update 05272020: use uninterpreted functions to implement the algorithms
-		auto result = Ite((op_mode == GB_LAYER_REDUCE_OP_MAX), adpfloat_max(data_0, data_1),
-										Ite((op_mode == GB_LAYER_REDUCE_OP_MEAN), adpfloat_mean(data_0, data_1), 
-																															adpfloat_add(data_0, data_1))); 
+		auto result = Ite((op_mode == GB_LAYER_REDUCE_OP_MAX), GBAdpfloat_max(data_0, data_1),
+										Ite((op_mode == GB_LAYER_REDUCE_OP_MEAN), GBAdpfloat_mean(data_0, data_1), 
+																															GBAdpfloat_add(data_0, data_1))); 
 
 		instr.SetUpdate(byte_cntr, byte_cntr + 1);
 		instr.SetUpdate(mem, Store(mem, addr_out_32, result));	
