@@ -26,6 +26,7 @@
 
 #include <flex/flex.h>
 #include <flex/util.h>
+#include <flex/uninterpreted_func.h>
 
 #include <vector>
 
@@ -33,24 +34,6 @@ namespace ilang {
 
 void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base);
 void AddChild_PECoreRunMac(Ila& m, const int& pe_idx);
-
-// uninterpreted functions
-auto uf_accum_scalar = SortRef::BV(PE_CORE_ACCUMSCALAR_BITWIDTH);
-auto uf_accum_bias = SortRef::BV(PE_CORE_ADPFLOAT_BIAS_BITWIDTH);
-std::vector<SortRef> right_shift_input = {uf_accum_scalar, uf_accum_bias, uf_accum_bias};
-FuncRef PECoreAccumRightShift("PECoreAccumRightShift", uf_accum_scalar, right_shift_input);
-
-auto uf_accum_bias_input = SortRef::BV(PE_CORE_SCALAR_BITWIDTH);
-auto uf_accum_bias_bias = SortRef::BV(PE_CORE_ADPFLOAT_BIAS_B_BITWIDTH);
-std::vector<SortRef> get_bias_input = {uf_accum_scalar, uf_accum_bias_input, 
-                                        uf_accum_bias_bias};
-FuncRef PECoreAccumGetBiasOut("PECoreAccumGetBiasOut", uf_accum_scalar, get_bias_input);
-
-FuncRef PECoreAccumOverflowCheck("PECoreAccumOverflowCheck", uf_accum_scalar, uf_accum_scalar);
-
-auto uf_act_reg_scalar = SortRef::BV(PE_CORE_ACTSCALAR_BITWIDTH);
-FuncRef PECoreAccum2ActReg("PECoreAccum2ActReg", uf_act_reg_scalar, uf_accum_scalar);
-
 
 void DefinePECore(Ila& m, const int& pe_idx, const uint64_t& base) {
 

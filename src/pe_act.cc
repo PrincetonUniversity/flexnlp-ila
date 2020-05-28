@@ -26,6 +26,7 @@
 
 #include <flex/flex.h>
 #include <flex/util.h>
+#include <flex/uninterpreted_func.h>
 #include <vector>
 
 namespace ilang {
@@ -38,33 +39,6 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base);
 // function to load the data from the PE Act Register
 ExprRef PEActRegLoad_v(Ila& child, const int& pe_idx, const ExprRef& reg_idx,
                         const ExprRef& addr);
-// // function to link store ast
-// void PEActRegStore_v(std::vector<ExprRef>& reg_next_v, const ExprRef& reg_idx,
-//                           const ExprRef& addr, const ExprRef& data);
-// // function to set instruction update for the corresponding memory states
-// void PEActRegUpdate_v(Ila& child, const int& pe_idx, InstrRef& instr,
-//                         std::vector<ExprRef>& reg_next_v);
-
-
-// declare uninterpreted function here;
-auto uf_act_in1 = SortRef::BV(PE_CORE_ACT_VECTOR_BITWIDTH);
-auto uf_act_in2 = SortRef::BV(PE_CORE_ACT_VECTOR_BITWIDTH);
-auto uf_act_out = SortRef::BV(PE_CORE_ACT_VECTOR_BITWIDTH);
-
-auto uf_scalar_type = SortRef::BV(TOP_DATA_IN_WIDTH);
-auto uf_act_type = SortRef::BV(PE_CORE_ACT_VECTOR_BITWIDTH);
-auto uf_adpbias_type = SortRef::BV(ACT_MNGR_CONFIG_REG_ADPFLOAT_BIAS_WIDTH);
-
-FuncRef Adptfloat2Fixed("Adptfloat2Fixed", uf_act_type, uf_scalar_type, uf_adpbias_type);
-FuncRef Fixed2Adptfloat("Fixed2Adaptfloat", uf_scalar_type, uf_act_type, uf_adpbias_type);
-
-FuncRef PEActEadd("PEActEadd", uf_act_out, uf_act_in1, uf_act_in2);
-FuncRef PEActEmul("PEActEmul", uf_act_out, uf_act_in1, uf_act_in2);
-FuncRef PEActSigmoid("PEActSigmoid", uf_act_out, uf_act_in1);
-FuncRef PEActTanh("PEActTanh", uf_act_out, uf_act_in1);
-FuncRef PEActRelu("PEActRelu", uf_act_out, uf_act_in1);
-FuncRef PEActOnex("PEActOnex", uf_act_out, uf_act_in1);
-
 
 void DefinePEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
   // TODO

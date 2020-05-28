@@ -77,16 +77,6 @@ void DefineGBInternalStates(Ila& m) {
   // state for child model state machine
   m.NewBvState(GB_LAYER_NORM_CHILD_STATE, GB_LAYER_NORM_CHILD_STATE_BITWIDTH);
 
-  // state for iterations, iterations = num_timestep
-  m.NewBvState(GB_LAYER_NORM_ITERATIONS, GB_LAYER_NORM_ITERATIONS_WIDTH);
-  // state for 2nd level instructions coutner
-  m.NewBvState(GB_LAYER_NORM_CNTR_TIMESTEP, GB_LAYER_NORM_CNTR_TIMESTEP_WIDTH);
-  // state for memory block size
-  m.NewBvState(GB_LAYER_NORM_MEM_BLOCK_SIZE, GB_CORE_STORE_LARGE_BITWIDTH);
-  // state for memory min addr offset
-  m.NewBvState(GB_LAYER_NORM_MEM_MIN_ADDR_OFFSET, GB_LAYER_NORM_MEM_MIN_ADDR_OFFSET_WIDTH);
-
-
   /******* GBLayerZeroPadding internal states ******/
   
   // state for setting flag of child valid states

@@ -24,10 +24,10 @@
 
 // File: adpflow_spec.h
 
-#include <ilang/ilang++.h>
-
 #ifndef FLEX_ADPFLOAT_SPEC__
 #define FLEX_ADPFLOAT_SPEC__
+
+#include <ilang/ilang++.h>
 
 namespace ilang {
 // define the adaptive flow related specs here
