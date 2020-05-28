@@ -39,9 +39,9 @@ namespace ilang {
   static auto uf_in2 = SortRef::BV(TOP_DATA_IN_WIDTH);
 
   // uninterpreted functions used in LayerReduce
-  static FuncRef GBAdpfloat_max("adpfloat_max", uf_out, uf_in1, uf_in2);
-  static FuncRef GBAdpfloat_mean("adpfloat_mean", uf_out, uf_in1, uf_in2);
-  static FuncRef GBAdpfloat_add("adpfloat_add", uf_out, uf_in1, uf_in2);
+  static FuncRef GBAdpfloat_max("GBAdpfloat_max", uf_out, uf_in1, uf_in2);
+  static FuncRef GBAdpfloat_mean("GBAdpfloat_mean", uf_out, uf_in1, uf_in2);
+  static FuncRef GBAdpfloat_add("GBAdpfloat_add", uf_out, uf_in1, uf_in2);
 
   // uninterpreted functions used in pe_core
   static auto uf_accum_scalar = SortRef::BV(PE_CORE_ACCUMSCALAR_BITWIDTH);
