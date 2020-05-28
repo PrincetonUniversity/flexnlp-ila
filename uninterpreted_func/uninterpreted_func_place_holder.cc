@@ -4,8 +4,43 @@
 #include "systemc.h"
 #include "flex_sim.h"
 
-// signed_gt used in Maxpooling of LayerReduce
-sc_biguint<8> flex_sim::signed_gt(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
+
+// GBNormAdd used in LayerNorm
+sc_biguint<24> flex_sim::GBNormAdd_24(sc_biguint<24> arg_0, sc_biguint<24> arg_1) {
+    return arg_0;
+}
+
+// GBNormDivide used in LayerNorm
+sc_biguint<20> flex_sim::GBNormDivide_24(sc_biguint<24> arg_0, sc_biguint<24> arg_1) {
+    return sc_biguint<20> temp = 0;
+}
+
+// ActSignedMinus used in LayerNorm
+sc_biguint<20> flex_sim::ActSignedMinus(sc_biguint<20> arg_0, sc_biguint<20> arg_1) {
+    return arg_0;
+}
+
+// SInvSqrt used in LayerNorm
+sc_biguint<20> flex_sim::SInvSqrt(sc_biguint<20> arg_0) {
+    return arg_0;
+}
+
+// adpfloat_max used in Maxpooling of LayerReduce
+sc_biguint<8> flex_sim::adpfloat_max(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
+  
+    sc_biguint<8> result = 0;
+  return result;
+}
+
+// adpfloat_mean in LayerReduce
+sc_biguint<8> flex_sim::adpfloat_mean(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
+  
+    sc_biguint<8> result = 0;
+  return result;
+}
+
+// adpfloat_add in LayerReduce
+sc_biguint<8> flex_sim::adpfloat_add(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
   
     sc_biguint<8> result = 0;
   return result;
