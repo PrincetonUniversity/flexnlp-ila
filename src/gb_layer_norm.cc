@@ -101,7 +101,6 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
   child.NewBvState(GB_LAYER_NORM_SUM_X_SQ, GB_LAYER_NORM_SUM_X_SQ_WIDTH);
   child.NewBvState(GB_LAYER_NORM_MEAN, GB_LAYER_NORM_MEAN_WIDTH);
   child.NewBvState(GB_LAYER_NORM_INV_STD, GB_LAYER_NORM_INV_STD_WIDTH);
-  child.NewBvState(GB_LAYER_NORM_VAR, GB_LAYER_NORM_VAR_WIDTH);
 
   child.NewBvState(GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA,
                         GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA_WIDTH);
@@ -110,9 +109,6 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
 
   // control related states  
   child.NewBvState(GB_LAYER_NORM_CNTR_VECTOR, GB_LAYER_NORM_CNTR_VECTOR_WIDTH);
-  child.NewBvState(GB_LAYER_NORM_SUM_DONE_FLAG, GB_LAYER_NORM_SUM_DONE_FLAG_WIDTH);
-  child.NewBvState(GB_LAYER_NORM_MEAN_DONE_FLAG, GB_LAYER_NORM_MEAN_DONE_FLAG_WIDTH);
-
 
   // common variables
   auto num_timestep = m.state(GB_LAYER_NORM_CONFIG_REG_NUM_TIMESTEP_1);
@@ -184,7 +180,7 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
     instr.SetUpdate(base_addr_v, base_addr_v_tmp); 
 
     auto next_state = 
-          Ite(counter_v >= num_vector - 1,
+          Ite(counter_v >= num_vector,
                 BvConst(GB_LAYER_NORM_CHILD_STATE_MEAN_OP, GB_LAYER_NORM_CHILD_STATE_BITWIDTH),
                 BvConst(GB_LAYER_NORM_CHILD_STATE_SUM_BYTE_OP, GB_LAYER_NORM_CHILD_STATE_BITWIDTH));
     instr.SetUpdate(state, next_state);
@@ -208,15 +204,19 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
     auto addr_32 = Concat(BvConst(0, 32-addr_20.bit_width()), addr_20);
 
     auto data = Load(mem, addr_32);
-    // TODO: implement the conversion from data to adpfloat type.
-    // TODO: Also need to extend the bit width the temp result in case of overflow.
+    auto adpbias_enc = m.state(GB_LAYER_NORM_CONFIG_REG_ADPBIAS_1);
 
-    auto adpfloat_data = Concat(BvConst(0, 16), data);
-    // TODO: check the implementation of EMUL in the flexNLP code
-    auto adpfloat_data_sq = (adpfloat_data * adpfloat_data) >> ACT_NUM_FRAC;
+    // use the same uninterpreted functions in pe_act
+    // convert adaptive float type data into ActScalar
+    auto x = Adptfloat2Fixed(data, adpbias_enc);
+    auto x_sq = PEActEmul(x, x);
+    // sum_x and sum_x_sq are 24bit wide
+    // we need to use uninterpreted functions for signed add
+    auto sum_x_tmp = GBNormAdd_24(sum_x, Concat(BvConst(0, 24-x.bit_width()), x));
+    auto sum_x_sq_tmp = GBNormAdd_24(sum_x_sq, Concat(BvConst(0, 24-x_sq.bit_width()), x_sq));
 
-    instr.SetUpdate(sum_x, sum_x + adpfloat_data);
-    instr.SetUpdate(sum_x_sq, sum_x_sq + adpfloat_data_sq);
+    instr.SetUpdate(sum_x, sum_x_tmp);
+    instr.SetUpdate(sum_x_sq, sum_x_sq_tmp);
 
     auto next_state = 
       Ite(counter_byte >= (GB_CORE_SCALAR - 1),
@@ -236,32 +236,34 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
 
     // calcuate the mean, variance and inverted standard variance
     auto mean_x = child.state(GB_LAYER_NORM_MEAN);
-    auto var_x = child.state(GB_LAYER_NORM_VAR);
     auto inv_std_x = child.state(GB_LAYER_NORM_INV_STD);
     // E[X], E[X^2]
-    auto num_vector_24 = Concat(BvConst(0, 16), num_vector);
+    auto num_vector_24 = Concat(BvConst(0, 24-num_vector.bit_width()), num_vector);
+    // This divisor is a multiple of unsigned number, no need for uninterpreted function
     auto divisor = num_vector_24 * GB_CORE_SCALAR;
-    auto mean_tmp = sum_x / divisor; 
-    auto sqmean_tmp = sum_x_sq / divisor;
+    // use uninterpreted functions for signed division
+    auto mean_tmp = GBNormDivide_24(sum_x, divisor);
+    auto sqmean_tmp = GBNormDivide_24(sum_x_sq, divisor);
 
     // E[X]^2
-    // TODO: EMUL
-    auto mean_sq_tmp = (mean_tmp * mean_tmp) >> K_ACT_NUM_FRAC;
+    // This shares the same uninterpreted functions with LayerNorm(PEActEmul are for one variable instead
+    // of a vector)
+    auto mean_sq_tmp = PEActEmul(mean_tmp, mean_tmp);
     // Var[X] = E[X^2] - E[X]^2
-    auto var_tmp = sqmean_tmp - mean_sq_tmp;
+    auto var_tmp = ActSignedMinus(sqmean_tmp, mean_sq_tmp);
     // inv_std = 1/sqrt(VAR[X])
-    // TODO: implement the uninterpretted function sqaure root
-    auto inv_std_tmp = var_tmp;
+    // implement the uninterpretted function sqaure root
+    auto inv_std_tmp = SInvSqrt(var_tmp);
 
     // states updates
     instr.SetUpdate(mean_x, mean_tmp);
-    instr.SetUpdate(var_x, var_tmp);
     instr.SetUpdate(inv_std_x, inv_std_tmp);
 
     auto next_state = 
           BvConst(GB_LAYER_NORM_CHILD_STATE_NORM_VECTOR_PREP, GB_LAYER_NORM_CHILD_STATE_BITWIDTH);
+
     instr.SetUpdate(state, next_state);
-    
+
   }
 
   { // instr 4 ---- setting vector level parameters for calculating norm of current timestep
@@ -270,14 +272,21 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
 
     instr.SetDecode(child_valid & state_nvp);
 
-    auto counter_v_20 = Concat(BvConst(0, 12), counter_v);
-    auto base_addr_v_tmp = base_addr_ts + counter_v_20 * GB_CORE_SCALAR;
+    auto counter_v_20 = Concat(BvConst(0, 20 - counter_v.bit_width()), counter_v);
+    auto row_size = GB_CORE_LARGE_NUM_BANKS * GB_CORE_SCALAR;
 
-    auto counter_v_16 = Concat(BvConst(0, 8), counter_v);
-    auto base_addr_gamma_tmp = m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_5) +    
-                                counter_v_16 * GB_CORE_SCALAR;
-    auto base_addr_beta_tmp = m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_6) +     
-                                counter_v_16 * GB_CORE_SCALAR;
+    auto base_addr_v_tmp = base_addr_ts + counter_v_20 * row_size;
+
+    // the base address store in the configuration should be vector level
+    // need to left shift 4 bits for byte level address
+    // addr in small buffer don't need to multiply the row size
+    auto base_addr_gamma_tmp = 
+          Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_5), BvConst(0, 4)) + 
+          counter_v_20 * GB_CORE_SCALAR;
+    
+    auto base_addr_beta_tmp = 
+          Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_6), BvConst(0, 4)) +
+          counter_v_20 * GB_CORE_SCALAR;
 
     auto counter_byte = child.state(GB_LAYER_NORM_CNTR_BYTE);
     auto base_addr_gamma = child.state(GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA);
@@ -285,14 +294,16 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
 
     instr.SetUpdate(counter_v, counter_v + 1);
     instr.SetUpdate(counter_byte, BvConst(0, GB_LAYER_NORM_CNTR_BYTE_WIDTH));
+
     instr.SetUpdate(base_addr_v, base_addr_v_tmp);
     instr.SetUpdate(base_addr_gamma, base_addr_gamma_tmp);
     instr.SetUpdate(base_addr_beta, base_addr_beta_tmp);
 
     auto next_state = 
-      Ite(counter_v >= num_vector - 1, 
+      Ite(counter_v >= num_vector, 
             BvConst(GB_LAYER_NORM_CHILD_STATE_NEXT, GB_LAYER_NORM_CHILD_STATE_BITWIDTH),
             BvConst(GB_LAYER_NORM_CHILD_STATE_NORM_BYTE_OP, GB_LAYER_NORM_CHILD_STATE_BITWIDTH));
+
     instr.SetUpdate(state, next_state);
   }
 
@@ -305,34 +316,46 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
     auto counter_byte = child.state(GB_LAYER_NORM_CNTR_BYTE);
     auto base_addr_gamma = child.state(GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA);
     auto base_addr_beta = child.state(GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_BETA);
+
     // control signals update
     instr.SetUpdate(counter_byte, counter_byte + 1);
+
     // computation
-    auto counter_byte_20 = Concat(BvConst(0, 15), counter_byte);
-    auto counter_byte_14 = Concat(BvConst(0, 9), counter_byte);
+    auto counter_byte_20 = Concat(BvConst(0, 20-counter_byte.bit_width()), counter_byte);
 
     auto addr_d = base_addr_v + counter_byte_20;
-    auto addr_g = base_addr_gamma + counter_byte_14;
-    auto addr_b = base_addr_beta + counter_byte_14;
+    auto addr_g = base_addr_gamma + counter_byte_20;
+    auto addr_b = base_addr_beta + counter_byte_20;
 
-    auto addr_d_32 = Concat(BvConst(0, 12), addr_d);
-    auto addr_g_32 = Concat(BvConst(0, 18), addr_g);
-    auto addr_b_32 = Concat(BvConst(0, 18), addr_b);
+    auto addr_d_32 = Concat(BvConst(0, 32-addr_d.bit_width()), addr_d);
+    auto addr_g_32 = Concat(BvConst(0, 32-addr_g.bit_width()), addr_g);
+    auto addr_b_32 = Concat(BvConst(0, 32-addr_b.bit_width()), addr_b);
 
     auto large_buf = m.state(GB_CORE_LARGE_BUFFER);
     auto small_buf = m.state(GB_CORE_SMALL_BUFFER);
     auto mean_x = child.state(GB_LAYER_NORM_MEAN);
-    auto var_x = child.state(GB_LAYER_NORM_VAR);
     auto inv_std_x = child.state(GB_LAYER_NORM_INV_STD);
 
-    // TODO: implement adpfloat2fixed, both data, gamma, beta.
+    // use uninterpreted functions to convert data, gamma and beta into fixed point
     auto data = Load(large_buf, addr_d_32);
     auto gamma = Load(small_buf, addr_g_32);
     auto beta = Load(small_buf, addr_b_32);
-    // TODO: check the EMUL operations
-    auto tmp1 = ((data - mean_x) * inv_std_x) >> K_ACT_NUM_FRAC;
-    auto tmp2 = (tmp1 * gamma) >> K_ACT_NUM_FRAC;
-    auto result = tmp2 + beta;
+
+    auto adpbias_enc = m.state(GB_LAYER_NORM_CONFIG_REG_ADPBIAS_1); //adpbias_1 for input/outout
+    auto adpbias_gamma = m.state(GB_LAYER_NORM_CONFIG_REG_ADPBIAS_3); //adpbias_3 for gamma
+    auto adpbias_beta = m.state(GB_LAYER_NORM_CONFIG_REG_ADPBIAS_4); //adpbias_4 for beta
+
+    auto data_fixed = Adptfloat2Fixed(data, adpbias_enc);
+    auto gamma_fixed = Adptfloat2Fixed(gamma, adpbias_gamma);
+    auto beta_fixed = Adptfloat2Fixed(beta, adpbias_beta);
+
+    // Normalization calculation
+    // y = (x - E[x])* inv_std * gamma + beta
+    auto tmp0 = ActSignedMinus(data_fixed, mean_x);
+    auto tmp1 = PEActEmul(tmp0, inv_std_x);
+    auto tmp2 = PEActEmul(tmp1, gamma_fixed);
+    auto result_fixed = PEActEadd(tmp2, beta_fixed);
+    auto result = Fixed2Adptfloat(result_fixed, adpbias_enc);
 
     instr.SetUpdate(large_buf, Store(large_buf, addr_d_32, result));
 
@@ -340,6 +363,7 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
       Ite(counter_byte >= (GB_CORE_SCALAR - 1),
             BvConst(GB_LAYER_NORM_CHILD_STATE_NORM_VECTOR_PREP, GB_LAYER_NORM_CHILD_STATE_BITWIDTH),
             BvConst(GB_LAYER_NORM_CHILD_STATE_NORM_BYTE_OP, GB_LAYER_NORM_CHILD_STATE_BITWIDTH));
+
     instr.SetUpdate(state, next_state);
   }
 
@@ -350,13 +374,14 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
     instr.SetDecode(child_valid & state_valid);
 
     auto next_state = BvConst(GB_LAYER_NORM_CHILD_STATE_TIMESTEP_PREP, GB_LAYER_NORM_CHILD_STATE_BITWIDTH);
-    auto is_done = (counter_ts >= (m.state(GB_LAYER_NORM_ITERATIONS) - 1));
+    auto is_done = (counter_ts >= (num_timestep - 1));
 
     instr.SetUpdate(state, next_state);
+    instr.SetUpdate(counter_ts, counter_ts + 1);
+
     instr.SetUpdate(m.state(GB_LAYER_NORM_CHILD_VALID_FLAG),
                     Ite(is_done, BvConst(GB_LAYER_NORM_INVALID,GB_LAYER_NORM_CHILD_VALID_FLAG_BITWIDTH),
                                   BvConst(GB_LAYER_NORM_VALID, GB_LAYER_NORM_CHILD_VALID_FLAG_BITWIDTH)));
-
   }
   
 }
