@@ -25,15 +25,11 @@
 // File: gb_layer_norm.cc
 
 #include <flex/flex.h>
+#include <flex/uninterpreted_func.h>
 
 namespace ilang {
 
 void AddChild_GB_LayerNorm_Child(Ila& m);
-void AddChild_GB_LayerNorm_Vector_Level_Sum(Ila& m);
-void AddChild_GB_LayerNorm_Timestep_Level_Mean(Ila& m);
-void AddChild_GB_LayerNorm_Vector_Level_Norm(Ila& m);
-void AddChild_GB_LayerNorm_Byte_Level_Sum(Ila& m);
-void AddChild_GB_LayerNorm_Byte_Level_Norm(Ila& m);
 
 void DefineStartGBLayerNorm(Ila& m) {
   // TODO 
@@ -45,14 +41,31 @@ void DefineStartGBLayerNorm(Ila& m) {
 
   instr.SetDecode(is_write & is_valid & (m.input(TOP_ADDR_IN) == start_addr));
 
-  // parameters from the GB_LAYER_NORM configurations
-  auto memory_index = m.state(GB_LAYER_NORM_CONFIG_REG_MEMORY_INDEX_1);
-  auto num_timestep = m.state(GB_LAYER_NORM_CONFIG_REG_NUM_TIMESTEP_1);
-  auto adpbias_enc = m.state(GB_LAYER_NORM_CONFIG_REG_ADPBIAS_1);
-  auto adpbias_gamma = m.state(GB_LAYER_NORM_CONFIG_REG_ADPBIAS_3);
-  auto adpbias_beta = m.state(GB_LAYER_NORM_CONFIG_REG_ADPBIAS_4);
+  // update 04082020, using state machine instead of multilevel child to organize the child instructions
+  auto state = m.state(GB_LAYER_NORM_CHILD_STATE);
+  auto next_state = BvConst(GB_LAYER_NORM_CHILD_STATE_TIMESTEP_PREP, GB_LAYER_NORM_CHILD_STATE_BITWIDTH);
+  auto child_valid_flag = m.state(GB_LAYER_NORM_CHILD_VALID_FLAG);
+
+  auto counter_ts = m.NewBvState(GB_LAYER_NORM_CNTR_TIMESTEP, GB_LAYER_NORM_CNTR_TIMESTEP_WIDTH);
+
+  instr.SetUpdate(state, next_state);
+  instr.SetUpdate(child_valid_flag, BvConst(GB_LAYER_NORM_VALID, GB_LAYER_NORM_CHILD_VALID_FLAG_BITWIDTH));
+  instr.SetUpdate(counter_ts, BvConst(0, GB_LAYER_NORM_CNTR_TIMESTEP_WIDTH));
+  
+  AddChild_GB_LayerNorm_Child(m); // add child model to handle timestep level instructions
+}
+
+void AddChild_GB_LayerNorm_Child(Ila& m) {
+  auto child = m.NewChild("Child_GBLayerNorm");
+  auto child_valid = (m.state(GB_LAYER_NORM_CHILD_VALID_FLAG) == GB_LAYER_NORM_VALID);
+
+  child.SetValid(child_valid);
+
+  // child states
 
   // calcuate the address range for the selected memory index
+  auto memory_index = m.state(GB_LAYER_NORM_CONFIG_REG_MEMORY_INDEX_1);
+  // memory_min_addr_offset is 20-bit
   auto memory_min_addr_offset =
       Ite((memory_index == 0),
           Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_0), BvConst(0, 4)),
@@ -79,32 +92,7 @@ void DefineStartGBLayerNorm(Ila& m) {
         BvConst(GB_CORE_STORE_LARGE_SIZE, GB_CORE_STORE_LARGE_BITWIDTH) - memory_min_addr_offset,
         memory_max_addr_offset - memory_min_addr_offset);
 
-  // states update for child instructions
-  instr.SetUpdate(m.state(GB_LAYER_NORM_ITERATIONS), num_timestep);
-  instr.SetUpdate(m.state(GB_LAYER_NORM_CNTR_TIMESTEP), BvConst(0, GB_LAYER_NORM_CNTR_TIMESTEP_WIDTH));
-  instr.SetUpdate(m.state(GB_LAYER_NORM_MEM_BLOCK_SIZE), block_size);
-  instr.SetUpdate(m.state(GB_LAYER_NORM_MEM_MIN_ADDR_OFFSET), memory_min_addr_offset);
 
-  // update 04082020, using state machine instead of multilevel child to organize the child instructions
-  auto state = m.state(GB_LAYER_NORM_CHILD_STATE);
-  auto next_state = BvConst(GB_LAYER_NORM_CHILD_STATE_TIMESTEP_PREP, GB_LAYER_NORM_CHILD_STATE_BITWIDTH);
-  auto child_valid_flag = m.state(GB_LAYER_NORM_CHILD_VALID_FLAG);
-
-  instr.SetUpdate(state, next_state);
-  instr.SetUpdate(child_valid_flag, BvConst(GB_LAYER_NORM_VALID, GB_LAYER_NORM_CHILD_VALID_FLAG_BITWIDTH));
-  
-  AddChild_GB_LayerNorm_Child(m); // add child model to handle timestep level instructions
-}
-
-void AddChild_GB_LayerNorm_Child(Ila& m) {
-  auto child = m.NewChild("Child_GBLayerNorm");
-  auto child_valid = (m.state(GB_LAYER_NORM_CHILD_VALID_FLAG) == GB_LAYER_NORM_VALID);
-  auto counter_ts = m.state(GB_LAYER_NORM_CNTR_TIMESTEP);
-
-  child.SetValid(child_valid & (counter_ts < m.state(GB_LAYER_NORM_ITERATIONS)));
-  child.SetFetch(BvConst(1, 1));
-
-  // child states
   child.NewBvState(GB_LAYER_NORM_TIMESTEP_LEVEL_BASE_ADDR, GB_LAYER_NORM_TIMESTEP_LEVEL_BASE_ADDR_WIDTH);
   child.NewBvState(GB_LAYER_NORM_VECTOR_BASE_ADDR, GB_LAYER_NORM_VECTOR_BASE_ADDR_WIDTH);
   child.NewBvState(GB_LAYER_NORM_CNTR_BYTE, GB_LAYER_NORM_CNTR_BYTE_WIDTH);
@@ -127,17 +115,18 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
 
 
   // common variables
+  auto num_timestep = m.state(GB_LAYER_NORM_CONFIG_REG_NUM_TIMESTEP_1);
   auto num_vector = m.state(GB_LAYER_NORM_CONFIG_REG_NUM_VECTOR_1);
   
+  // timestep counter is at the parent level, initilized at the parent instruction.
+  auto counter_ts = m.state(GB_LAYER_NORM_CNTR_TIMESTEP);
   auto counter_v = child.state(GB_LAYER_NORM_CNTR_VECTOR);
+
   auto base_addr_ts = child.state(GB_LAYER_NORM_TIMESTEP_LEVEL_BASE_ADDR);
   auto base_addr_v = child.state(GB_LAYER_NORM_VECTOR_BASE_ADDR);
 
   auto sum_x = child.state(GB_LAYER_NORM_SUM_X);
   auto sum_x_sq = child.state(GB_LAYER_NORM_SUM_X_SQ);
-
-  auto flag_sum = child.state(GB_LAYER_NORM_SUM_DONE_FLAG);
-  auto flag_mean = child.state(GB_LAYER_NORM_MEAN_DONE_FLAG);
 
   // update
   auto state = m.state(GB_LAYER_NORM_CHILD_STATE);
@@ -149,13 +138,20 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
     instr.SetDecode(child_valid & state_ts);
 
     // state updates
-    // FIXME: 05022020: the base addr offset for the timestep is wrong!!!!
-    // found through a similar mistake from gb_control
-    auto timestep_size = Concat(BvConst(0, 8), num_vector) * GB_CORE_SCALAR;
-    auto base_addr_offset = Concat(BvConst(0,4), timestep_size * counter_ts);
+
+    // fixed all the parameters to 20 bit
+    auto num_vector_20 = Concat(BvConst(0, 20-num_vector.bit_width()), num_vector);
+    auto timestep_size = num_vector_20 * GB_CORE_SCALAR;
+    auto group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
+
+    auto cntr_ts_20 = Concat(BvConst(0, 20-counter_ts.bit_width()), counter_ts);
+    auto group_index = cntr_ts_20 / BvConst(GB_CORE_SCALAR, 20);
+    auto group_offset = URem(cntr_ts_20, BvConst(GB_CORE_SCALAR, 20));
+
+    auto base_addr_offset = group_index * group_size + group_offset * GB_CORE_SCALAR;
 
     // update the base addr for the current timestep
-    instr.SetUpdate(base_addr_ts, m.state(GB_LAYER_NORM_MEM_MIN_ADDR_OFFSET) + base_addr_offset);
+    instr.SetUpdate(base_addr_ts, memory_min_addr_offset + base_addr_offset);
 
     // clear the sum register for current timestep
     instr.SetUpdate(sum_x, BvConst(0, GB_LAYER_NORM_SUM_X_WIDTH));
@@ -163,20 +159,11 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
 
     // initiate the control signals
     instr.SetUpdate(counter_v, BvConst(0, GB_LAYER_NORM_CNTR_VECTOR_WIDTH));
-    instr.SetUpdate(flag_sum, BvConst(0, GB_LAYER_NORM_SUM_DONE_FLAG_WIDTH));
-    instr.SetUpdate(flag_mean, BvConst(0, GB_LAYER_NORM_MEAN_DONE_FLAG_WIDTH));
 
     // update state machine
     auto next_state = BvConst(GB_LAYER_NORM_CHILD_STATE_SUM_VECTOR_PREP,
                                 GB_LAYER_NORM_CHILD_STATE_BITWIDTH);
     instr.SetUpdate(state, next_state);
-
-    // // add 3rd level child here for computing the sum of the data for the whole timestep
-    // AddChild_GB_LayerNorm_Vector_Level_Sum(m);
-    // // add child to compute the variance and mean of the data 
-    // AddChild_GB_LayerNorm_Timestep_Level_Mean(m);
-    // // add child to compute the norm of the data;
-    // AddChild_GB_LayerNorm_Vector_Level_Norm(m);
   }
 
   { // instr 1 ---- setting vector level sum preparation
@@ -185,8 +172,11 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
 
     instr.SetDecode(child_valid & state_svp);
 
-    auto counter_v_20 = Concat(BvConst(0, 12), counter_v);
-    auto base_addr_v_tmp = base_addr_ts + counter_v_20 * GB_CORE_SCALAR;
+    // extend the counter parameter to 20 bit
+    auto counter_v_20 = Concat(BvConst(0, 20 - counter_v.bit_width()), counter_v);
+    auto row_size = GB_CORE_SCALAR * GB_CORE_LARGE_NUM_BANKS;
+    auto base_addr_v_tmp = base_addr_ts + counter_v_20 * row_size;
+
     auto counter_byte = child.state(GB_LAYER_NORM_CNTR_BYTE);
 
     instr.SetUpdate(counter_v, counter_v + 1);
@@ -213,12 +203,14 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
     instr.SetUpdate(counter_byte, counter_byte + 1);
 
     // data updates
-    auto counter_byte_20 = Concat(BvConst(0, 15), counter_byte);
-    auto addr = base_addr_v + counter_byte_20;
-    auto addr_32 = Concat(BvConst(0, 12), addr);
+    auto counter_byte_20 = Concat(BvConst(0, 20-counter_byte.bit_width()), counter_byte);
+    auto addr_20 = base_addr_v + counter_byte_20;
+    auto addr_32 = Concat(BvConst(0, 32-addr_20.bit_width()), addr_20);
+
     auto data = Load(mem, addr_32);
     // TODO: implement the conversion from data to adpfloat type.
     // TODO: Also need to extend the bit width the temp result in case of overflow.
+
     auto adpfloat_data = Concat(BvConst(0, 16), data);
     // TODO: check the implementation of EMUL in the flexNLP code
     auto adpfloat_data_sq = (adpfloat_data * adpfloat_data) >> ACT_NUM_FRAC;

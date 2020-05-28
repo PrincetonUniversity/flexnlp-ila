@@ -45,6 +45,11 @@ int main() {
     ILA_INFO << flex.instr(i);
   }
 
+  for (auto i = 0; i < flex.child_num(); i++) {
+    ILA_INFO << flex.child(i);
+    ILA_INFO << "child states number: " << flex.child(i).state_num();
+  }
+
 
   return 0;
 }
