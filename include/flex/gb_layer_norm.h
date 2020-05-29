@@ -102,6 +102,13 @@ namespace ilang {
 #define GB_LAYER_NORM_SUM_X_SQ "gb_layer_norm_sum_X_SQ"
 #define GB_LAYER_NORM_SUM_X_SQ_WIDTH GB_LAYER_NORM_SUM_TYPE_BITWIDTH
 
+// need a 20 bit vector accumulator registers for mean and mean_sq
+#define GB_LAYER_NORM_VECTOR_SUM_X "gb_layer_norm_vector_sum_x"
+#define GB_LAYER_NORM_VECTOR_SUM_X_WIDTH ACT_WORD_WIDTH
+
+#define GB_LAYER_NORM_VECTOR_SUM_X_SQ "gb_layer_norm_vector_sum_x_sq"
+#define GB_LAYER_NORM_VECTOR_SUM_X_SQ_WIDTH ACT_WORD_WIDTH
+
 // timestep level state, mean value of data in the timestep
 #define GB_LAYER_NORM_MEAN "gb_layer_norm_mean"
 #define GB_LAYER_NORM_MEAN_WIDTH ACT_WORD_WIDTH
