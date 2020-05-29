@@ -83,7 +83,7 @@ namespace ilang {
   // layer normalization shares several same uninterpreted functions with pe_act
   // signed divide
   static auto uf_norm_sum_type = SortRef::BV(GB_LAYER_NORM_SUM_TYPE_BITWIDTH);
-  static FuncRef GBNormAdd_24("GBNormAdd_24", uf_norm_sum_type, uf_norm_sum_type, uf_norm_sum_type);
+  static FuncRef GBNormAdd_24_20("GBNormAdd_24_20", uf_norm_sum_type, uf_norm_sum_type, uf_act_in1);
   static FuncRef GBNormDivide_24("GBNormDivide_24", uf_act_out, uf_norm_sum_type, uf_norm_sum_type);
   // signed minus for ActScalar type
   static FuncRef ActSignedMinus("ActSignedMinus", uf_act_out, uf_act_in1, uf_act_in2);

@@ -102,6 +102,10 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
   child.NewBvState(GB_LAYER_NORM_MEAN, GB_LAYER_NORM_MEAN_WIDTH);
   child.NewBvState(GB_LAYER_NORM_INV_STD, GB_LAYER_NORM_INV_STD_WIDTH);
 
+  // update 05292020, create two registers to hold the sum results of a vector (20 bit)
+  child.NewBvState(GB_LAYER_NORM_VECTOR_SUM_X, GB_LAYER_NORM_VECTOR_SUM_X_WIDTH);
+  child.NewBvState(GB_LAYER_NORM_VECTOR_SUM_X_SQ, GB_LAYER_NORM_VECTOR_SUM_X_SQ_WIDTH);
+
   child.NewBvState(GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA,
                         GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA_WIDTH);
   child.NewBvState(GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_BETA,
@@ -123,6 +127,9 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
 
   auto sum_x = child.state(GB_LAYER_NORM_SUM_X);
   auto sum_x_sq = child.state(GB_LAYER_NORM_SUM_X_SQ);
+  
+  auto sum_x_vector = child.state(GB_LAYER_NORM_VECTOR_SUM_X);
+  auto sum_x_sq_vector = child.state(GB_LAYER_NORM_VECTOR_SUM_X_SQ);
 
   // update
   auto state = m.state(GB_LAYER_NORM_CHILD_STATE);
@@ -153,6 +160,9 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
     instr.SetUpdate(sum_x, BvConst(0, GB_LAYER_NORM_SUM_X_WIDTH));
     instr.SetUpdate(sum_x_sq, BvConst(0, GB_LAYER_NORM_SUM_X_SQ_WIDTH));
 
+    instr.SetUpdate(sum_x_vector, BvConst(0, GB_LAYER_NORM_VECTOR_SUM_X_WIDTH));
+    instr.SetUpdate(sum_x_sq_vector, BvConst(0, GB_LAYER_NORM_VECTOR_SUM_X_SQ_WIDTH));
+
     // initiate the control signals
     instr.SetUpdate(counter_v, BvConst(0, GB_LAYER_NORM_CNTR_VECTOR_WIDTH));
 
@@ -178,6 +188,18 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
     instr.SetUpdate(counter_v, counter_v + 1);
     instr.SetUpdate(counter_byte, BvConst(0, GB_LAYER_NORM_CNTR_BYTE_WIDTH));
     instr.SetUpdate(base_addr_v, base_addr_v_tmp); 
+
+    // update 05292020: seperate the vector level sum and the timestep level sum to immitate the 
+    // verilog implementation
+    auto sum_x_next = GBNormAdd_24_20(sum_x, sum_x_vector);
+    auto sum_x_sq_next = GBNormAdd_24_20(sum_x, sum_x_sq_vector);
+
+    instr.SetUpdate(sum_x, sum_x_next);
+    instr.SetUpdate(sum_x_sq, sum_x_sq_next);
+
+    // reset the vector level accumulators
+    instr.SetUpdate(sum_x_vector, BvConst(0, GB_LAYER_NORM_VECTOR_SUM_X_WIDTH));
+    instr.SetUpdate(sum_x_sq_vector, BvConst(0, GB_LAYER_NORM_VECTOR_SUM_X_SQ_WIDTH));
 
     auto next_state = 
           Ite(counter_v >= num_vector,
@@ -212,16 +234,18 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
     auto x_sq = PEActEmul(x, x);
     // sum_x and sum_x_sq are 24bit wide
     // we need to use uninterpreted functions for signed add
-    auto sum_x_tmp = GBNormAdd_24(sum_x, Concat(BvConst(0, 24-x.bit_width()), x));
-    auto sum_x_sq_tmp = GBNormAdd_24(sum_x_sq, Concat(BvConst(0, 24-x_sq.bit_width()), x_sq));
-
-    instr.SetUpdate(sum_x, sum_x_tmp);
-    instr.SetUpdate(sum_x_sq, sum_x_sq_tmp);
+    
+    // update 05292020: use another vector level sum register (20 bits) to hold vector level sum
+    auto sum_x_vector_tmp = PEActEadd(sum_x_vector, x);
+    auto sum_x_sq_vector_tmp = PEActEadd(sum_x_sq_vector, x_sq);
+    instr.SetUpdate(sum_x_vector, sum_x_vector_tmp);
+    instr.SetUpdate(sum_x_sq_vector, sum_x_vector_tmp);
 
     auto next_state = 
       Ite(counter_byte >= (GB_CORE_SCALAR - 1),
             BvConst(GB_LAYER_NORM_CHILD_STATE_SUM_VECTOR_PREP, GB_LAYER_NORM_CHILD_STATE_BITWIDTH),
             BvConst(GB_LAYER_NORM_CHILD_STATE_SUM_BYTE_OP, GB_LAYER_NORM_CHILD_STATE_BITWIDTH));
+            
     instr.SetUpdate(state, next_state);
   }
 
