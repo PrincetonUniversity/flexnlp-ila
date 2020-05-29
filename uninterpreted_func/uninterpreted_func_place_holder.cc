@@ -6,7 +6,7 @@
 
 
 // GBNormAdd used in LayerNorm
-sc_biguint<24> flex_sim::GBNormAdd_24(sc_biguint<24> arg_0, sc_biguint<24> arg_1) {
+sc_biguint<24> flex_sim::GBNormAdd_24_20(sc_biguint<24> arg_0, sc_biguint<20> arg_1) {
     return arg_0;
 }
 

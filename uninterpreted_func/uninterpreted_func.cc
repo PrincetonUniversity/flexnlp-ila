@@ -22,11 +22,11 @@
 static int counter = 0;
 
 // GBNormAdd used in LayerNorm
-sc_biguint<24> flex_sim::GBNormAdd_24(sc_biguint<24> arg_0, sc_biguint<24> arg_1) {
+sc_biguint<24> flex_sim::GBNormAdd_24(sc_biguint<24> arg_0, sc_biguint<20> arg_1) {
   sc_bigint<24> arg_0_s = arg_0;
-  sc_bigint<24> arg_1_s = arg_1;
+  sc_bigint<20> arg_1_s = arg_1;
   spec::LayerNormSumType in_0 = arg_0_s.to_int();
-  spec::LayerNormSumType in_1 = arg_1_s.to_int();
+  spec::ActScalarType in_1 = arg_1_s.to_int();
   spec::LayerNormSumType out = in_0 + in_1;
   sc_bigint<24> result_s = out.to_int();
   sc_biguint<24> result = result_s;
@@ -458,7 +458,7 @@ sc_biguint<20> flex_sim::Adptfloat2Fixed(sc_biguint<8> arg_0, sc_biguint<3> arg_
   out_tmp = input_adpfloat.to_fixed<spec::kActWordWidth, spec::kActNumFrac>(bias);
 
   sc_bigint<20> result_s = out_tmp.to_int();
-  sc_bigint<20> result = result_s;
+  sc_biguint<20> result = result_s;
 
   //std::cout << dec << "No." << counter << " " << "PEAdptfloat2Fixed: ";
   //std::cout << hex << "arg_0: " << arg_0 << '\t' << "arg_1: " << arg_1 << '\t';
