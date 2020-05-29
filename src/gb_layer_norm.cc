@@ -192,7 +192,7 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
     // update 05292020: seperate the vector level sum and the timestep level sum to immitate the 
     // verilog implementation
     auto sum_x_next = GBNormAdd_24_20(sum_x, sum_x_vector);
-    auto sum_x_sq_next = GBNormAdd_24_20(sum_x, sum_x_sq_vector);
+    auto sum_x_sq_next = GBNormAdd_24_20(sum_x_sq, sum_x_sq_vector);
 
     instr.SetUpdate(sum_x, sum_x_next);
     instr.SetUpdate(sum_x_sq, sum_x_sq_next);
@@ -239,13 +239,13 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
     auto sum_x_vector_tmp = PEActEadd(sum_x_vector, x);
     auto sum_x_sq_vector_tmp = PEActEadd(sum_x_sq_vector, x_sq);
     instr.SetUpdate(sum_x_vector, sum_x_vector_tmp);
-    instr.SetUpdate(sum_x_sq_vector, sum_x_vector_tmp);
+    instr.SetUpdate(sum_x_sq_vector, sum_x_sq_vector_tmp);
 
     auto next_state = 
       Ite(counter_byte >= (GB_CORE_SCALAR - 1),
             BvConst(GB_LAYER_NORM_CHILD_STATE_SUM_VECTOR_PREP, GB_LAYER_NORM_CHILD_STATE_BITWIDTH),
             BvConst(GB_LAYER_NORM_CHILD_STATE_SUM_BYTE_OP, GB_LAYER_NORM_CHILD_STATE_BITWIDTH));
-            
+
     instr.SetUpdate(state, next_state);
   }
 
