@@ -12,7 +12,8 @@ sc_biguint<24> flex_sim::GBNormAdd_24_20(sc_biguint<24> arg_0, sc_biguint<20> ar
 
 // GBNormDivide used in LayerNorm
 sc_biguint<20> flex_sim::GBNormDivide_24(sc_biguint<24> arg_0, sc_biguint<24> arg_1) {
-    return sc_biguint<20> temp = 0;
+    sc_biguint<20> result = 0;
+    return result;
 }
 
 // ActSignedMinus used in LayerNorm
