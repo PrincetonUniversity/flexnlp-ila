@@ -64,6 +64,7 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
   // child states
 
   // calcuate the address range for the selected memory index
+  // FIXME: Current ILAtor has a bug: Concat a const will not actually has effect in ILAtor.
   auto memory_index = m.state(GB_LAYER_NORM_CONFIG_REG_MEMORY_INDEX_1);
   // memory_min_addr_offset is 20-bit
   auto memory_min_addr_offset =
@@ -308,9 +309,13 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
           Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_5), BvConst(0, 4)) + 
           counter_v_20 * GB_CORE_SCALAR;
     
+    // FIXME: Workaround for the current ILAtor issue
     auto base_addr_beta_tmp = 
-          Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_6), BvConst(0, 4)) +
+          (Concat(BvConst(0, 4), m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_6)) << 4) + 
           counter_v_20 * GB_CORE_SCALAR;
+    // auto base_addr_beta_tmp = 
+    //       Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_6), BvConst(0, 4)) +
+    //       counter_v_20 * GB_CORE_SCALAR;
 
     auto counter_byte = child.state(GB_LAYER_NORM_CNTR_BYTE);
     auto base_addr_gamma = child.state(GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA);
@@ -366,8 +371,8 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
     auto beta = Load(small_buf, addr_b_32);
 
     auto adpbias_enc = m.state(GB_LAYER_NORM_CONFIG_REG_ADPBIAS_1); //adpbias_1 for input/outout
-    auto adpbias_gamma = m.state(GB_LAYER_NORM_CONFIG_REG_ADPBIAS_3); //adpbias_3 for gamma
-    auto adpbias_beta = m.state(GB_LAYER_NORM_CONFIG_REG_ADPBIAS_4); //adpbias_4 for beta
+    auto adpbias_gamma = m.state(GB_LAYER_NORM_CONFIG_REG_ADPBIAS_4); //adpbias_4 for gamma
+    auto adpbias_beta = m.state(GB_LAYER_NORM_CONFIG_REG_ADPBIAS_3); //adpbias_4 for beta
 
     auto data_fixed = Adptfloat2Fixed(data, adpbias_enc);
     auto gamma_fixed = Adptfloat2Fixed(gamma, adpbias_gamma);
