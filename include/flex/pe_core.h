@@ -359,8 +359,11 @@ namespace ilang {
 
 #define CORE_RUN_MAC_CHILD_STATE "core_run_mac_child_state"
 #define PE_CORE_RUN_MAC_CHILD_STATE_BITWIDTH 4
-#define PE_CORE_RUN_MAC_STATE_FETCH 0
-#define PE_CORE_RUN_MAC_STATE_MUL 1
+
+#define PE_CORE_RUN_MAC_STATE_FETCH_NON_CLUSTER 0
+#define PE_CORE_RUN_MAC_STATE_FETCH_CLUSTER 1
+#define PE_CORE_RUN_MAC_STATE_MUL 2
+#define PE_CORE_RUN_MAC_STATE_OUT 3
 
 
 #define CORE_RUN_MAC_CHILD_WEIGHT_BYTE "core_run_mac_child_weight_byte"
@@ -375,6 +378,10 @@ namespace ilang {
 #define PE_CORE_RUN_BIAS_CHILD_FLAG_BITWIDTH 1
 #define CORE_RUN_BIAS_CHILD_CNTR "core_run_bias_child_cntr"
 #define PE_CORE_RUN_BIAS_CHILD_CNTR_BITWIDTH 5
+
+//update 06022020: add temp registers for run_mac_mul to reduce overhead
+#define CORE_RUN_MAC_CHILD_RESULT_TEMP "core_run_mac_child_result_temp"
+#define PE_CORE_RUN_MAC_CHILD_RESULT_TEMP_BITWIDTH PE_CORE_ACCUM_VECTOR_BITWIDTH
 
 /****** shared states between pe_core and pe_act ********/
 // valid bit for pe_act_reg, immitate the push function,

@@ -26,6 +26,7 @@
 
 #include <flex/util.h>
 #include <flex/pe_config.h>
+#include <flex/uninterpreted_func.h>
 
 #include <ilang/ilang++.h>
 #include <ilang/util/log.h>
@@ -130,5 +131,52 @@ ExprRef PEActInstrFetch(Ila&m, const int& pe_idx, const ExprRef& instr_cntr) {
   return result;
 }
 
+// update 06022020: add a template function call for pe_core_run_mac update result
+
+void PECoreRunMacOut(Ila& m, const int& pe_idx, const int& idx) {
+  auto child_pe_core = m.child(PEGetChildName(pe_idx, "CORE_CHILD"));
+  auto child_run_mac = child_pe_core.child(PEGetChildName(pe_idx, "CORE_RUN_MAC_CHILD"));
+
+  auto is_cluster = 
+    (m.state(PEGetVarName(pe_idx, RNN_LAYER_SIZING_CONFIG_REG_IS_CLUSTER)) == PE_CORE_VALID);
+  
+  auto state = child_pe_core.state(PEGetVarName(pe_idx, CORE_RUN_MAC_CHILD_STATE));
+
+  auto run_mac_flag = child_pe_core.state(PEGetVarName(pe_idx, CORE_CHILD_RUN_MAC_FLAG));
+  auto run_mac_cntr = child_pe_core.state(PEGetVarName(pe_idx, CORE_CHILD_RUN_MAC_CNTR));
+  auto result_tmp = child_run_mac.state(PEGetVarName(pe_idx, CORE_RUN_MAC_CHILD_RESULT_TEMP));
+
+  auto child_valid = ((run_mac_flag == PE_CORE_VALID) & (run_mac_cntr < 16));
+  auto state_out = (state == PE_CORE_RUN_MAC_STATE_OUT);
+
+  {
+    auto instr = child_run_mac.NewInstr(
+                  PEGetVarNameVector(pe_idx, idx, "core_run_mac_out"));
+
+    // one individual instruction for each register
+    instr.SetDecode(child_valid & state_out & (run_mac_cntr == idx));
+
+    auto accum_state = child_pe_core.state(PEGetVarNameVector(pe_idx, idx, CORE_ACCUM_VECTOR));
+    auto tmp = AccumAdd2(accum_state, result_tmp);
+
+    // state updates
+    instr.SetUpdate(accum_state, tmp);
+    auto next_state = Ite(is_cluster,
+                            BvConst(PE_CORE_RUN_MAC_STATE_FETCH_CLUSTER,
+                                    PE_CORE_RUN_MAC_CHILD_STATE_BITWIDTH),
+                            BvConst(PE_CORE_RUN_MAC_STATE_FETCH_NON_CLUSTER,
+                                    PE_CORE_RUN_MAC_CHILD_STATE_BITWIDTH));
+    
+    auto run_mac_flag_next = Ite(run_mac_cntr >= 15, 
+                                  BvConst(PE_CORE_INVALID, PE_CORE_CHILD_RUN_MAC_FLAG_BITWIDTH),
+                                  BvConst(PE_CORE_VALID, PE_CORE_CHILD_RUN_MAC_FLAG_BITWIDTH));
+    
+    // control state updates
+    instr.SetUpdate(state, next_state);
+    instr.SetUpdate(run_mac_cntr, run_mac_cntr + 1);
+    instr.SetUpdate(run_mac_flag, run_mac_flag_next);
+  }
+  
+}
 
 }; // namespace ilang
