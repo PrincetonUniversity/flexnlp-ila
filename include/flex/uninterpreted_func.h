@@ -30,6 +30,7 @@
 #define FLEX_UN_FUNC_H__
 
 #include <ilang/ilang++.h>
+#include <flex/flex.h>
 #include <vector>
 
 namespace ilang {
@@ -59,6 +60,20 @@ namespace ilang {
 
   static auto uf_act_reg_scalar = SortRef::BV(PE_CORE_ACTSCALAR_BITWIDTH);
   static FuncRef PECoreAccum2ActReg("PECoreAccum2ActReg", uf_act_reg_scalar, uf_accum_scalar);
+
+  // uninterpreted functions in pe_core_run_mac
+  static auto uf_product_sum_in_1 = SortRef::BV(PE_CORE_SCALAR_BITWIDTH);
+  static auto uf_product_sum_in_2 = SortRef::BV(PE_CORE_SCALAR_BITWIDTH);
+  static auto uf_product_sum_out = SortRef::BV(PE_CORE_ACCUMSCALAR_BITWIDTH);
+
+  static FuncRef ProductSum("ProductSum", uf_product_sum_out, uf_product_sum_in_1, uf_product_sum_in_2);
+
+  static auto uf_accum_add_in_1 = SortRef::BV(PE_CORE_ACCUMSCALAR_BITWIDTH);
+  static auto uf_accum_add_in_2 = SortRef::BV(PE_CORE_ACCUMSCALAR_BITWIDTH);
+  static auto uf_accum_add_out = SortRef::BV(PE_CORE_ACCUMSCALAR_BITWIDTH);
+
+  static FuncRef AccumAdd("AccumAdd", uf_accum_add_out, uf_accum_add_in_1, uf_accum_add_in_2);
+  static FuncRef AccumAdd2("AccumAdd2", uf_accum_add_out, uf_accum_add_in_1, uf_accum_add_in_2);
 
   // uninterpreted functions in pe_act.cc
   static auto uf_act_in1 = SortRef::BV(PE_CORE_ACT_VECTOR_BITWIDTH);

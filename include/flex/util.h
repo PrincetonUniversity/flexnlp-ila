@@ -43,6 +43,8 @@ ExprRef FetchClusterLUT_Second(Ila& m, const int& pe_idx, const ExprRef& index);
 // helper functions in PEActUnit
 ExprRef PEActInstrFetch(Ila& m, const int& pe_idx, const ExprRef& instr_cntr);
 
+void PECoreRunMacOut(Ila& m, const int& pe_idx, const int& idx);
+
 }; // namespace ilang
 
 #endif // FLEX_UTIL_H__
