@@ -27,6 +27,8 @@
 #ifndef FLEX_GB_ATTENTION_H__
 #define FLEX_GB_ATTENTION_H__
 
+#include <flex/adpfloat_spec.h>
+
 namespace ilang {
 
 // config register: is_valid
@@ -64,6 +66,56 @@ namespace ilang {
 // config register: adpbias_4
 #define GB_ATTENTION_CONFIG_REG_ADPBIAS_4 "gb_attention_adpbias_4"
 #define GB_ATTENTION_CONFIG_REG_ADPBIAS_4_WIDTH 3
+
+/************ parameters other than configurations *********/
+#define GB_ATTENTION_VALID 1
+#define GB_ATTENTION_INVALID 0
+
+#define GB_ATTENTION_SOFTMAX_INDEX 7
+
+#define GB_ATTENTION_CHILD_VALID_FLAG "gb_attention_child_valid_flag"
+#define GB_ATTENTION_CHILD_VALID_FLAG_BITWIDTH 1
+
+#define GB_ATTENTION_CHILD_STATE "gb_attention_child_state"
+#define GB_ATTENTION_CHILD_STATE_BITWIDTH 4
+
+#define GB_ATTENTION_CHILD_STATE_IDLE 0
+#define GB_ATTENTION_CHILD_STATE_PREP 1
+#define GB_ATTENTION_CHILD_STATE_BMM 2
+#define GB_ATTENTION_CHILD_STATE_BMM_TP 3
+#define GB_ATTENTION_CHILD_STATE_BMM_MV 4
+#define GB_ATTENTION_CHILD_STATE_NEXT 5
+
+
+
+#define GB_ATTENTION_SUM_EXP "gb_attention_sum_exp"
+#define GB_ATTENTION_SUM_EXP_BITWIDTH ATTENTION_WORD_WIDTH
+
+#define GB_ATTENTION_MAX_VALUE "gb_attention_max_value"
+#define GB_ATTENTION_MAX_VALUE_BITWIDTH ATTENTION_WORD_WIDTH
+
+#define GB_ATTENTION_ACCUM_VECTOR "gb_attention_accum_vector"
+#define GB_ATTENTION_ACCUM_VECTOR_BITWIDTH ATTENTION_WORD_WIDTH
+
+#define GB_ATTENTION_DP0 "gb_attention_dp0"
+#define GB_ATTENTION_DP0_BITWIDTH 8
+
+#define GB_ATTENTION_DP1 "gb_attention_dp1"
+#define GB_ATTENTION_DP1_BITWIDTH 8
+
+#define GB_ATTENTION_BMM_CNTR "gb_attention_bmm_cntr"
+#define GB_ATTENTION_BMM_CNTR_BITWIDTH 1
+
+#define GB_ATTENTION_SOFTMAX_CNTR "gb_attention_softmax_cntr"
+#define GB_ATTENTION_SOFTMAX_CNTR_BITWIDTH 2
+
+#define GB_ATTENTION_VECTOR_CNTR "gb_attention_vector_cntr"
+#define GB_ATTENTION_VECTOR_CNTR_BITWIDTH 8
+
+#define GB_ATTENTION_TIMESTEP_CNTR "gb_attention_timestep_cntr"
+#define GB_ATTENTION_TIMESTEP_CNTR_BITWIDTH 16
+
+
 
 }; // namespace ilang
 
