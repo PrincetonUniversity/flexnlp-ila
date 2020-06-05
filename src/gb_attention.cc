@@ -25,6 +25,7 @@
 // File: gb_attention.cc
 
 #include <flex/flex.h>
+#include <flex/uninterpreted_func.h>
 
 namespace ilang {
 
@@ -225,6 +226,55 @@ void AddChild_GB_Attention(Ila& m) {
             BvConst(GB_ATTENTION_CHILD_STATE_BMM_MV, GB_ATTENTION_CHILD_STATE_BITWIDTH)));
     
     instr.SetUpdate(state, next_state);
+  }
+
+  { // instr 3 ---- get the transpose of the input matrix
+    auto instr = child.NewInstr("gb_attention_child_bmm_tp");
+    auto state_bmmtp = (state == GB_ATTENTION_CHILD_STATE_BMM_TP);
+
+    instr.SetDecode(child_valid & state_bmmtp);
+
+    // do the transpose of the matrix
+    // don't need the intermediate temp reg because it is non-blocking assignment
+    for (auto i = 0; i < GB_CORE_SCALAR; i++) {
+      for (auto j = 0; j < GB_CORE_SCALAR; j++) {
+        auto reg_i_j = child.state(GBGetVectorName2D(i, j, GB_ATTENTION_DP0));
+        auto reg_j_i = child.state(GBGetVectorName2D(j, i, GB_ATTENTION_DP0));
+        instr.SetUpdate(reg_i_j, reg_j_i);
+      }
+    }
+
+    auto next_state = BvConst(GB_ATTENTION_CHILD_STATE_BMM_MV,
+                              GB_ATTENTION_CHILD_STATE_BITWIDTH);
+                              
+  }
+
+  { // instr 4 ---- matrix-vector multiplication
+    auto instr = child.NewInstr("gb_attention_child_bmm_mv");
+    auto state_bmm_mv = (state == GB_ATTENTION_CHILD_STATE_BMM_MV);
+
+    instr.SetDecode(child_valid & state_bmm_mv);
+
+    // do the matrix-vector multiplication
+    for (auto i = 0; i < GB_CORE_SCALAR; i++) {
+      auto accum_reg_i = child.state(GBGetVectorName(i, GB_ATTENTION_ACCUM_VECTOR));
+      auto accum_tmp = BvConst(0, ACCUM_WORD_WIDTH);
+
+      for (auto j = 0; j < GB_CORE_SCALAR; j++) {
+        auto dp0_byte = child.state(GBGetVectorName2D(i, j, GB_ATTENTION_DP0));
+        auto dp1_byte = child.state(GBGetVectorName(j, GB_ATTENTION_DP1));
+        auto tmp = ProductSum(dp0_byte, dp1_byte);
+        accum_tmp = AccumAdd(accum_tmp, tmp);
+      }
+
+      instr.SetUpdate(accum_reg_i, accum_tmp);
+    }
+    
+    auto next_state = BvConst(GB_ATTENTION_CHILD_STATE_NEXT, 
+                              GB_ATTENTION_CHILD_STATE_BITWIDTH);
+
+    instr.SetUpdate(state, next_state);
+
   }
 }
 
