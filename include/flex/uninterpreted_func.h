@@ -104,6 +104,10 @@ namespace ilang {
   static FuncRef ActSignedMinus("ActSignedMinus", uf_act_out, uf_act_in1, uf_act_in2);
   // inv_std = 1/sqrt(VAR[X])
   static FuncRef SInvSqrt("SInvSqrt", uf_act_out, uf_act_in1);
+
+  // uninterpreted functions used in gb_attention
+  static auto uf_atten_scalar = SortRef::BV(GB_ATTENTION_ACCUM_VECTOR_BITWIDTH);
+  static FuncRef GBAttentionMax("GBAttentionMax", uf_atten_scalar, uf_atten_scalar, uf_atten_scalar);
 }; // namespace ilang
 
 #endif // UN_FUNC_H__

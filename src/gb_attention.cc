@@ -78,6 +78,7 @@ void AddChild_GB_Attention(Ila& m) {
 
   // vector states
   for (auto i = 0; i < GB_CORE_SCALAR; i++) {
+    // states for holding accumulation results
     child.NewBvState(GBGetVectorName(i, GB_ATTENTION_ACCUM_VECTOR),
                       GB_ATTENTION_ACCUM_VECTOR_BITWIDTH);
     // states for holding input vector data
@@ -87,6 +88,12 @@ void AddChild_GB_Attention(Ila& m) {
       child.NewBvState(GBGetVectorName2D(i, j, GB_ATTENTION_DP0),
                         GB_ATTENTION_DP0_BITWIDTH);
     }
+  }
+
+  for (auto i = 0; i < GB_ATTENTION_VECTOR_NUM; i++) {
+    // states for holding attention values
+    child.NewBvState(GBGetVectorName(i, GB_ATTENTION_VECTOR),
+                      GB_ATTENTION_VECTOR_BITWIDTH);
   }
 
   /********** gb_attention child instructions ***************/
@@ -208,6 +215,7 @@ void AddChild_GB_Attention(Ila& m) {
 
     auto addr_small_v = Concat(BvConst(0, 32-mem_small_base.bit_width()), mem_small_base) + 
           Concat(BvConst(0, 32-vector_index.bit_width()), vector_index) * GB_CORE_SCALAR;
+
     for (auto i = 0; i < GB_CORE_SCALAR; i++) {
       auto addr_small_b = addr_small_v + i;
       auto reg = child.state(GBGetVectorName(i, GB_ATTENTION_DP1));
@@ -270,11 +278,171 @@ void AddChild_GB_Attention(Ila& m) {
       instr.SetUpdate(accum_reg_i, accum_tmp);
     }
     
-    auto next_state = BvConst(GB_ATTENTION_CHILD_STATE_NEXT, 
-                              GB_ATTENTION_CHILD_STATE_BITWIDTH);
+    auto is_end_vector = (vector_cntr >= num_vector - 1);
+    auto is_end_timestep = (timestep_cntr >= num_timestep - 1);
+
+    auto vector_cntr_next = 
+      Ite(bmm_cntr == 0,
+          Ite(is_end_vector, BvConst(0, GB_ATTENTION_VECTOR_CNTR_BITWIDTH), vector_cntr + 1),
+          vector_cntr);
+    
+    auto timestep_cntr_next = 
+      Ite(bmm_cntr == 0,
+          Ite(is_end_timestep, BvConst(0, GB_ATTENTION_TIMESTEP_CNTR_BITWIDTH), timestep_cntr + 1),
+          timestep_cntr);
+
+    auto next_state = 
+      Ite(bmm_cntr == 0,
+        Ite(is_end_vector,
+            BvConst(GB_ATTENTION_CHILD_STATE_NEXT, GB_ATTENTION_CHILD_STATE_BITWIDTH),
+            BvConst(GB_ATTENTION_CHILD_STATE_BMM, GB_ATTENTION_CHILD_STATE_BITWIDTH)),
+        Ite(is_end_timestep,
+            BvConst(GB_ATTENTION_CHILD_STATE_OUT, GB_ATTENTION_CHILD_STATE_BITWIDTH),
+            BvConst(GB_ATTENTION_CHILD_STATE_BMM, GB_ATTENTION_CHILD_STATE_BITWIDTH)));
 
     instr.SetUpdate(state, next_state);
+    instr.SetUpdate(vector_cntr, vector_cntr_next);
+    instr.SetUpdate(timestep_cntr, timestep_cntr_next);
+  }
 
+  { // instr 5 ---- FSM next instruction
+    auto instr = child.NewInstr("gb_attention_child_next");
+    auto state_next = (state == GB_ATTENTION_CHILD_STATE_NEXT);
+
+    instr.SetDecode(child_valid & state_next);
+
+    // right shrift amout
+    auto adpbias_matrix = m.state(GB_ATTENTION_CONFIG_REG_ADPBIAS_1);
+    auto adpbias_input = m.state(GB_ATTENTION_CONFIG_REG_ADPBIAS_2);
+
+    auto shift_const = 2*ADPTFLOW_MAN_WIDTH + 2*ADPTFLOW_OFFSET_NEG - ATTENTION_NUM_FRAC;
+    auto shift_bias = Concat(BvConst(0, 32-adpbias_matrix.bit_width()), adpbias_matrix) +
+                      Concat(BvConst(0, 32-adpbias_input.bit_width()), adpbias_input);
+    
+    auto is_left_shift = (shift_bias > shift_const);
+    auto shift_amout = Ite(is_left_shift,
+                            shift_bias - shift_const,
+                            BvConst(shift_const,32) - shift_bias);
+    
+    for (auto i = 0; i < GB_ATTENTION_VECTOR_NUM; i++) {
+      auto atten_vector = child.state(GBGetVectorName(i, GB_ATTENTION_VECTOR));
+      auto accum_vector = 
+        Ite(softmax_cntr == 0,
+            child.state(GBGetVectorName(i, GB_ATTENTION_ACCUM_VECTOR)),
+        Ite(softmax_cntr == 1,
+            child.state(GBGetVectorName(4+i, GB_ATTENTION_ACCUM_VECTOR)),
+        Ite(softmax_cntr == 2,
+            child.state(GBGetVectorName(8+i, GB_ATTENTION_ACCUM_VECTOR)),
+            child.state(GBGetVectorName(12+i, GB_ATTENTION_ACCUM_VECTOR)))));
+      
+      // shift
+      auto atten_vector_next = 
+        Ite(accum_vector == 0, 
+            BvConst(ATTENTION_HIGH_NEG, GB_ATTENTION_ACCUM_VECTOR_BITWIDTH),
+            Ite(is_left_shift, accum_vector << shift_amout,
+                                accum_vector >> shift_amout));
+
+      instr.SetUpdate(atten_vector, atten_vector_next);
+    }
+
+    auto next_state = BvConst(GB_ATTENTION_CHILD_STATE_NEXT_MAX,
+                              GB_ATTENTION_CHILD_STATE_BITWIDTH);
+    instr.SetUpdate(state, next_state);
+  }
+
+  { // instr 6 ---- FSM NEXT, update max value
+    auto instr = child.NewInstr("gb_attention_child_next_max");
+    auto state_next_max = (state == GB_ATTENTION_CHILD_STATE_NEXT_MAX);
+
+    instr.SetDecode(child_valid & state_next_max);
+
+    auto max_val_next = max_val;
+
+    for (auto i = 0; i < GB_ATTENTION_VECTOR_NUM; i++) {
+      auto accum_scalar = child.state(GBGetVectorName(i, GB_ATTENTION_VECTOR));
+      max_val_next = GBAttentionMax(max_val_next, accum_scalar);
+    }
+
+    instr.SetUpdate(max_val, max_val_next);
+
+    auto next_state = BvConst(GB_ATTENTION_CHILD_STATE_NEXT_WR,
+                              GB_ATTENTION_CHILD_STATE_BITWIDTH);
+    
+    instr.SetUpdate(state, next_state);
+  }
+
+  { // instr 7 ---- FSM NEXT write data into small buffer
+    // write softmax values into the small buffer 
+    auto instr = child.NewInstr("gb_attention_child_next_wr");
+    auto state_next_wr = (state == GB_ATTENTION_CHILD_STATE_NEXT_WR);
+
+    instr.SetDecode(child_valid & state_next_wr);
+
+    auto mem_small_index = BvConst(GB_ATTENTION_SOFTMAX_INDEX,
+                                    GB_ATTENTION_CONFIG_REG_MEMORY_INDEX_1_WIDTH);
+
+    auto mem_small = m.state(GB_CORE_SMALL_BUFFER);
+    auto mem_small_base = 
+      Ite(mem_small_index == 0,
+        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_0), BvConst(0,4)),
+      Ite(mem_small_index == 1,
+        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_1), BvConst(0,4)),
+      Ite(mem_small_index == 2,
+        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_2), BvConst(0,4)),
+      Ite(mem_small_index == 3,
+        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_3), BvConst(0,4)),
+      Ite(mem_small_index == 4,
+        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_4), BvConst(0,4)),
+      Ite(mem_small_index == 5,
+        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_5), BvConst(0,4)),
+      Ite(mem_small_index == 6,
+        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_6), BvConst(0,4)),
+        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_7), BvConst(0,4))
+        )))))));
+
+    auto vector_index = (timestep_cntr >> 2) + 
+          Concat(BvConst(0, timestep_cntr.bit_width() - softmax_cntr.bit_width()), softmax_cntr);
+          
+    auto vector_index_b = Concat(vector_index, BvConst(0, 4));
+
+    auto addr_base_v = Concat(BvConst(0, 32-mem_small_base.bit_width()), mem_small_base) +
+                        Concat(BvConst(0, 32-vector_index_b.bit_width()), vector_index_b);
+    
+    auto mem_small_next = mem_small;
+
+    for (auto i = 0; i < GB_CORE_SCALAR; i++) {
+      auto accum_scalar = child.state(GBGetVectorName(i/4, GB_ATTENTION_VECTOR));
+      auto addr_b = addr_base_v + i;
+      auto hi = 8 * (i % 4) + 7;
+      auto lo = 8 * (i % 4);
+      auto data = Extract(accum_scalar, hi, lo);
+      mem_small_next = Store(mem_small_next, addr_b, data);
+    }
+
+    instr.SetUpdate(mem_small, mem_small_next);
+
+    // constrol state updates
+    auto is_end1 = (softmax_cntr >= GB_ATTENTION_VECTOR_NUM - 1);
+    auto is_end2 = (timestep_cntr >= num_timestep - 16);
+
+    auto softmax_cntr_next = Ite(is_end1, BvConst(0, GB_ATTENTION_SOFTMAX_CNTR_BITWIDTH),
+                                          softmax_cntr + 1);
+    auto timestep_cntr_next = Ite(is_end2, BvConst(0, GB_ATTENTION_TIMESTEP_CNTR_BITWIDTH),
+                                            timestep_cntr + 16);
+    auto bmm_cntr_next = Ite(is_end1 & is_end2, BvConst(1, GB_ATTENTION_BMM_CNTR_BITWIDTH),
+                                                bmm_cntr);
+    auto next_state = 
+          Ite(is_end1 & is_end2,
+            BvConst(GB_ATTENTION_CHILD_STATE_SFM, GB_ATTENTION_CHILD_STATE_BITWIDTH),
+            Ite(is_end1 & !is_end2,
+                BvConst(GB_ATTENTION_CHILD_STATE_PREP, GB_ATTENTION_CHILD_STATE_BITWIDTH),
+                BvConst(GB_ATTENTION_CHILD_STATE_NEXT, GB_ATTENTION_CHILD_STATE_BITWIDTH)));
+    
+    instr.SetUpdate(softmax_cntr, softmax_cntr_next);
+    instr.SetUpdate(timestep_cntr, timestep_cntr_next);
+    instr.SetUpdate(bmm_cntr, bmm_cntr_next);
+
+    instr.SetUpdate(state, next_state);   
   }
 }
 
