@@ -131,6 +131,29 @@ ExprRef PEActInstrFetch(Ila&m, const int& pe_idx, const ExprRef& instr_cntr) {
   return result;
 }
 
+// function help get the gb small buffer base address given the memory index
+ExprRef GBGetSmallBufBase(Ila& m, const ExprRef& mem_small_index) {
+  auto mem_small_base = 
+    Ite(mem_small_index == 0,
+      Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_0), BvConst(0,4)),
+    Ite(mem_small_index == 1,
+      Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_1), BvConst(0,4)),
+    Ite(mem_small_index == 2,
+      Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_2), BvConst(0,4)),
+    Ite(mem_small_index == 3,
+      Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_3), BvConst(0,4)),
+    Ite(mem_small_index == 4,
+      Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_4), BvConst(0,4)),
+    Ite(mem_small_index == 5,
+      Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_5), BvConst(0,4)),
+    Ite(mem_small_index == 6,
+      Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_6), BvConst(0,4)),
+      Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_7), BvConst(0,4))
+      )))))));
+  
+  return mem_small_base;
+}
+
 // update 06022020: add a template function call for pe_core_run_mac update result
 
 void PECoreRunMacOut(Ila& m, const int& pe_idx, const int& idx) {

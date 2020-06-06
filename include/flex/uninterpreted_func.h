@@ -107,7 +107,13 @@ namespace ilang {
 
   // uninterpreted functions used in gb_attention
   static auto uf_atten_scalar = SortRef::BV(GB_ATTENTION_ACCUM_VECTOR_BITWIDTH);
+  static FuncRef GBAttentionLSH("GBAttentionLSH", uf_atten_scalar, uf_atten_scalar, uf_atten_scalar);
+  static FuncRef GBAttentionRSH("GBAttentionRSH", uf_atten_scalar, uf_atten_scalar, uf_atten_scalar);
   static FuncRef GBAttentionMax("GBAttentionMax", uf_atten_scalar, uf_atten_scalar, uf_atten_scalar);
+  static FuncRef GBAttentionSub("GBAttentionSub", uf_atten_scalar, uf_atten_scalar, uf_atten_scalar);
+  static FuncRef GBAttentionExp("GBAttentionExp", uf_atten_scalar, uf_atten_scalar, uf_atten_scalar);
+  static FuncRef GBAttentionDiv("GBAttentionDiv", uf_atten_scalar, uf_atten_scalar, uf_atten_scalar);
+  static FuncRef GBAttentionCompress("GBAttentionCompress", uf_out, uf_atten_scalar, uf_adpbias_type);
 }; // namespace ilang
 
 #endif // UN_FUNC_H__

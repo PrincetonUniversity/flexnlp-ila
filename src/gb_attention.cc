@@ -26,6 +26,7 @@
 
 #include <flex/flex.h>
 #include <flex/uninterpreted_func.h>
+#include <flex/util.h>
 
 namespace ilang {
 
@@ -83,6 +84,12 @@ void AddChild_GB_Attention(Ila& m) {
                       GB_ATTENTION_ACCUM_VECTOR_BITWIDTH);
     // states for holding input vector data
     child.NewBvState(GBGetVectorName(i, GB_ATTENTION_DP1), GB_ATTENTION_DP1_BITWIDTH);
+    // states for holding softmax results
+    child.NewBvState(GBGetVectorName(i, GB_ATTENTION_SFM_RESULT_VECTOR),
+                      GB_ATTENTION_SFM_RESULT_VECTOR_BITWIDTH);
+    // states for holding output in the FSM out
+    child.NewBvState(GBGetVectorName(i, GB_ATTENTION_OUT_VECTOR),
+                      GB_ATTENTION_OUT_VECTOR_BITWIDTH);
     // declare states for holding the input matrix data
     for (auto j = 0; j < GB_CORE_SCALAR; j++) {
       child.NewBvState(GBGetVectorName2D(i, j, GB_ATTENTION_DP0),
@@ -94,6 +101,9 @@ void AddChild_GB_Attention(Ila& m) {
     // states for holding attention values
     child.NewBvState(GBGetVectorName(i, GB_ATTENTION_VECTOR),
                       GB_ATTENTION_VECTOR_BITWIDTH);
+    // states for holding exp vectors
+    child.NewBvState(GBGetVectorName(i, GB_ATTENTION_EXP_VECTOR),
+                      GB_ATTENTION_EXP_VECTOR_BITWIDTH);
   }
 
   /********** gb_attention child instructions ***************/
@@ -195,23 +205,7 @@ void AddChild_GB_Attention(Ila& m) {
     auto is_zero = BoolConst(true); // determine whether dp1 is zero vector
 
     auto mem_small = m.state(GB_CORE_SMALL_BUFFER);
-    auto mem_small_base = 
-      Ite(mem_small_index == 0,
-        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_0), BvConst(0,4)),
-      Ite(mem_small_index == 1,
-        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_1), BvConst(0,4)),
-      Ite(mem_small_index == 2,
-        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_2), BvConst(0,4)),
-      Ite(mem_small_index == 3,
-        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_3), BvConst(0,4)),
-      Ite(mem_small_index == 4,
-        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_4), BvConst(0,4)),
-      Ite(mem_small_index == 5,
-        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_5), BvConst(0,4)),
-      Ite(mem_small_index == 6,
-        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_6), BvConst(0,4)),
-        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_7), BvConst(0,4))
-        )))))));
+    auto mem_small_base = GBGetSmallBufBase(m, mem_small_index);
 
     auto addr_small_v = Concat(BvConst(0, 32-mem_small_base.bit_width()), mem_small_base) + 
           Concat(BvConst(0, 32-vector_index.bit_width()), vector_index) * GB_CORE_SCALAR;
@@ -297,7 +291,7 @@ void AddChild_GB_Attention(Ila& m) {
             BvConst(GB_ATTENTION_CHILD_STATE_NEXT, GB_ATTENTION_CHILD_STATE_BITWIDTH),
             BvConst(GB_ATTENTION_CHILD_STATE_BMM, GB_ATTENTION_CHILD_STATE_BITWIDTH)),
         Ite(is_end_timestep,
-            BvConst(GB_ATTENTION_CHILD_STATE_OUT, GB_ATTENTION_CHILD_STATE_BITWIDTH),
+            BvConst(GB_ATTENTION_CHILD_STATE_OUT1, GB_ATTENTION_CHILD_STATE_BITWIDTH),
             BvConst(GB_ATTENTION_CHILD_STATE_BMM, GB_ATTENTION_CHILD_STATE_BITWIDTH)));
 
     instr.SetUpdate(state, next_state);
@@ -339,8 +333,8 @@ void AddChild_GB_Attention(Ila& m) {
       auto atten_vector_next = 
         Ite(accum_vector == 0, 
             BvConst(ATTENTION_HIGH_NEG, GB_ATTENTION_ACCUM_VECTOR_BITWIDTH),
-            Ite(is_left_shift, accum_vector << shift_amout,
-                                accum_vector >> shift_amout));
+            Ite(is_left_shift, GBAttentionLSH(accum_vector, shift_amout),
+                                GBAttentionRSH(accum_vector, shift_amout)));
 
       instr.SetUpdate(atten_vector, atten_vector_next);
     }
@@ -382,27 +376,11 @@ void AddChild_GB_Attention(Ila& m) {
                                     GB_ATTENTION_CONFIG_REG_MEMORY_INDEX_1_WIDTH);
 
     auto mem_small = m.state(GB_CORE_SMALL_BUFFER);
-    auto mem_small_base = 
-      Ite(mem_small_index == 0,
-        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_0), BvConst(0,4)),
-      Ite(mem_small_index == 1,
-        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_1), BvConst(0,4)),
-      Ite(mem_small_index == 2,
-        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_2), BvConst(0,4)),
-      Ite(mem_small_index == 3,
-        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_3), BvConst(0,4)),
-      Ite(mem_small_index == 4,
-        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_4), BvConst(0,4)),
-      Ite(mem_small_index == 5,
-        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_5), BvConst(0,4)),
-      Ite(mem_small_index == 6,
-        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_6), BvConst(0,4)),
-        Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_7), BvConst(0,4))
-        )))))));
+    auto mem_small_base = GBGetSmallBufBase(m, mem_small_index);
 
     auto vector_index = (timestep_cntr >> 2) + 
           Concat(BvConst(0, timestep_cntr.bit_width() - softmax_cntr.bit_width()), softmax_cntr);
-          
+
     auto vector_index_b = Concat(vector_index, BvConst(0, 4));
 
     auto addr_base_v = Concat(BvConst(0, 32-mem_small_base.bit_width()), mem_small_base) +
@@ -433,7 +411,7 @@ void AddChild_GB_Attention(Ila& m) {
                                                 bmm_cntr);
     auto next_state = 
           Ite(is_end1 & is_end2,
-            BvConst(GB_ATTENTION_CHILD_STATE_SFM, GB_ATTENTION_CHILD_STATE_BITWIDTH),
+            BvConst(GB_ATTENTION_CHILD_STATE_SFM1_RD, GB_ATTENTION_CHILD_STATE_BITWIDTH),
             Ite(is_end1 & !is_end2,
                 BvConst(GB_ATTENTION_CHILD_STATE_PREP, GB_ATTENTION_CHILD_STATE_BITWIDTH),
                 BvConst(GB_ATTENTION_CHILD_STATE_NEXT, GB_ATTENTION_CHILD_STATE_BITWIDTH)));
@@ -444,6 +422,384 @@ void AddChild_GB_Attention(Ila& m) {
 
     instr.SetUpdate(state, next_state);   
   }
+
+  {// instruction 8 ---- FSM SFM read
+    auto instr = child.NewInstr("gb_attention_child_sfm1_rd");
+    auto state_sfm1_rd = (state == GB_ATTENTION_CHILD_STATE_SFM1_RD);
+
+    instr.SetDecode(child_valid & state_sfm1_rd);
+
+    auto mem_small_index = BvConst(GB_ATTENTION_SOFTMAX_INDEX,
+                                    GB_ATTENTION_CONFIG_REG_MEMORY_INDEX_1_WIDTH);
+    auto mem_small_base = GBGetSmallBufBase(m, mem_small_index);
+    
+    auto vector_index = (timestep_cntr >> 2) + 
+          Concat(BvConst(0, timestep_cntr.bit_width() - softmax_cntr.bit_width()), softmax_cntr);
+    auto vector_index_b = Concat(vector_index, BvConst(0, 4));
+
+    auto addr_base_v = Concat(BvConst(0, 32-mem_small_base.bit_width()), mem_small_base) +
+                        Concat(BvConst(0, 32-vector_index_b.bit_width()), vector_index_b);
+
+    auto mem_small = m.state(GB_CORE_SMALL_BUFFER);
+
+    for (auto i = 0; i < 4; i++) {
+      auto exp_vector = child.state(GBGetVectorName(i, GB_ATTENTION_EXP_VECTOR));
+      auto mem_addr_base = addr_base_v + i*4;
+      auto data_0 = Load(mem_small, mem_addr_base + 0);
+      auto data_1 = Load(mem_small, mem_addr_base + 1);
+      auto data_2 = Load(mem_small, mem_addr_base + 2);
+      auto data_3 = Load(mem_small, mem_addr_base + 3);
+      auto exp_vector_next = Concat(data_3, Concat(data_2, Concat(data_1, data_0)));
+
+      instr.SetUpdate(exp_vector, exp_vector_next);
+    }
+
+    auto next_state = BvConst(GB_ATTENTION_CHILD_STATE_SFM1_COMP,
+                              GB_ATTENTION_CHILD_STATE_BITWIDTH);
+    
+    instr.SetUpdate(state, next_state);
+  }
+  
+  {// instruction 9 ---- FSM SFM computation
+    auto instr = child.NewInstr("gb_attention_child_sfm1_comp");
+    auto state_sfm1_sub = (state == GB_ATTENTION_CHILD_STATE_SFM1_COMP);
+
+    instr.SetDecode(child_valid & state_sfm1_sub);
+
+    auto tmp_sum = BvConst(0, ATTENTION_WORD_WIDTH);
+
+    for (auto i = 0; i < 4; i++) {
+      auto exp_vector = child.state(GBGetVectorName(i, GB_ATTENTION_EXP_VECTOR));
+      auto exp_vector_next = GBAttentionSub(exp_vector, max_val);
+      exp_vector_next = GBAttentionExp(exp_vector_next, exp_vector_next);
+      
+      tmp_sum = tmp_sum + exp_vector_next;  
+    }
+
+    auto sum_exp_next = sum_exp + tmp_sum;
+
+    instr.SetUpdate(sum_exp, sum_exp_next);
+
+    // constrol state updates
+    auto is_end1 = (softmax_cntr >= GB_ATTENTION_VECTOR_NUM - 1);
+    auto is_end2 = (timestep_cntr >= num_timestep - 16);
+
+    auto softmax_cntr_next = Ite(is_end1, BvConst(0, GB_ATTENTION_SOFTMAX_CNTR_BITWIDTH),
+                                          softmax_cntr + 1);
+    auto timestep_cntr_next = Ite(is_end2, BvConst(0, GB_ATTENTION_TIMESTEP_CNTR_BITWIDTH),
+                                            timestep_cntr + 16);
+    
+    auto next_state =
+          Ite(is_end1 & is_end2, 
+              BvConst(GB_ATTENTION_CHILD_STATE_SFM2_RD, GB_ATTENTION_CHILD_STATE_BITWIDTH),
+              BvConst(GB_ATTENTION_CHILD_STATE_SFM1_RD, GB_ATTENTION_CHILD_STATE_BITWIDTH));
+
+    instr.SetUpdate(softmax_cntr, softmax_cntr_next);
+    instr.SetUpdate(timestep_cntr, timestep_cntr_next);
+    instr.SetUpdate(state, next_state);
+  }
+
+  { // instruction 10 ---- FSM SFM2 read
+    auto instr = child.NewInstr("gb_attention_sfm2_rd");
+    auto state_sfm2_rd = (state == GB_ATTENTION_CHILD_STATE_SFM2_RD);
+
+    instr.SetDecode(child_valid & state_sfm2_rd);
+
+    auto mem_small_index = BvConst(GB_ATTENTION_SOFTMAX_INDEX,
+                                    GB_ATTENTION_CONFIG_REG_MEMORY_INDEX_1_WIDTH);
+    auto mem_small_base = GBGetSmallBufBase(m, mem_small_index);
+    
+    auto vector_index = (timestep_cntr >> 2) + 
+          Concat(BvConst(0, timestep_cntr.bit_width() - softmax_cntr.bit_width()), softmax_cntr);
+    auto vector_index_b = Concat(vector_index, BvConst(0, 4));
+
+    auto addr_base_v = Concat(BvConst(0, 32-mem_small_base.bit_width()), mem_small_base) +
+                        Concat(BvConst(0, 32-vector_index_b.bit_width()), vector_index_b);
+
+    auto mem_small = m.state(GB_CORE_SMALL_BUFFER);
+
+    for (auto i = 0; i < 4; i++) {
+      auto exp_vector = child.state(GBGetVectorName(i, GB_ATTENTION_EXP_VECTOR));
+      auto mem_addr_base = addr_base_v + i*4;
+      auto data_0 = Load(mem_small, mem_addr_base + 0);
+      auto data_1 = Load(mem_small, mem_addr_base + 1);
+      auto data_2 = Load(mem_small, mem_addr_base + 2);
+      auto data_3 = Load(mem_small, mem_addr_base + 3);
+      auto exp_vector_next = Concat(data_3, Concat(data_2, Concat(data_1, data_0)));
+
+      instr.SetUpdate(exp_vector, exp_vector_next);
+    }
+
+    auto next_state = 
+          Ite(softmax_cntr == 0, 
+              BvConst(GB_ATTENTION_CHILD_STATE_SFM2_COMP0, GB_ATTENTION_CHILD_STATE_BITWIDTH),
+          Ite(softmax_cntr == 1,
+              BvConst(GB_ATTENTION_CHILD_STATE_SFM2_COMP1, GB_ATTENTION_CHILD_STATE_BITWIDTH),
+          Ite(softmax_cntr == 2,
+              BvConst(GB_ATTENTION_CHILD_STATE_SFM2_COMP2, GB_ATTENTION_CHILD_STATE_BITWIDTH),
+              BvConst(GB_ATTENTION_CHILD_STATE_SFM2_COMP3, GB_ATTENTION_CHILD_STATE_BITWIDTH))));
+    
+    instr.SetUpdate(state, next_state);
+  }
+
+  { // instruction 11 ---- FSM SFM2 computation0
+    auto instr = child.NewInstr("gb_attention_sfm2_comp0");
+    auto state_sfm2_comp = (state == GB_ATTENTION_CHILD_STATE_SFM2_COMP0);
+
+    instr.SetDecode(child_valid & state_sfm2_comp);
+
+    auto adpbias_softmax = m.state(GB_ATTENTION_CONFIG_REG_ADPBIAS_3);
+
+    for (auto i = 0; i < 4; i++) {
+      auto exp_vector = child.state(GBGetVectorName(i, GB_ATTENTION_EXP_VECTOR));
+      auto exp_vector_sub = GBAttentionSub(exp_vector, max_val); // X - Max[X]
+      auto exp_vector_exp = GBAttentionExp(exp_vector_sub, exp_vector_sub); // (X-Max[X])^2
+      auto exp_vector_div = GBAttentionDiv(exp_vector_exp, sum_exp); // (X-Max[X])^2 / sum_exp
+      auto tmp = GBAttentionCompress(exp_vector_div, adpbias_softmax);
+      
+      auto sfm_result_vector = child.state(GBGetVectorName(i, GB_ATTENTION_SFM_RESULT_VECTOR));
+      instr.SetUpdate(sfm_result_vector, tmp);
+    }
+
+    auto softmax_cntr_next = Ite(softmax_cntr >= 3,
+                                  BvConst(0, GB_ATTENTION_SOFTMAX_CNTR_BITWIDTH),
+                                  softmax_cntr + 1);
+    instr.SetUpdate(softmax_cntr, softmax_cntr_next);
+
+    auto next_state = BvConst(GB_ATTENTION_CHILD_STATE_SFM2_RD,
+                              GB_ATTENTION_CHILD_STATE_BITWIDTH);
+    
+    instr.SetUpdate(state, next_state);
+
+  }
+
+
+  { // instruction 12 ---- FSM SFM2 computation1
+    auto instr = child.NewInstr("gb_attention_sfm2_comp1");
+    auto state_sfm2_comp = (state == GB_ATTENTION_CHILD_STATE_SFM2_COMP1);
+
+    instr.SetDecode(child_valid & state_sfm2_comp);
+
+    auto adpbias_softmax = m.state(GB_ATTENTION_CONFIG_REG_ADPBIAS_3);
+
+    for (auto i = 0; i < 4; i++) {
+      auto exp_vector = child.state(GBGetVectorName(i, GB_ATTENTION_EXP_VECTOR));
+      auto exp_vector_sub = GBAttentionSub(exp_vector, max_val); // X - Max[X]
+      auto exp_vector_exp = GBAttentionExp(exp_vector_sub, exp_vector_sub); // (X-Max[X])^2
+      auto exp_vector_div = GBAttentionDiv(exp_vector_exp, sum_exp); // (X-Max[X])^2 / sum_exp
+      auto tmp = GBAttentionCompress(exp_vector_div, adpbias_softmax);
+      
+      auto sfm_result_vector = child.state(GBGetVectorName(i+4, GB_ATTENTION_SFM_RESULT_VECTOR));
+      instr.SetUpdate(sfm_result_vector, tmp);
+    }
+
+    auto softmax_cntr_next = Ite(softmax_cntr >= 3,
+                                  BvConst(0, GB_ATTENTION_SOFTMAX_CNTR_BITWIDTH),
+                                  softmax_cntr + 1);
+    instr.SetUpdate(softmax_cntr, softmax_cntr_next);
+
+    auto next_state = BvConst(GB_ATTENTION_CHILD_STATE_SFM2_RD,
+                              GB_ATTENTION_CHILD_STATE_BITWIDTH);
+    
+    instr.SetUpdate(state, next_state);
+  }
+
+  { // instruction 13 ---- FSM SFM2 computation2
+    auto instr = child.NewInstr("gb_attention_sfm2_comp2");
+    auto state_sfm2_comp = (state == GB_ATTENTION_CHILD_STATE_SFM2_COMP2);
+
+    instr.SetDecode(child_valid & state_sfm2_comp);
+
+    auto adpbias_softmax = m.state(GB_ATTENTION_CONFIG_REG_ADPBIAS_3);
+
+    for (auto i = 0; i < 4; i++) {
+      auto exp_vector = child.state(GBGetVectorName(i, GB_ATTENTION_EXP_VECTOR));
+      auto exp_vector_sub = GBAttentionSub(exp_vector, max_val); // X - Max[X]
+      auto exp_vector_exp = GBAttentionExp(exp_vector_sub, exp_vector_sub); // (X-Max[X])^2
+      auto exp_vector_div = GBAttentionDiv(exp_vector_exp, sum_exp); // (X-Max[X])^2 / sum_exp
+      auto tmp = GBAttentionCompress(exp_vector_div, adpbias_softmax);
+      
+      auto sfm_result_vector = child.state(GBGetVectorName(i+8, GB_ATTENTION_SFM_RESULT_VECTOR));
+      instr.SetUpdate(sfm_result_vector, tmp);
+    }
+
+    auto softmax_cntr_next = Ite(softmax_cntr >= 3,
+                                  BvConst(0, GB_ATTENTION_SOFTMAX_CNTR_BITWIDTH),
+                                  softmax_cntr + 1);
+    instr.SetUpdate(softmax_cntr, softmax_cntr_next);
+
+    auto next_state = BvConst(GB_ATTENTION_CHILD_STATE_SFM2_RD,
+                              GB_ATTENTION_CHILD_STATE_BITWIDTH);
+    
+    instr.SetUpdate(state, next_state);
+  }
+
+  { // instruction 14 ---- FSM SFM2 computation3
+    auto instr = child.NewInstr("gb_attention_sfm2_comp3");
+    auto state_sfm2_comp = (state == GB_ATTENTION_CHILD_STATE_SFM2_COMP3);
+
+    instr.SetDecode(child_valid & state_sfm2_comp);
+
+    auto adpbias_softmax = m.state(GB_ATTENTION_CONFIG_REG_ADPBIAS_3);
+
+    for (auto i = 0; i < 4; i++) {
+      auto exp_vector = child.state(GBGetVectorName(i, GB_ATTENTION_EXP_VECTOR));
+      auto exp_vector_sub = GBAttentionSub(exp_vector, max_val); // X - Max[X]
+      auto exp_vector_exp = GBAttentionExp(exp_vector_sub, exp_vector_sub); // (X-Max[X])^2
+      auto exp_vector_div = GBAttentionDiv(exp_vector_exp, sum_exp); // (X-Max[X])^2 / sum_exp
+      auto tmp = GBAttentionCompress(exp_vector_div, adpbias_softmax);
+      
+      auto sfm_result_vector = child.state(GBGetVectorName(i+12, GB_ATTENTION_SFM_RESULT_VECTOR));
+      instr.SetUpdate(sfm_result_vector, tmp);
+    }
+
+    auto softmax_cntr_next = Ite(softmax_cntr >= 3,
+                                  BvConst(0, GB_ATTENTION_SOFTMAX_CNTR_BITWIDTH),
+                                  softmax_cntr + 1);
+    instr.SetUpdate(softmax_cntr, softmax_cntr_next);
+
+    auto next_state = BvConst(GB_ATTENTION_CHILD_STATE_SFM3,
+                              GB_ATTENTION_CHILD_STATE_BITWIDTH);
+    
+    instr.SetUpdate(state, next_state);
+  }
+
+  { // instruction 15 ---- FSM state SFM3, write result back into small buffer
+    auto instr = child.NewInstr("gb_attention_sfm2_comp3");
+    auto state_sfm3 = (state == GB_ATTENTION_CHILD_STATE_SFM3);
+
+    instr.SetDecode(child_valid & state_sfm3);
+
+    auto mem_small_index = BvConst(GB_ATTENTION_SOFTMAX_INDEX,
+                                    GB_ATTENTION_CONFIG_REG_MEMORY_INDEX_1_WIDTH);
+    auto mem_small_base = GBGetSmallBufBase(m, mem_small_index);
+
+    auto vector_index = timestep_cntr >> 4;
+    auto vector_index_v = Concat(vector_index, BvConst(0, 4));
+
+    auto addr_base_b = Concat(BvConst(0, 32-mem_small_base.bit_width()), mem_small_base) +
+                       Concat(BvConst(0, 32-vector_index_v.bit_width()), vector_index_v);
+    
+    auto mem_small = m.state(GB_CORE_SMALL_BUFFER);
+    auto mem_small_next = mem_small;
+
+    for (auto i = 0; i < GB_CORE_SCALAR; i++) {
+      auto sfm_result = child.state(GBGetVectorName(i, GB_ATTENTION_SFM_RESULT_VECTOR));
+      auto addr = addr_base_b + i;
+      mem_small_next = Store(mem_small_next, addr, sfm_result); 
+    }
+
+    instr.SetUpdate(mem_small, mem_small_next);
+
+    // control state update
+    auto is_end = (timestep_cntr >= num_timestep - 16);
+    auto bmm_cntr_next = Ite(is_end, BvConst(1, GB_ATTENTION_BMM_CNTR_BITWIDTH),
+                                      bmm_cntr);
+    auto timestep_cntr_next = Ite(is_end, timestep_cntr + 16, timestep_cntr);
+
+    auto next_state = Ite(is_end,
+                          BvConst(GB_ATTENTION_CHILD_STATE_PREP,
+                                  GB_ATTENTION_CHILD_STATE_BITWIDTH),
+                          BvConst(GB_ATTENTION_CHILD_STATE_SFM2_RD,
+                                  GB_ATTENTION_CHILD_STATE_BITWIDTH));
+    
+    instr.SetUpdate(state, next_state);
+    instr.SetUpdate(bmm_cntr, bmm_cntr_next);
+    instr.SetUpdate(timestep_cntr, timestep_cntr_next);
+  }
+
+  { // instruction 16 ---- FSM OUT1
+    auto instr = child.NewInstr("gb_attention_child_out1");
+    auto state_out1 = (state == GB_ATTENTION_CHILD_STATE_OUT1);
+
+    instr.SetDecode(child_valid & state_out1);
+
+    // right shrift amout
+    auto adpbias_matrix = m.state(GB_ATTENTION_CONFIG_REG_ADPBIAS_1);
+    auto adpbias_softmax = m.state(GB_ATTENTION_CONFIG_REG_ADPBIAS_3);
+    auto adpbias_out = m.state(GB_ATTENTION_CONFIG_REG_ADPBIAS_4);
+
+    auto shift_const = 2*ADPTFLOW_MAN_WIDTH + 2*ADPTFLOW_OFFSET_NEG - ATTENTION_NUM_FRAC;
+    auto shift_bias = Concat(BvConst(0, 32-adpbias_matrix.bit_width()), adpbias_matrix) +
+                      Concat(BvConst(0, 32-adpbias_softmax.bit_width()), adpbias_softmax);
+    
+    auto is_left_shift = (shift_bias > shift_const);
+    auto shift_amout = Ite(is_left_shift,
+                            shift_bias - shift_const,
+                            BvConst(shift_const,32) - shift_bias);
+    
+    for (auto i = 0; i < GB_CORE_SCALAR; i++) {
+      auto accum_vector = child.state(GBGetVectorName(i, GB_ATTENTION_ACCUM_VECTOR));
+      auto tmp = Ite(is_left_shift, GBAttentionLSH(accum_vector, shift_amout),
+                                    GBAttentionRSH(accum_vector, shift_amout));
+      tmp = GBAttentionCompress(tmp, adpbias_out);
+
+      auto out_data_vector = child.state(GBGetVectorName(i, GB_ATTENTION_OUT_VECTOR));
+      instr.SetUpdate(out_data_vector, tmp);
+    }
+
+    auto next_state = BvConst(GB_ATTENTION_CHILD_STATE_OUT2, 
+                              GB_ATTENTION_CHILD_STATE_BITWIDTH);
+
+    instr.SetUpdate(state, next_state);
+  }
+
+  { // instruction 17 ---- FSM OUT2
+    auto instr = child.NewInstr("gb_attention_child_out2");
+    auto state_out2 = (state == GB_ATTENTION_CHILD_STATE_OUT2);
+
+    instr.SetDecode(child_valid & state_out2);
+
+    auto mem_small_index = m.state(GB_ATTENTION_CONFIG_REG_MEMORY_INDEX_2);
+    auto mem_small_base = GBGetSmallBufBase(m, mem_small_index);
+
+    auto vector_index = vector_cntr;
+    auto vector_index_b = Concat(vector_cntr, BvConst(0, 4));
+
+    auto addr_small_base = Concat(BvConst(0, 32-mem_small_base.bit_width()), mem_small_base) +
+                           Concat(BvConst(0, 32-vector_index_b.bit_width()), vector_index_b);
+    
+    auto mem_small = m.state(GB_CORE_SMALL_BUFFER);
+    auto mem_small_next = mem_small;
+
+    for (auto i = 0; i < GB_CORE_SCALAR; i++) {
+      auto out_data_vector = child.state(GBGetVectorName(i, GB_ATTENTION_OUT_VECTOR));
+      auto addr = addr_small_base + i;
+      mem_small_next = Store(mem_small_next, addr, out_data_vector);
+    }
+
+    instr.SetUpdate(mem_small, mem_small_next);
+
+    // control state update
+    auto is_end = (vector_cntr >= num_vector - 1);
+    auto vector_cntr_next = Ite(is_end, BvConst(0, GB_ATTENTION_VECTOR_CNTR_BITWIDTH),
+                                        vector_cntr + 1);
+    auto bmm_cntr_next = Ite(is_end, BvConst(0, GB_ATTENTION_BMM_CNTR_BITWIDTH),
+                                      bmm_cntr);
+    
+    auto next_state = Ite(is_end, BvConst(GB_ATTENTION_CHILD_STATE_FIN,
+                                          GB_ATTENTION_CHILD_STATE_BITWIDTH),
+                                  BvConst(GB_ATTENTION_CHILD_STATE_PREP,
+                                          GB_ATTENTION_CHILD_STATE_BITWIDTH));
+    
+    instr.SetUpdate(vector_cntr, vector_cntr_next);
+    instr.SetUpdate(bmm_cntr, bmm_cntr_next);
+    instr.SetUpdate(state, next_state);
+  }
+
+  { // instruction 18 ---- FSM FIN
+    auto instr = child.NewInstr("gb_attention_child_fin");
+    auto state_fin = (state == GB_ATTENTION_CHILD_STATE_FIN);
+
+    instr.SetDecode(child_valid & state_fin);
+
+    instr.SetUpdate(state, BvConst(GB_ATTENTION_CHILD_STATE_IDLE,
+                                    GB_ATTENTION_CHILD_STATE_BITWIDTH));
+    instr.SetUpdate(m.state(GB_ATTENTION_CHILD_VALID_FLAG),
+                    BvConst(GB_ATTENTION_INVALID,
+                            GB_ATTENTION_CHILD_VALID_FLAG_BITWIDTH));
+  }
+
 }
 
 }; // namespace ilang
