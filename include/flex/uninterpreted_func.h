@@ -111,7 +111,7 @@ namespace ilang {
   static FuncRef GBAttentionRSH("GBAttentionRSH", uf_atten_scalar, uf_atten_scalar, uf_atten_scalar);
   static FuncRef GBAttentionMax("GBAttentionMax", uf_atten_scalar, uf_atten_scalar, uf_atten_scalar);
   static FuncRef GBAttentionSub("GBAttentionSub", uf_atten_scalar, uf_atten_scalar, uf_atten_scalar);
-  static FuncRef GBAttentionExp("GBAttentionExp", uf_atten_scalar, uf_atten_scalar, uf_atten_scalar);
+  static FuncRef GBAttentionExp("GBAttentionExp", uf_atten_scalar, uf_atten_scalar);
   static FuncRef GBAttentionDiv("GBAttentionDiv", uf_atten_scalar, uf_atten_scalar, uf_atten_scalar);
   static FuncRef GBAttentionCompress("GBAttentionCompress", uf_out, uf_atten_scalar, uf_adpbias_type);
 }; // namespace ilang
