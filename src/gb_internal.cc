@@ -89,6 +89,12 @@ void DefineGBInternalStates(Ila& m) {
   m.NewBvState(GB_CONTROL_CHILD_VALID_FLAG, GB_CONTROL_CHILD_VALID_FLAG_BITWIDTH);
   // state for child model state machine
   m.NewBvState(GB_CONTROL_CHILD_STATE, GB_CONTROL_CHILD_STATE_BITWIDTH);
+
+  /******* GBAttention internal states ******/
+  // state for setting the flag of child valid
+  m.NewBvState(GB_ATTENTION_CHILD_VALID_FLAG, GB_ATTENTION_CHILD_VALID_FLAG_BITWIDTH);
+  // state for child model FSM 
+  m.NewBvState(GB_ATTENTION_CHILD_STATE, GB_ATTENTION_CHILD_STATE_BITWIDTH);
 }
 
 
