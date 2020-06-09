@@ -128,7 +128,7 @@ sc_biguint<32> flex_sim::GBAttentionDiv(sc_biguint<32> arg_0, sc_biguint<32> arg
 }
 
 // GBAttentionCompress: attention scalar compress used in gb_attention
-sc_biguint<8> GBAttentionCompress(sc_biguint<32> arg_0, sc_biguint<3> arg_1) {
+sc_biguint<8> flex_sim::GBAttentionCompress(sc_biguint<32> arg_0, sc_biguint<3> arg_1) {
   sc_bigint<32> arg_0_s = arg_0;
 
   AdpfloatType<8,3> tmp;
