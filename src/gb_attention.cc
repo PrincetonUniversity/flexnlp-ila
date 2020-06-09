@@ -486,7 +486,7 @@ void AddChild_GB_Attention(Ila& m) {
     for (auto i = 0; i < 4; i++) {
       auto exp_vector = child.state(GBGetVectorName(i, GB_ATTENTION_EXP_VECTOR));
       auto exp_vector_next = GBAttentionSub(exp_vector, max_val);
-      exp_vector_next = GBAttentionExp(exp_vector_next, exp_vector_next);
+      exp_vector_next = GBAttentionExp(exp_vector_next);
       
       tmp_sum = tmp_sum + exp_vector_next;  
     }
@@ -568,7 +568,7 @@ void AddChild_GB_Attention(Ila& m) {
     for (auto i = 0; i < 4; i++) {
       auto exp_vector = child.state(GBGetVectorName(i, GB_ATTENTION_EXP_VECTOR));
       auto exp_vector_sub = GBAttentionSub(exp_vector, max_val); // X - Max[X]
-      auto exp_vector_exp = GBAttentionExp(exp_vector_sub, exp_vector_sub); // (X-Max[X])^2
+      auto exp_vector_exp = GBAttentionExp(exp_vector_sub); // (X-Max[X])^2
       auto exp_vector_div = GBAttentionDiv(exp_vector_exp, sum_exp); // (X-Max[X])^2 / sum_exp
       auto tmp = GBAttentionCompress(exp_vector_div, adpbias_softmax);
       
@@ -600,7 +600,7 @@ void AddChild_GB_Attention(Ila& m) {
     for (auto i = 0; i < 4; i++) {
       auto exp_vector = child.state(GBGetVectorName(i, GB_ATTENTION_EXP_VECTOR));
       auto exp_vector_sub = GBAttentionSub(exp_vector, max_val); // X - Max[X]
-      auto exp_vector_exp = GBAttentionExp(exp_vector_sub, exp_vector_sub); // (X-Max[X])^2
+      auto exp_vector_exp = GBAttentionExp(exp_vector_sub); // (X-Max[X])^2
       auto exp_vector_div = GBAttentionDiv(exp_vector_exp, sum_exp); // (X-Max[X])^2 / sum_exp
       auto tmp = GBAttentionCompress(exp_vector_div, adpbias_softmax);
       
@@ -630,7 +630,7 @@ void AddChild_GB_Attention(Ila& m) {
     for (auto i = 0; i < 4; i++) {
       auto exp_vector = child.state(GBGetVectorName(i, GB_ATTENTION_EXP_VECTOR));
       auto exp_vector_sub = GBAttentionSub(exp_vector, max_val); // X - Max[X]
-      auto exp_vector_exp = GBAttentionExp(exp_vector_sub, exp_vector_sub); // (X-Max[X])^2
+      auto exp_vector_exp = GBAttentionExp(exp_vector_sub); // (X-Max[X])^2
       auto exp_vector_div = GBAttentionDiv(exp_vector_exp, sum_exp); // (X-Max[X])^2 / sum_exp
       auto tmp = GBAttentionCompress(exp_vector_div, adpbias_softmax);
       
@@ -660,7 +660,7 @@ void AddChild_GB_Attention(Ila& m) {
     for (auto i = 0; i < 4; i++) {
       auto exp_vector = child.state(GBGetVectorName(i, GB_ATTENTION_EXP_VECTOR));
       auto exp_vector_sub = GBAttentionSub(exp_vector, max_val); // X - Max[X]
-      auto exp_vector_exp = GBAttentionExp(exp_vector_sub, exp_vector_sub); // (X-Max[X])^2
+      auto exp_vector_exp = GBAttentionExp(exp_vector_sub); // (X-Max[X])^2
       auto exp_vector_div = GBAttentionDiv(exp_vector_exp, sum_exp); // (X-Max[X])^2 / sum_exp
       auto tmp = GBAttentionCompress(exp_vector_div, adpbias_softmax);
       
