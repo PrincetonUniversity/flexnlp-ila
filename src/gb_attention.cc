@@ -118,10 +118,9 @@ void AddChild_GB_Attention(Ila& m) {
 
     instr.SetUpdate(state, next_state);                          
     // states initilization
-    instr.SetUpdate(child.state(GB_ATTENTION_SUM_EXP),
-                      BvConst(0, GB_ATTENTION_SUM_EXP_BITWIDTH));
-    instr.SetUpdate(child.state(GB_ATTENTION_MAX_VALUE),
-                      BvConst(ATTENTION_WORD_MIN, GB_ATTENTION_MAX_VALUE_BITWIDTH));
+    instr.SetUpdate(sum_exp, BvConst(0, GB_ATTENTION_SUM_EXP_BITWIDTH));
+    instr.SetUpdate(max_val,
+                     BvConst(ATTENTION_WORD_MIN, GB_ATTENTION_MAX_VALUE_BITWIDTH));
     
     instr.SetUpdate(vector_cntr, BvConst(0, GB_ATTENTION_VECTOR_CNTR_BITWIDTH));
     instr.SetUpdate(timestep_cntr, BvConst(0, GB_ATTENTION_TIMESTEP_CNTR_BITWIDTH));
@@ -141,19 +140,19 @@ void AddChild_GB_Attention(Ila& m) {
                       BvConst(0, GB_ATTENTION_ACCUM_VECTOR_BITWIDTH));
     }
 
-    auto next_state = BvConst(GB_ATTENTION_CHILD_STATE_BMM, GB_ATTENTION_CHILD_STATE_BITWIDTH);
+    auto next_state = BvConst(GB_ATTENTION_CHILD_STATE_BMM_RD, GB_ATTENTION_CHILD_STATE_BITWIDTH);
 
     instr.SetUpdate(state, next_state);
   }
 
   { // instruction 2 ---- state BMM
-    auto instr = child.NewInstr("gb_attention_child_bmm");
-    auto state_bmm = (state == GB_ATTENTION_CHILD_STATE_BMM);
+    auto instr = child.NewInstr("gb_attention_child_bmm_rd");
+    auto state_bmm = (state == GB_ATTENTION_CHILD_STATE_BMM_RD);
 
     instr.SetDecode(child_valid & state_bmm);
 
     auto mem_large_index_enc = m.state(GB_ATTENTION_CONFIG_REG_MEMORY_INDEX_1);
-    // TODO: See whether current ILAtor support concatenation of specified length constant
+
     auto mem_large_base_enc = 
       Ite(mem_large_index_enc == 0, 
           Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_0), BvConst(0, 4)),
@@ -222,11 +221,12 @@ void AddChild_GB_Attention(Ila& m) {
 
     // next state
     auto next_state = 
-      Ite(is_zero, BvConst(GB_ATTENTION_CHILD_STATE_NEXT, GB_ATTENTION_CHILD_STATE_BITWIDTH),
+      Ite(is_zero, 
+        BvConst(GB_ATTENTION_CHILD_STATE_BMM_NEXT, GB_ATTENTION_CHILD_STATE_BITWIDTH),
         Ite(bmm_cntr == 1, 
             BvConst(GB_ATTENTION_CHILD_STATE_BMM_TP, GB_ATTENTION_CHILD_STATE_BITWIDTH),
             BvConst(GB_ATTENTION_CHILD_STATE_BMM_MV, GB_ATTENTION_CHILD_STATE_BITWIDTH)));
-    
+       
     instr.SetUpdate(state, next_state);
   }
 
@@ -272,27 +272,42 @@ void AddChild_GB_Attention(Ila& m) {
       instr.SetUpdate(accum_reg_i, accum_tmp);
     }
     
+    // move the control states updates to a independent instruction to handle the is_zero case
+    auto next_state = BvConst(GB_ATTENTION_CHILD_STATE_BMM_NEXT, 
+                                GB_ATTENTION_CHILD_STATE_BITWIDTH);
+    
+    instr.SetUpdate(state, next_state);
+  }
+
+  { // instr 19 ---- FSM BMM control state updates
+    auto instr = child.NewInstr("gb_attention_child_bmm_next");
+    auto state_bmm_next = (state == GB_ATTENTION_CHILD_STATE_BMM_NEXT);
+
+    instr.SetDecode(child_valid & state_bmm_next);
+
     auto is_end_vector = (vector_cntr >= num_vector - 1);
-    auto is_end_timestep = (timestep_cntr >= num_timestep - 1);
+    auto is_end_timestep = (timestep_cntr >= num_timestep - 16);
 
     auto vector_cntr_next = 
       Ite(bmm_cntr == 0,
-          Ite(is_end_vector, BvConst(0, GB_ATTENTION_VECTOR_CNTR_BITWIDTH), vector_cntr + 1),
+          Ite(is_end_vector, 
+              BvConst(0, GB_ATTENTION_VECTOR_CNTR_BITWIDTH), vector_cntr + 1),
           vector_cntr);
     
     auto timestep_cntr_next = 
-      Ite(bmm_cntr == 0,
-          Ite(is_end_timestep, BvConst(0, GB_ATTENTION_TIMESTEP_CNTR_BITWIDTH), timestep_cntr + 1),
+      Ite(bmm_cntr == 1,
+          Ite(is_end_timestep, 
+              BvConst(0, GB_ATTENTION_TIMESTEP_CNTR_BITWIDTH), timestep_cntr + 16),
           timestep_cntr);
 
     auto next_state = 
       Ite(bmm_cntr == 0,
         Ite(is_end_vector,
-            BvConst(GB_ATTENTION_CHILD_STATE_NEXT, GB_ATTENTION_CHILD_STATE_BITWIDTH),
-            BvConst(GB_ATTENTION_CHILD_STATE_BMM, GB_ATTENTION_CHILD_STATE_BITWIDTH)),
+            BvConst(GB_ATTENTION_CHILD_STATE_NEXT_SH, GB_ATTENTION_CHILD_STATE_BITWIDTH),
+            BvConst(GB_ATTENTION_CHILD_STATE_BMM_RD, GB_ATTENTION_CHILD_STATE_BITWIDTH)),
         Ite(is_end_timestep,
             BvConst(GB_ATTENTION_CHILD_STATE_OUT1, GB_ATTENTION_CHILD_STATE_BITWIDTH),
-            BvConst(GB_ATTENTION_CHILD_STATE_BMM, GB_ATTENTION_CHILD_STATE_BITWIDTH)));
+            BvConst(GB_ATTENTION_CHILD_STATE_BMM_RD, GB_ATTENTION_CHILD_STATE_BITWIDTH)));
 
     instr.SetUpdate(state, next_state);
     instr.SetUpdate(vector_cntr, vector_cntr_next);
@@ -300,8 +315,8 @@ void AddChild_GB_Attention(Ila& m) {
   }
 
   { // instr 5 ---- FSM next instruction
-    auto instr = child.NewInstr("gb_attention_child_next");
-    auto state_next = (state == GB_ATTENTION_CHILD_STATE_NEXT);
+    auto instr = child.NewInstr("gb_attention_child_next_shift");
+    auto state_next = (state == GB_ATTENTION_CHILD_STATE_NEXT_SH);
 
     instr.SetDecode(child_valid & state_next);
 
@@ -414,7 +429,7 @@ void AddChild_GB_Attention(Ila& m) {
             BvConst(GB_ATTENTION_CHILD_STATE_SFM1_RD, GB_ATTENTION_CHILD_STATE_BITWIDTH),
             Ite(is_end1 & !is_end2,
                 BvConst(GB_ATTENTION_CHILD_STATE_PREP, GB_ATTENTION_CHILD_STATE_BITWIDTH),
-                BvConst(GB_ATTENTION_CHILD_STATE_NEXT, GB_ATTENTION_CHILD_STATE_BITWIDTH)));
+                BvConst(GB_ATTENTION_CHILD_STATE_NEXT_SH, GB_ATTENTION_CHILD_STATE_BITWIDTH)));
     
     instr.SetUpdate(softmax_cntr, softmax_cntr_next);
     instr.SetUpdate(timestep_cntr, timestep_cntr_next);
@@ -665,7 +680,7 @@ void AddChild_GB_Attention(Ila& m) {
   }
 
   { // instruction 15 ---- FSM state SFM3, write result back into small buffer
-    auto instr = child.NewInstr("gb_attention_sfm2_comp3");
+    auto instr = child.NewInstr("gb_attention_sfm3");
     auto state_sfm3 = (state == GB_ATTENTION_CHILD_STATE_SFM3);
 
     instr.SetDecode(child_valid & state_sfm3);
