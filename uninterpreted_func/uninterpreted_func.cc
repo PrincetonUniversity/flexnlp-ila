@@ -21,6 +21,129 @@
 
 static int counter = 0;
 
+// GBAttentionLSH: left-shift function used in gb_attention
+sc_biguint<32> flex_sim::GBAttentionLSH(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
+  sc_bigint<32> arg_0_s = arg_0;
+  sc_bigint<32> arg_1_s = arg_1;
+  NVINT32 tmp_out = arg_0_s.to_int();
+  NVINT32 shift_amout = arg_1_s.to_int();
+  tmp_out = tmp_out << shift_amout;
+  sc_bigint<32> result_s = tmp_out.to_int();
+  sc_biguint<32> result = result_s;
+
+  return result;
+}
+
+// GBAttentionRSH: right-shift function used in gb_attention
+sc_biguint<32> flex_sim::GBAttentionRSH(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
+  sc_bigint<32> arg_0_s = arg_0;
+  sc_bigint<32> arg_1_s = arg_1;
+  NVINT32 tmp_out = arg_0_s.to_int();
+  NVINT32 shift_amout = arg_1_s.to_int();
+  tmp_out = tmp_out >> shift_amout;
+  sc_bigint<32> result_s = tmp_out.to_int();
+  sc_biguint<32> result = result_s;
+
+  return result;
+}
+
+// GBAttentionMax: finding the maximum values used in gb_attention
+sc_biguint<32> flex_sim::GBAttentionMax(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
+  sc_bigint<32> arg_0_s = arg_0;
+  sc_bigint<32> arg_1_s = arg_1;
+  spec::AttentionScalarType max_val_next = arg_0_s.to_int();
+  spec::AttentionScalarType accum_scalar = arg_1_s.to_int();
+  spec::AttentionScalarType out_tmp = (max_val_next > accum_scalar) ? max_val_next : accum_scalar;
+  sc_bigint<32> result_s = out_tmp.to_int();
+  sc_biguint<32> result = result_s;
+
+  return result;
+}
+
+// GBAttentionSUb: attention scalar sub used in gb_attention
+sc_biguint<32> flex_sim::GBAttentionSub(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
+  sc_bigint<32> arg_0_s = arg_0;
+  sc_bigint<32> arg_1_s = arg_1;
+  spec::AttentionScalarType in_0 = arg_0_s.to_int();
+  spec::AttentionScalarType in_1 = arg_1_s.to_int();
+  spec::AttentionScalarType out = in_0 - in_1;
+  sc_bigint<32> result_s = out.to_int();
+  sc_biguint<32> result = result_s;
+
+  return result;
+}
+
+// GBAttentionExp: attention scalar exponential used in gb_attention
+sc_biguint<32> flex_sim::GBAttentionExp(sc_biguint<32> arg_0) {
+  sc_bigint<32> arg_0_s = arg_0;
+  spec::AttentionScalarType in = arg_0_s.to_int();
+  spec::AttentionScalarType out_tmp;
+
+  ac_fixed<spec::kAttentionWordWidth, spec::kAttentionNumInt, true, AC_TRN, AC_WRAP> in_ac; 
+  ac_fixed<spec::kAttentionWordWidth, spec::kAttentionNumInt, false, AC_TRN, AC_WRAP> out_ac;
+
+  in_ac.set_slc(0, in);
+
+  out_ac = ac_math::ac_exp_pwl
+            <ac_fixed<spec::kAttentionWordWidth, spec::kAttentionNumInt, false, AC_TRN, AC_WRAP> >(in_ac);
+
+  out_tmp.set_slc(0, nvhls::get_slc<spec::kAttentionWordWidth>(out_ac, 0));
+
+  sc_bigint<32> result_s = out_tmp.to_int();
+  sc_biguint<32> result = result_s;
+
+  return result;
+}
+
+// GBAttentionDiv: attention scalar div used in gb_attention
+sc_biguint<32> flex_sim::GBAttentionDiv(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
+  sc_bigint<32> arg_0_s = arg_0;
+  sc_bigint<32> arg_1_s = arg_1;
+  spec::AttentionScalarType in_0 = arg_0_s.to_int();
+  spec::AttentionScalarType in_1 = arg_1_s.to_int();
+  spec::AttentionScalarType out_tmp;
+
+  ac_fixed<spec::kAttentionWordWidth, spec::kAttentionNumInt, true, AC_TRN, AC_WRAP> in_1_ac, in_2_ac; 
+  ac_fixed<spec::kAttentionWordWidth, spec::kAttentionNumInt, true, AC_TRN, AC_WRAP> out_ac;  
+  
+  ac_fixed<6, 2, false, AC_TRN, AC_WRAP> in_1_reduce, in_2_reduce;
+  ac_fixed<10, 2, false, AC_TRN, AC_WRAP> out_reduce;
+  
+
+  in_1_ac.set_slc(0, in_0);
+  in_2_ac.set_slc(0, in_1);
+  
+  in_1_reduce = in_1_ac;
+  in_2_reduce = in_2_ac;
+  
+  ac_math::ac_div(in_1_reduce, in_2_reduce, out_reduce);
+
+  out_ac = out_reduce;
+  out_tmp.set_slc(0, nvhls::get_slc<spec::kAttentionWordWidth>(out_ac, 0));
+
+  sc_bigint<32> result_s = out_tmp.to_int();
+  sc_biguint<32> result = result_s;
+
+  return result;
+}
+
+// GBAttentionCompress: attention scalar compress used in gb_attention
+sc_biguint<8> GBAttentionCompress(sc_biguint<32> arg_0, sc_biguint<3> arg_1) {
+  sc_bigint<32> arg_0_s = arg_0;
+
+  AdpfloatType<8,3> tmp;
+  NVINTW(26) reduce = arg_0_s.to_int();
+  spec::AdpfloatBiasType adpbias = arg_1.to_uint();
+  tmp.set_value_fixed<26, spec::kAttentionNumFrac>(reduce, adpbias);
+
+  spec::ScalarType out_tmp = tmp.to_rawbits();
+  
+  sc_biguint<32> result = out_tmp.to_uint();
+
+  return result;
+}
+
+
 // GBNormAdd used in LayerNorm
 sc_biguint<24> flex_sim::GBNormAdd_24_20(sc_biguint<24> arg_0, sc_biguint<20> arg_1) {
   sc_bigint<24> arg_0_s = arg_0;
