@@ -710,7 +710,8 @@ void AddChild_GB_Attention(Ila& m) {
     auto is_end = (timestep_cntr >= num_timestep - 16);
     auto bmm_cntr_next = Ite(is_end, BvConst(1, GB_ATTENTION_BMM_CNTR_BITWIDTH),
                                       bmm_cntr);
-    auto timestep_cntr_next = Ite(is_end, timestep_cntr + 16, timestep_cntr);
+    auto timestep_cntr_next = Ite(is_end, BvConst(0, GB_ATTENTION_TIMESTEP_CNTR_BITWIDTH), 
+                                          timestep_cntr + 16);
 
     auto next_state = Ite(is_end,
                           BvConst(GB_ATTENTION_CHILD_STATE_PREP,
