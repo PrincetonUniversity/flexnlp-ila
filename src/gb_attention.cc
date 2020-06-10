@@ -428,8 +428,12 @@ void AddChild_GB_Attention(Ila& m) {
 
     auto softmax_cntr_next = Ite(is_end1, BvConst(0, GB_ATTENTION_SOFTMAX_CNTR_BITWIDTH),
                                           softmax_cntr + 1);
-    auto timestep_cntr_next = Ite(is_end2, BvConst(0, GB_ATTENTION_TIMESTEP_CNTR_BITWIDTH),
-                                            timestep_cntr + 16);
+
+    auto timestep_cntr_next = Ite(is_end1,
+                                  Ite(is_end2, BvConst(0, GB_ATTENTION_TIMESTEP_CNTR_BITWIDTH),
+                                                timestep_cntr + 16),
+                                  timestep_cntr);
+
     auto bmm_cntr_next = Ite(is_end1 & is_end2, BvConst(1, GB_ATTENTION_BMM_CNTR_BITWIDTH),
                                                 bmm_cntr);
     auto next_state = 
@@ -509,9 +513,11 @@ void AddChild_GB_Attention(Ila& m) {
 
     auto softmax_cntr_next = Ite(is_end1, BvConst(0, GB_ATTENTION_SOFTMAX_CNTR_BITWIDTH),
                                           softmax_cntr + 1);
-    auto timestep_cntr_next = Ite(is_end2, BvConst(0, GB_ATTENTION_TIMESTEP_CNTR_BITWIDTH),
-                                            timestep_cntr + 16);
-    
+
+    auto timestep_cntr_next = Ite(is_end1,
+                                  Ite(is_end2, BvConst(0, GB_ATTENTION_TIMESTEP_CNTR_BITWIDTH),
+                                                timestep_cntr + 16),
+                                  timestep_cntr);    
     auto next_state =
           Ite(is_end1 & is_end2, 
               BvConst(GB_ATTENTION_CHILD_STATE_SFM2_RD, GB_ATTENTION_CHILD_STATE_BITWIDTH),
