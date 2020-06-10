@@ -275,6 +275,8 @@ void AddChild_GB_Attention(Ila& m) {
         accum_tmp = AccumAdd(accum_tmp, tmp);
       }
 
+      auto accum_reg_i_next = AccumAdd(accum_reg_i, accum_tmp);
+
       instr.SetUpdate(accum_reg_i, accum_tmp);
     }
     
