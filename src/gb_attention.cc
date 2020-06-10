@@ -180,10 +180,11 @@ void AddChild_GB_Attention(Ila& m) {
 
     // fetch the data encoder data from large memory buffer
     auto mem_large = m.state(GB_CORE_LARGE_BUFFER);
-    auto row_size = GB_CORE_SCALAR * GB_CORE_LARGE_NUM_BANKS;
+  
+    // auto row_size = GB_CORE_SCALAR * GB_CORE_LARGE_NUM_BANKS;
 
     for (auto i = 0; i < GB_CORE_SCALAR; i++) {
-      auto addr_large_v = ts_base_addr + row_size * i;
+      auto addr_large_v = ts_base_addr + GB_CORE_SCALAR * i;
       for (auto j = 0; j < GB_CORE_SCALAR; j++) {
         auto addr_large_b = addr_large_v + j;
         auto reg = child.state(GBGetVectorName2D(i,j,GB_ATTENTION_DP0));
