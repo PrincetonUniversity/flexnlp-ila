@@ -277,7 +277,7 @@ void AddChild_GB_Attention(Ila& m) {
 
       auto accum_reg_i_next = AccumAdd(accum_reg_i, accum_tmp);
 
-      instr.SetUpdate(accum_reg_i, accum_tmp);
+      instr.SetUpdate(accum_reg_i, accum_reg_i_next);
     }
     
     // move the control states updates to a independent instruction to handle the is_zero case
