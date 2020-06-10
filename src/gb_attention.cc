@@ -163,28 +163,28 @@ void AddChild_GB_Attention(Ila& m) {
           Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3), BvConst(0,4)))));
     
     // // calculating the address for the large memory
-    // auto num_vector_32 = Concat(BvConst(0, 32-num_vector.bit_width()), num_vector);
-    // auto timestep_size = num_vector_32 * GB_CORE_SCALAR;
-    // auto group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
+    auto num_vector_32 = Concat(BvConst(0, 32-num_vector.bit_width()), num_vector);
+    auto timestep_size = num_vector_32 * GB_CORE_SCALAR;
+    auto group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
 
-    // auto group_index = timestep_cntr/BvConst(GB_CORE_SCALAR, timestep_cntr.bit_width());
+    auto group_index = timestep_cntr/BvConst(GB_CORE_SCALAR, timestep_cntr.bit_width());
     // auto group_offset = URem(timestep_cntr, BvConst(GB_CORE_SCALAR, timestep_cntr.bit_width()));
-    // auto group_index_32 = 
-    //       Concat(BvConst(0, 32 - group_index.bit_width()), group_index);
+    auto group_index_32 = 
+          Concat(BvConst(0, 32 - group_index.bit_width()), group_index);
     // auto group_offset_32 = 
     //       Concat(BvConst(0, 32 - group_offset.bit_width()), group_offset);
     
-    // auto ts_base_addr_offset = group_index_32*group_size + group_offset_32*GB_CORE_SCALAR;
-    // auto ts_base_addr = Concat(BvConst(0, 32-mem_large_base_enc.bit_width()), mem_large_base_enc)
-    //                     + ts_base_addr_offset;
+    auto ts_base_addr_offset = group_index_32*group_size;
+    auto ts_base_addr = Concat(BvConst(0, 32-mem_large_base_enc.bit_width()), mem_large_base_enc)
+                        + ts_base_addr_offset;
 
     // fetch the data encoder data from large memory buffer
     auto mem_large = m.state(GB_CORE_LARGE_BUFFER);
     auto vector_cntr_32 = Concat(BvConst(0,32-vector_cntr.bit_width()), vector_cntr);
     auto row_size = GB_CORE_SCALAR * GB_CORE_LARGE_NUM_BANKS;
-    auto mem_large_addr_offset = vector_cntr_32 * row_size;
-    auto mem_large_addr_base = Concat(BvConst(0, 32-mem_large_base_enc.bit_width()), mem_large_base_enc) +
-                                mem_large_addr_offset;
+    auto vector_addr_offset = vector_cntr_32 * row_size;
+
+    auto mem_large_addr_base = ts_base_addr + vector_addr_offset;
 
     for (auto i = 0; i < GB_CORE_SCALAR; i++) {
       auto addr_large_v = mem_large_addr_base + GB_CORE_SCALAR * i;
