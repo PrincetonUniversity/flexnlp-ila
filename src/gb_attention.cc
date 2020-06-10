@@ -248,6 +248,8 @@ void AddChild_GB_Attention(Ila& m) {
 
     auto next_state = BvConst(GB_ATTENTION_CHILD_STATE_BMM_MV,
                               GB_ATTENTION_CHILD_STATE_BITWIDTH);
+    
+    instr.SetUpdate(state, next_state);
                               
   }
 
