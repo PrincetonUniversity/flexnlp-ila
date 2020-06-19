@@ -45,15 +45,5 @@ int main() {
     ILA_INFO << flex.instr(i);
   }
 
-  // for (auto i = 0; i < flex.child_num(); i++) {
-  //   ILA_INFO << flex.child(i);
-  //   ILA_INFO << "child states number: " << flex.child(i).state_num();
-  // }
-
-  // auto child_pe_core_0 = flex.child(PEGetChildName(0, "CORE_CHILD"));
-  // auto child_run_mac_0 = child_pe_core_0.child(PEGetChildName(0, "CORE_RUN_MAC_CHILD"));
-  // ILA_INFO << "child_run_mac_0 instr number: " << child_run_mac_0.instr_num();
-
-
   return 0;
 }

@@ -830,6 +830,9 @@ void AddChild_GB_Attention(Ila& m) {
                             GB_ATTENTION_CHILD_VALID_FLAG_BITWIDTH));
   }
 
+  ILA_INFO << "gb_attention summary: #state: " << child.state_num() - m.state_num() << '\t'
+           << "#instr: " << child.instr_num();
+
 }
 
 }; // namespace ilang

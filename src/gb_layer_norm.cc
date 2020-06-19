@@ -413,6 +413,8 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
                                   BvConst(GB_LAYER_NORM_VALID, GB_LAYER_NORM_CHILD_VALID_FLAG_BITWIDTH)));
   }
   
+  ILA_INFO << "gb_layernorm summary: #state: " << child.state_num() - m.state_num() << '\t'
+            << "#instr: " << child.instr_num();
 }
 
 }; // namespace ilang
