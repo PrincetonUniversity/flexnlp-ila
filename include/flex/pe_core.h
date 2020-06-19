@@ -289,6 +289,118 @@ namespace ilang {
 #define RNN_LAYER_SIZING_CONFIG_REG_NUM_OUTPUT "rnn_layer_sizing_num_output"
 #define RNN_LAYER_SIZING_CONFIG_REG_NUM_OUTPUT_WIDTH 8
 
+
+
+// 
+// Define PE Core states
+//
+#define PE_CORE_INVALID 0
+#define PE_CORE_VALID 1
+
+#define CORE_IS_START "core_is_start"
+#define PE_CORE_IS_START_BITWIDTH 1
+
+#define PE_CORE_CNTR "pe_core_cntr"
+#define PE_CORE_CNTR_BIWTDTH 3
+
+#define PE_VALID_NUM "pe_valid_num"
+#define PE_VALID_NUM_BITWIDTH 3
+
+#define CORE_STATE "core_state"
+#define PE_CORE_STATE_BITWIDTH 3
+
+// states that defined in the specs
+#define PE_CORE_STATE_IDLE 0
+#define PE_CORE_STATE_PRE 1
+#define PE_CORE_STATE_MAC 2
+#define PE_CORE_STATE_BIAS 3
+#define PE_CORE_STATE_OUT 4
+
+// // is start register
+// #define CORE_IS_START "core_is_start"
+// #define PE_CORE_IS_START_BITWIDTH 1
+// core manager counter
+#define CORE_MNGR_CNTR "core_manager_cntr"
+#define PE_CORE_MNGR_CNTR_BITWIDTH 1
+#define PE_CORE_MNGR_0 0
+#define PE_CORE_MNGR_1 1
+
+// core accumulator register
+#define CORE_ACCUM_VECTOR "core_accum_vector"
+#define PE_CORE_ACCUM_VECTOR_BITWIDTH 32
+#define PE_CORE_ACCUM_VECTOR_LANES CORE_SCALAR
+
+#define CORE_ACT_VECTOR_REG "core_act_vector_reg"
+#define PE_CORE_ACT_VECTOR_REG_BITWIDTH 32
+#define PE_CORE_ACT_VECTOR_REG_LANES CORE_SCALAR
+
+// core input counter
+#define CORE_INPUT_CNTR "core_input_counter"
+#define PE_CORE_INPUT_CNTR_BITWIDTH 8
+
+// core output counter
+#define CORE_OUTPUT_CNTR "core_output_counter"
+#define PE_CORE_OUTPUT_CNTR_BITWIDTH 8
+
+// core run mac child related states
+#define CORE_CHILD_RUN_MAC_FLAG "core_child_run_mac_flag"
+#define PE_CORE_CHILD_RUN_MAC_FLAG_BITWIDTH 1
+
+#define CORE_CHILD_RUN_MAC_CNTR "core_child_run_mac_cntr"
+#define PE_CORE_CHILD_RUN_MAC_CNTR_BITWIDTH 5
+
+#define CORE_CHILD_RUN_MAC_WEIGHT_BASE_VECTOR "core_child_run_mac_weight_base_vector"
+#define PE_CORE_CHILD_RUN_MAC_WEIGHT_BASE_VECTOR_BITWIDTH                               \
+  MEM_MNGR_FIRST_CONFIG_REG_BASE_WEIGHT_WIDTH
+
+#define CORE_CHILD_RUN_MAC_INPUT_BASE_VECTOR "core_child_run_mac_input_base_vector"
+#define PE_CORE_CHILD_RUN_MAC_INPUT_BASE_VECTOR_BITWIDTH                                \
+  MEM_MNGR_FIRST_CONFIG_REG_BASE_INPUT_WIDTH
+
+#define CORE_RUN_MAC_CHILD_STATE "core_run_mac_child_state"
+#define PE_CORE_RUN_MAC_CHILD_STATE_BITWIDTH 4
+
+#define PE_CORE_RUN_MAC_STATE_FETCH_NON_CLUSTER 0
+#define PE_CORE_RUN_MAC_STATE_FETCH_CLUSTER 1
+#define PE_CORE_RUN_MAC_STATE_MUL 2
+#define PE_CORE_RUN_MAC_STATE_OUT 3
+
+
+#define CORE_RUN_MAC_CHILD_WEIGHT_BYTE "core_run_mac_child_weight_byte"
+#define PE_CORE_RUN_MAC_CHILD_WEIGHT_BYTE_BITWIDTH 8
+#define CORE_RUN_MAC_CHILD_INPUT_BYTE "core_run_mac_child_input_byte"
+#define PE_CORE_RUN_MAC_CHILD_INPUT_BYTE_BITWIDTH 8
+
+#define CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY "cluster_table_first_Entry"
+#define CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY "cluster_table_second_Entry"
+
+#define CORE_RUN_BIAS_CHILD_FLAG "core_child_run_bias_flag"
+#define PE_CORE_RUN_BIAS_CHILD_FLAG_BITWIDTH 1
+#define CORE_RUN_BIAS_CHILD_CNTR "core_run_bias_child_cntr"
+#define PE_CORE_RUN_BIAS_CHILD_CNTR_BITWIDTH 5
+
+//update 06022020: add temp registers for run_mac_mul to reduce overhead
+#define CORE_RUN_MAC_CHILD_RESULT_TEMP "core_run_mac_child_result_temp"
+#define PE_CORE_RUN_MAC_CHILD_RESULT_TEMP_BITWIDTH PE_CORE_ACCUM_VECTOR_BITWIDTH
+
+/****** shared states between pe_core and pe_act ********/
+// valid bit for pe_act_reg, immitate the push function,
+#define CORE_ACT_REG_PORT_VALID "act_reg_port_valid"
+#define PE_CORE_ACT_REG_PORT_VALID_BITWIDTH 1
+
+// core activation vector type
+#define CORE_ACT_VECTOR "core_act_vector"
+#define PE_CORE_ACT_VECTOR_BITWIDTH 20
+#define PE_CORE_ACT_VECTOR_LANES CORE_SCALAR
+
+
+/****** uninterpreted function ******/
+#define PE_CORE_SCALAR_BITWIDTH 8
+#define PE_CORE_ACCUMSCALAR_BITWIDTH 32
+#define PE_CORE_ACTSCALAR_BITWIDTH 20
+#define PE_CORE_ADPFLOAT_BIAS_B_BITWIDTH 3
+#define PE_CORE_ADPFLOAT_BIAS_BITWIDTH 3
+
 }; // namespace ilang
 
 #endif // FLEX_PE_CORE_H__

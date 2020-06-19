@@ -26,15 +26,20 @@
 
 #include <flex/flex.h>
 
+#include <iostream>
+#include <queue>
+
+#include <ilang/ila/instr_lvl_abs.h>
+#include <ilang/target-sc/ila_sim.h>
 #include <ilang/util/log.h>
 
 using namespace ilang;
 
-int main() {
+int main(int argc, char* argv[]) {
   SetToStdErr(1);
 
   // get the ILA model
-  auto flex = GetFlexIla("flex");
+  auto flex = GetFlexIla("flex_sim");
 
   ILA_INFO << "#input: " << flex.input_num();
   ILA_INFO << "#state: " << flex.state_num();
@@ -43,6 +48,17 @@ int main() {
   for (auto i = 0; i < flex.instr_num(); i++) {
     ILA_INFO << flex.instr(i);
   }
+
+  auto model = flex.get();
+
+  ILA_INFO << "before calling sim gen function";
+  // simulation generation
+  IlaSim simulator_generator;
+  std::string sim_gen_dir = "./sim_model";
+
+  simulator_generator.set_instr_lvl_abs(model);
+  simulator_generator.enable_cmake_support();
+  simulator_generator.sim_gen(sim_gen_dir, false, true, false);
 
   return 0;
 }

@@ -9,6 +9,8 @@ This is the ILA model of the [FlexNLP](https://github.com/ttambe/FlexNLP) accele
     -   `gb_config.h` defines the GB-related modules (e.g., Control)
     -   `pe_config.h` defines the PE-related modules (e.g., ActUnit)
     -   `flex.h` provides the functions for constructing the ILA model
+    -   `adpfloat_spec.h` provides parameters related to adpfloat data format used in the model
+    -   `uninterpreted_func.h` defines the uninterpreted functions
 
 -   `src` contains source files for functions to construct the ILA model
     -   `top_input.cc` defines the AXI interface inputs
@@ -21,3 +23,4 @@ This is the ILA model of the [FlexNLP](https://github.com/ttambe/FlexNLP) accele
     -   `util.cc` contains some helper functions
 
 -   `app` contains the `main.cc` for applications using the ILA model
+

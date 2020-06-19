@@ -211,6 +211,90 @@ namespace ilang {
 #define ACT_VECTOR_16_31_CONFIG_REG_INST15 "act_vector_16_31_Inst15"
 #define ACT_VECTOR_16_31_CONFIG_REG_INST15_WIDTH 8
 
+// PE Act Child instructions 
+// used to schedule PE sending data back to GB
+#define PE_ACT_OUTGB_CNTR "pe_act_outgb_cntr"
+#define PE_ACT_OUTGB_CNTR_BITWIDTH 3
+// used to schedule PE sending PE_DONE back to GB
+#define PE_ACT_DONE_CNTR "pe_act_done_cntr"
+#define PE_ACT_DONE_CNTR_BITWIDTH 3
+
+#define PE_ACT_VALID 1
+#define PE_ACT_INVALID 0
+
+#define ACT_IS_START_REG "act_is_start_reg"
+#define PE_ACT_IS_START_REG_BITWIDTH 1
+
+#define ACT_INSTR_COUNTER "act_instruction_counter"
+#define PE_ACT_INSTR_COUNTER_BITWIDTH ACT_MNGR_CONFIG_REG_NUM_INST_WIDTH
+
+#define ACT_OUTPUT_COUNTER "act_output_counter"
+#define PE_ACT_OUTPUT_COUNTER_BITWIDTH 8
+
+// PE Act Register
+#define PE_ACT_REGS_NUM 4
+#define PE_ACT_REGS_ADDR_WIDTH 4 // 16 entries per vector
+#define ACT_REGS "act_regs"
+
+// PE Act control flag
+#define ACT_IS_INIT_REG "act_is_init_reg"
+#define PE_ACT_IS_INIT_REG_BITWIDTH 1
+
+#define PE_ACT_FLAG_BITWIDTH 1
+#define ACT_W_OUT "act_w_out"
+#define ACT_W_LOAD "act_w_load"
+#define ACT_W_DONE "act_w_done"
+#define ACT_IS_INCR "act_is_incr"
+
+// ACT FSM STATE
+#define ACT_STATE "act_state"
+#define PE_ACT_STATE_BITWIDTH 3
+#define PE_ACT_STATE_FETCH 0
+#define PE_ACT_STATE_EXEC 1
+#define PE_ACT_STATE_INCR 2
+#define PE_ACT_STATE_SEND_DONE 3
+#define PE_ACT_STATE_IDLE 4
+#define PE_ACT_STATE_MEM 5
+
+// ACT opcode
+#define ACT_OP "act_op"
+#define PE_ACT_OP_BITWIDTH 4
+#define PE_ACT_OP_HI_IDX 7
+#define PE_ACT_OP_LO_IDX 4
+
+#define PE_ACT_OP_LOAD 0x1
+#define PE_ACT_OP_STORE 0x2
+#define PE_ACT_OP_INPE 0x3
+#define PE_ACT_OP_OUTGB 0x4
+#define PE_ACT_OP_COPY 0x7
+#define PE_ACT_OP_EADD 0x8
+#define PE_ACT_OP_EMUL 0x9
+#define PE_ACT_OP_SIGM 0xA
+#define PE_ACT_OP_TANH 0xB
+#define PE_ACT_OP_RELU 0xC
+#define PE_ACT_OP_ONEX 0xD
+
+// ACT instruction registers
+// this value is to represent the index of the act vector registers
+#define PE_ACT_REG_IDX_BITWIDTH 2
+
+#define ACT_REG_A1 "act_reg_a1"
+#define PE_ACT_REG_A1 PE_ACT_REG_IDX_BITWIDTH
+#define PE_ACT_REG_A1_HI_IDX 1
+#define PE_ACT_REG_A1_LO_IDX 0
+
+#define ACT_REG_A2 "act_reg_a2"
+#define PE_ACT_REG_A2 PE_ACT_REG_IDX_BITWIDTH
+#define PE_ACT_REG_A2_HI_IDX 3
+#define PE_ACT_REG_A2_LO_IDX 2
+
+// temp registers for holding intermediate results for storing into the memory
+#define ACT_REG_TEMP "act_reg_temp"
+
+
+
+
+
 }; // namespace ilang
 
 #endif // FLEX_PE_ACT_UNIT_H__

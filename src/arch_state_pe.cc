@@ -52,6 +52,23 @@ void DefinePEOtherState(Ila& m, const int& pe_idx) {
       m.NewMemState(PEGetVarName(pe_idx, CORE_INPUT_BUFFER), TOP_ADDR_IN_WIDTH,
                     TOP_DATA_IN_WIDTH);
   pe_core_input_buffer.SetEntryNum(CORE_INPUT_BUFFER_SIZE);
+
+  //
+  // Define child states in the PE Core
+  //
+  
+  // state machine for PE Core module
+  m.NewBvState(PEGetVarName(pe_idx, CORE_STATE), PE_CORE_STATE_BITWIDTH);
+
+  // core activation vector
+  // act register needs to be defined at the top level, which are accessed by act child model.
+  for (auto i = 0; i < PE_CORE_ACT_VECTOR_LANES; i++) {
+    m.NewBvState(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECTOR), PE_CORE_ACT_VECTOR_BITWIDTH);
+  }
+  // valid bit for core act register, which are accessed by both pe_core and pe_act
+  // use it to immitate push function
+  m.NewBvState(PEGetVarName(pe_idx, CORE_ACT_REG_PORT_VALID), PE_CORE_ACT_REG_PORT_VALID_BITWIDTH);
+
 }
 
 }; // namespace ilang

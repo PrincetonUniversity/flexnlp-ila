@@ -36,6 +36,8 @@ Ila GetFlexIla(const std::string& model_name) {
   //
   DefineTopInput(m);
 
+  DefineSharedState(m);
+  
   DefineGBConfigState(m);
   DefineGBOtherState(m);
 
@@ -48,6 +50,19 @@ Ila GetFlexIla(const std::string& model_name) {
   DefinePEOtherState(m, 1);
   DefinePEOtherState(m, 2);
   DefinePEOtherState(m, 3);
+
+  // GB internal states
+  DefineGBInternalStates(m);
+
+  // PE internal states
+  DefinePEInternalStates(m);
+  DefinePEInternalStates(m, 0);
+  DefinePEInternalStates(m, 1);
+  DefinePEInternalStates(m, 2);
+  DefinePEInternalStates(m, 3); 
+  
+  // define initial conditions
+  DefineInitConditons(m);
 
   //
   // define valid function
@@ -64,22 +79,32 @@ Ila GetFlexIla(const std::string& model_name) {
   // configuration setting
   DefineGBConfigInstr(m);
 
-  DefinePEConfigInstr(m, 0, TOP_PE0_ADDR_MIN);
-  DefinePEConfigInstr(m, 1, TOP_PE1_ADDR_MIN);
-  DefinePEConfigInstr(m, 2, TOP_PE2_ADDR_MIN);
-  DefinePEConfigInstr(m, 3, TOP_PE3_ADDR_MIN);
+  DefinePEConfigInstr(m, 0, TOP_PE0_ADDR_OFFSET);
+  DefinePEConfigInstr(m, 1, TOP_PE1_ADDR_OFFSET);
+  DefinePEConfigInstr(m, 2, TOP_PE2_ADDR_OFFSET);
+  DefinePEConfigInstr(m, 3, TOP_PE3_ADDR_OFFSET);
 
   // store instructions
+  // This instruction have conflicts with other buffer write instructions.
   DefineGBCoreStore(m);
+  // define PE core store instructions for 4 PE cores
+  // update: change the PECoreStore to PEStore to include the store instruction for Act buffer
+  DefinePEStore(m, 0, TOP_PE0_ADDR_MIN);
+  DefinePEStore(m, 1, TOP_PE1_ADDR_MIN);
+  DefinePEStore(m, 2, TOP_PE2_ADDR_MIN);
+  DefinePEStore(m, 3, TOP_PE3_ADDR_MIN);
 
-  DefinePECoreStore(m, 0, TOP_PE0_ADDR_MIN);
-  DefinePECoreStore(m, 1, TOP_PE1_ADDR_MIN);
-  DefinePECoreStore(m, 2, TOP_PE2_ADDR_MIN);
-  DefinePECoreStore(m, 3, TOP_PE3_ADDR_MIN);
-  DefinePEActStore(m, 0, TOP_PE0_ADDR_MIN);
-  DefinePEActStore(m, 1, TOP_PE1_ADDR_MIN);
-  DefinePEActStore(m, 2, TOP_PE2_ADDR_MIN);
-  DefinePEActStore(m, 3, TOP_PE3_ADDR_MIN);
+  // Define PE core instructions for 4 PE Cores
+  DefinePECore(m, 0, TOP_PE0_ADDR_MIN);
+  DefinePECore(m, 1, TOP_PE1_ADDR_MIN);
+  DefinePECore(m, 2, TOP_PE2_ADDR_MIN);
+  DefinePECore(m, 3, TOP_PE3_ADDR_MIN);
+  // Define PE Act Unit for 4 PE cores
+  DefinePEAct(m, 0, TOP_PE0_ADDR_MIN);
+  DefinePEAct(m, 1, TOP_PE1_ADDR_MIN);
+  DefinePEAct(m, 2, TOP_PE2_ADDR_MIN);
+  DefinePEAct(m, 3, TOP_PE3_ADDR_MIN);
+
 
   // GB specific start instructions
   DefineStartGBAttention(m);
