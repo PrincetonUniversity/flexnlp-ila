@@ -4,6 +4,34 @@
 #include "systemc.h"
 #include "flex_sim.h"
 
+sc_biguint<32> flex_sim::GBAttentionLSH(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
+    return arg_0;
+}
+
+sc_biguint<32> flex_sim::GBAttentionRSH(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
+    return arg_0;
+}
+
+sc_biguint<32> flex_sim::GBAttentionMax(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
+    return arg_0;
+}
+
+sc_biguint<32> flex_sim::GBAttentionSub(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
+    return arg_0;
+}
+
+sc_biguint<32> flex_sim::GBAttentionExp(sc_biguint<32> arg_0) {
+    return arg_0;
+}
+
+sc_biguint<32> flex_sim::GBAttentionDiv(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
+    return arg_0;
+}
+
+sc_biguint<8>  flex_sim::GBAttentionCompress(sc_biguint<32> arg_0, sc_biguint<3> arg_1) {
+    return 0;
+}
+
 
 // GBNormAdd used in LayerNorm
 sc_biguint<24> flex_sim::GBNormAdd_24_20(sc_biguint<24> arg_0, sc_biguint<20> arg_1) {
