@@ -31,6 +31,8 @@ namespace ilang {
 Ila GetFlexIla(const std::string& model_name) {
   auto m = Ila(model_name);
 
+  SetUnsignedComparison(true);
+
   //
   // define interface (I/O) and architectural states
   //
@@ -79,15 +81,15 @@ Ila GetFlexIla(const std::string& model_name) {
   // configuration setting
   DefineGBConfigInstr(m);
 
-  //DefinePEConfigInstr(m, 0, TOP_PE0_ADDR_OFFSET);
-  //DefinePEConfigInstr(m, 1, TOP_PE1_ADDR_OFFSET);
-  //DefinePEConfigInstr(m, 2, TOP_PE2_ADDR_OFFSET);
-  //DefinePEConfigInstr(m, 3, TOP_PE3_ADDR_OFFSET);
+  DefinePEConfigInstr(m, 0, TOP_PE0_ADDR_OFFSET);
+  DefinePEConfigInstr(m, 1, TOP_PE1_ADDR_OFFSET);
+  DefinePEConfigInstr(m, 2, TOP_PE2_ADDR_OFFSET);
+  DefinePEConfigInstr(m, 3, TOP_PE3_ADDR_OFFSET);
 
   // store instructions
   // This instruction have conflicts with other buffer write instructions.
   DefineGBCoreStore(m);
-  /*
+  
   // define PE core store instructions for 4 PE cores
   // update: change the PECoreStore to PEStore to include the store instruction for Act buffer
   DefinePEStore(m, 0, TOP_PE0_ADDR_MIN);
@@ -106,11 +108,10 @@ Ila GetFlexIla(const std::string& model_name) {
   DefinePEAct(m, 2, TOP_PE2_ADDR_MIN);
   DefinePEAct(m, 3, TOP_PE3_ADDR_MIN);
 
-*/
   // GB specific start instructions
-  //DefineStartGBAttention(m);
-  //DefineStartGBControl(m);
-  //DefineStartGBLayerNorm(m);
+  DefineStartGBAttention(m);
+  DefineStartGBControl(m);
+  DefineStartGBLayerNorm(m);
   DefineStartGBLayerReduce(m);
   DefineStartGBZeroPadding(m);
 
