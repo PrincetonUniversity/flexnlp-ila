@@ -24,3 +24,10 @@ This is the ILA model of the [FlexNLP](https://github.com/ttambe/FlexNLP) accele
 
 -   `app` contains the `main.cc` for applications using the ILA model
 
+## systemc file path needed for building systemc model
+
+You need to specify the systemc path when building the generated systemc files in build/sim_model/
+
+1. SystemC-2.3.1a or newer is needed
+2. SystemC needs to be installed using CMake and specified using c++11
+3. under flexnlp-ila/build/sim_model/build, cmake .. -DCMAKE_INSTALL_PREFIX=<systemc_intall_path> (ex. /home/(user_name)/local/systemc-2.3.3) to specify the systemc path.
