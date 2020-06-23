@@ -145,7 +145,7 @@ namespace ilang {
       auto cntr_timestep_20 = Concat(BvConst(0, 20-cntr_timestep.bit_width()), cntr_timestep);
       auto ts_index_0 = cntr_timestep_20;
       auto ts_index_1 = cntr_timestep_20 + 1;
-      auto ts_index_out = cntr_timestep_20 / BvConst(0, cntr_timestep_20.bit_width());
+      auto ts_index_out = cntr_timestep_20 / BvConst(2, cntr_timestep_20.bit_width());
 
       auto group_index_0 = ts_index_0 / BvConst(GB_CORE_SCALAR, 20);
       auto group_offset_0 = URem(ts_index_0, BvConst(GB_CORE_SCALAR, 20));
@@ -239,8 +239,8 @@ namespace ilang {
       instr.SetUpdate(mem, Store(mem, addr_out, result));
       instr.SetUpdate(cntr_byte, cntr_byte + 1);
 
-      auto timestep_done = (cntr_timestep >= num_timestep - 2);
-      auto vector_done = (cntr_vector >= num_vector - 1);
+      auto timestep_done = (cntr_timestep > num_timestep - 2);
+      auto vector_done = (cntr_vector > num_vector - 1);
       auto byte_done = (cntr_byte >= (GB_CORE_SCALAR - 1));
 
       auto next_state = 
