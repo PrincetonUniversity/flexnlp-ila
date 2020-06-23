@@ -67,9 +67,12 @@ void DefineGBInternalStates(Ila& m) {
   m.NewBvState(GB_LAYER_REDUCE_VECTOR_LEVEL_FLAG,
                 GB_LAYER_REDUCE_VECTOR_LEVEL_FLAG_WIDTH);
   m.NewBvState(GB_LAYER_REDUCE_BYTE_LEVEL_FLAG,
-                GB_LAYER_REDUCE_BYTE_LEVEL_FLAG_WIDTH);                                
+                GB_LAYER_REDUCE_BYTE_LEVEL_FLAG_WIDTH);     
   
-  
+  // state for setting the flag of child valid state
+  m.NewBvState(GB_LAYER_REDUCE_CHILD_VALID_FLAG, GB_LAYER_REDUCE_CHILD_VALID_FLAG_BITWIDTH);
+  // state for child model FSM
+  m.NewBvState(GB_LAYER_REDUCE_CHILD_STATE, GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH);
 
   /******** GBLayerNorm internal states ********/
   // state for setting flag of child valid state

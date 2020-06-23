@@ -188,6 +188,34 @@ namespace ilang {
   "gb_layer_reduce_byte_level_flag"
 #define GB_LAYER_REDUCE_BYTE_LEVEL_FLAG_WIDTH  FLAG_BITWIDTH
 
+// 
+#define GB_LAYER_REDUCE_VALID 1
+#define GB_LAYER_REDUCE_INVALID 0
+// GB LAYER REDUCE valid flag
+#define GB_LAYER_REDUCE_CHILD_VALID_FLAG "gb_layer_reduce_child_valid_flag"
+#define GB_LAYER_REDUCE_CHILD_VALID_FLAG_BITWIDTH 1
+
+// gb layer reduce FSM
+#define GB_LAYER_REDUCE_CHILD_STATE "gb_layer_reduce_child_state"
+#define GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH 3
+#define GB_LAYER_REDUCE_CHILD_STATE_PREP 0
+#define GB_LAYER_REDUCE_CHILD_STATE_GROUP_OP 1
+#define GB_LAYER_REDUCE_CHILD_STATE_TIMESTEP_OP 2
+#define GB_LAYER_REDUCE_CHILD_STATE_VECTOR_OP 3
+#define GB_LAYER_REDUCE_CHILD_STATE_BYTE_OP 4
+#define GB_LAYER_REDUCE_CHILD_STATE_DONE 5
+
+// iteration cntr
+#define GB_LAYER_REDUCE_TIMESTEP_CNTR "gb_layer_reduce_timestep_cntr"
+#define GB_LAYER_REDUCE_TIMESTEP_CNTR_BITWIDTH                                \
+  GB_LAYER_REDUCE_CONFIG_REG_NUM_TIMESTEP_1_WIDTH
+// vector cntr
+#define GB_LAYER_REDUCE_VECTOR_CNTR "gb_layer_reduce_vector_cntr"
+#define GB_LAYER_REDUCE_VECTOR_CNTR_BITWIDTH                                  \
+  GB_LAYER_REDUCE_CONFIG_REG_NUM_VECTOR_1_WIDTH
+
+// timestep level
+
 }; // namespace ilang
 
 #endif // FLEX_GB_LAYER_REDUCE_H__

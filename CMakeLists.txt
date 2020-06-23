@@ -40,7 +40,8 @@ add_library(${MyTarget}ila
   src/gb_control.cc
   src/gb_core_store.cc
   src/gb_layer_norm.cc
-  src/gb_layer_reduce.cc
+# src/gb_layer_reduce.cc
+  src/gb_layer_reduce_fsm.cc
   src/gb_zero_padding.cc
   src/gb_internal.cc
   src/pe_act.cc
