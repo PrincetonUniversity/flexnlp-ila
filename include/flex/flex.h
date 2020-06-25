@@ -39,6 +39,8 @@
 
 namespace ilang {
 
+namespace flex {
+
 void DefineTopInput(Ila& m);
 
 void DefineSharedState(Ila& m);
@@ -75,6 +77,8 @@ void DefineGBInternalStates(Ila& m);
 void DefinePEInternalStates(Ila& m);
 void DefinePEInternalStates(Ila& m, const int& pe_idx);
 
-}; // namespace ilang
+} // namespace flex
+
+} // namespace ilang
 
 #endif // FLEX_FLEX_H__

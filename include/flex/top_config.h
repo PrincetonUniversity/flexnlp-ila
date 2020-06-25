@@ -29,6 +29,8 @@
 
 namespace ilang {
 
+namespace flex {
+
 // AXI interface
 //
 // - cmod/Top/Top.h
@@ -108,7 +110,8 @@ namespace ilang {
 #define TOP_PE3_ADDR_MIN (TOP_ADDR_BASE + 0x04000000)
 #define TOP_PE3_ADDR_MAX (TOP_ADDR_BASE + 0x04FFFFFF)
 
+} // namespace flex
 
-}; // namespace ilang
+} // namespace ilang
 
 #endif // FLEX_TOP_CONFIG_H__

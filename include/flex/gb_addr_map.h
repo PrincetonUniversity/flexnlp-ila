@@ -29,6 +29,8 @@
 
 namespace ilang {
 
+namespace flex {
+
 // GB start signals (1-bit, write only)
 #define START_ADDR_GB_CONTROL 0x10
 #define START_ADDR_GB_LAYER_REDUCE 0x20
@@ -39,7 +41,8 @@ namespace ilang {
 // GBCore store instruction
 #define GB_CORE_STORE_LARGE_ADDR_MIN 0x00500000
 #define GB_CORE_STORE_LARGE_ADDR_MAX 0x005FFFF0
-#define GB_CORE_STORE_LARGE_SIZE (GB_CORE_STORE_LARGE_ADDR_MAX - GB_CORE_STORE_LARGE_ADDR_MIN)
+#define GB_CORE_STORE_LARGE_SIZE                                               \
+  (GB_CORE_STORE_LARGE_ADDR_MAX - GB_CORE_STORE_LARGE_ADDR_MIN)
 #define GB_CORE_STORE_LARGE_BITWIDTH 20
 
 #define GB_CORE_STORE_SMALL_ADDR_MIN 0x00600000
@@ -66,6 +69,8 @@ namespace ilang {
 // Attention instruction
 #define CONFIG_ADDR_GB_ATTENTION (0x00B00000 + 0x10)
 
-}; // namespace ilang
+} // namespace flex
+
+} // namespace ilang
 
 #endif // FLEX_GB_ADDR_MAP_H__

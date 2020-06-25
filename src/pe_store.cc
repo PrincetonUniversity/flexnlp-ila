@@ -28,21 +28,25 @@
 
 namespace ilang {
 
+namespace flex {
+
 void DefinePEStore(Ila& m, const int& pe_idx, const uint64_t& base) {
-  
+
   { // instruction 0 ---- PE Core Store in Weight buffer
     auto instr = m.NewInstr(PEGetInstrName(pe_idx, "CORE_STORE_WEIGHT_BUFFER"));
-    
+
     auto is_write = m.input(TOP_IF_WR) & ~m.input(TOP_IF_RD);
     auto addr_base = TOP_ADDR_BASE + (pe_idx + 1) * PE_PARTITION_SIZE;
-    auto valid_addr = (m.input(TOP_ADDR_IN) >= (addr_base + PE_CORE_STORE_WEIGHT_ADDR_MIN)) &
-                        (m.input(TOP_ADDR_IN) <= (addr_base + PE_CORE_STORE_WEIGHT_ADDR_MAX));
+    auto valid_addr =
+        (m.input(TOP_ADDR_IN) >= (addr_base + PE_CORE_STORE_WEIGHT_ADDR_MIN)) &
+        (m.input(TOP_ADDR_IN) <= (addr_base + PE_CORE_STORE_WEIGHT_ADDR_MAX));
     // ILA_INFO << "PE " << pe_idx << " base addr: " << std::hex << addr_base;
 
     instr.SetDecode(is_write & valid_addr);
 
     auto mem = m.state(PEGetVarName(pe_idx, CORE_WEIGHT_BUFFER));
-    auto addr = m.input(TOP_ADDR_IN) - addr_base - PE_CORE_STORE_WEIGHT_ADDR_MIN;
+    auto addr =
+        m.input(TOP_ADDR_IN) - addr_base - PE_CORE_STORE_WEIGHT_ADDR_MIN;
 
     auto mem_next = Store(mem, (addr + 0), m.input(TOP_DATA_IN_0));
     mem_next = Store(mem_next, (addr + 1), m.input(TOP_DATA_IN_1));
@@ -68,9 +72,10 @@ void DefinePEStore(Ila& m, const int& pe_idx, const uint64_t& base) {
 
     auto is_write = m.input(TOP_IF_WR) & ~m.input(TOP_IF_RD);
     auto addr_base = TOP_ADDR_BASE + (pe_idx + 1) * PE_PARTITION_SIZE;
-    auto valid_addr = (m.input(TOP_ADDR_IN) >= (addr_base + PE_CORE_STORE_INPUT_ADDR_MIN)) &
-                        (m.input(TOP_ADDR_IN) <= (addr_base + PE_CORE_STORE_INPUT_ADDR_MAX));
-    
+    auto valid_addr =
+        (m.input(TOP_ADDR_IN) >= (addr_base + PE_CORE_STORE_INPUT_ADDR_MIN)) &
+        (m.input(TOP_ADDR_IN) <= (addr_base + PE_CORE_STORE_INPUT_ADDR_MAX));
+
     instr.SetDecode(is_write & valid_addr);
 
     auto mem = m.state(PEGetVarName(pe_idx, CORE_INPUT_BUFFER));
@@ -95,15 +100,16 @@ void DefinePEStore(Ila& m, const int& pe_idx, const uint64_t& base) {
     instr.SetUpdate(mem, Store(mem_next, (addr + 15), m.input(TOP_DATA_IN_15)));
   }
 
-  // update 04132020: change the function name from PECoreStore to PEStore to include the 
-  // store function to activation buffer, which is visible at the AXI interface.
+  // update 04132020: change the function name from PECoreStore to PEStore to
+  // include the store function to activation buffer, which is visible at the
+  // AXI interface.
   { // instructions 2 ---- PE Act Store for Act Buffer
     auto instr = m.NewInstr(PEGetInstrName(pe_idx, "ACT_STORE_BUFFER"));
 
     auto is_write = m.input(TOP_IF_WR) & ~m.input(TOP_IF_RD);
     auto valid_addr = (m.input(TOP_ADDR_IN) >= (base + PE_ACT_STORE_ADDR_MIN)) &
-                        (m.input(TOP_ADDR_IN) <= (base + PE_ACT_STORE_ADDR_MAX));
-    
+                      (m.input(TOP_ADDR_IN) <= (base + PE_ACT_STORE_ADDR_MAX));
+
     instr.SetDecode(is_write & valid_addr);
 
     auto mem = m.state(PEGetVarName(pe_idx, ACT_BUFFER));
@@ -129,4 +135,6 @@ void DefinePEStore(Ila& m, const int& pe_idx, const uint64_t& base) {
   }
 }
 
-}; // namespace ilang
+} // namespace flex
+
+} // namespace ilang

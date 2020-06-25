@@ -24,12 +24,14 @@
 
 // File: config_instr_pe.cc
 
-#include <flex/flex.h>
-
-#include <flex/util.h>
 #include <ilang/ilang++.h>
 
+#include <flex/flex.h>
+#include <flex/util.h>
+
 namespace ilang {
+
+namespace flex {
 
 void DefinePEConfigInstr(Ila& m, const int& pe_idx, const uint64_t& host_base) {
   auto is_write = m.input(TOP_IF_WR) & ~m.input(TOP_IF_RD);
@@ -651,4 +653,6 @@ void DefinePEConfigInstr(Ila& m, const int& pe_idx, const uint64_t& host_base) {
   }
 }
 
-}; // namespace ilang
+} // namespace flex
+
+} // namespace ilang

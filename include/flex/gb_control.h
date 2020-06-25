@@ -31,6 +31,8 @@
 
 namespace ilang {
 
+namespace flex {
+
 // config register: is_valid
 #define GB_CONTROL_CONFIG_REG_IS_VALID "gb_control_is_valid"
 #define GB_CONTROL_CONFIG_REG_IS_VALID_WIDTH 1
@@ -63,8 +65,6 @@ namespace ilang {
 #define GB_CONTROL_CONFIG_REG_NUM_TIMESTEP_1 "gb_control_num_timestep_1"
 #define GB_CONTROL_CONFIG_REG_NUM_TIMESTEP_1_WIDTH 16
 
-
-
 /************* SHARED STATES WITH PE *****************/
 // #define PE_START_SIGNAL_SHARED "pe_start_signal_shared"
 #define PE_CORE_START_SIGNAL "pe_core_start_signal"
@@ -75,8 +75,9 @@ namespace ilang {
 #define PE_DONE_SIGNAL_SHARED "pe_done_signal_shared"
 #define PE_DONE_SIGNAL_SHARED_BITWIDTH 1
 
-// data_in has data (128 bit) and data_addr (8 bit: vector index in the timestep)
-// divided into 16 states because ILA doesn't support 128 bit long state.
+// data_in has data (128 bit) and data_addr (8 bit: vector index in the
+// timestep) divided into 16 states because ILA doesn't support 128 bit long
+// state.
 #define GB_CONTROL_DATA_IN "gb_control_data_in"
 #define GB_CONTROL_DATA_IN_0 "gb_control_data_in_0"
 #define GB_CONTROL_DATA_IN_1 "gb_control_data_in_1"
@@ -98,7 +99,8 @@ namespace ilang {
 #define GB_CONTROL_DATA_IN_BITWIDTH 8
 
 #define GB_CONTROL_DATA_IN_ADDR "gb_control_data_in_addr"
-#define GB_CONTROL_DATA_IN_ADDR_BITWIDTH GB_CONTROL_CONFIG_REG_NUM_VECTOR_1_WIDTH
+#define GB_CONTROL_DATA_IN_ADDR_BITWIDTH                                       \
+  GB_CONTROL_CONFIG_REG_NUM_VECTOR_1_WIDTH
 
 #define GB_CONTROL_DATA_OUT "gb_control_data_out"
 #define GB_CONTROL_DATA_OUT_0 "gb_control_data_out_0"
@@ -121,7 +123,8 @@ namespace ilang {
 #define GB_CONTROL_DATA_OUT_BITWIDTH 8
 
 #define GB_CONTROL_DATA_OUT_ADDR "gb_control_data_out_addr"
-#define GB_CONTROL_DATA_OUT_ADDR_BITWIDTH GB_CONTROL_CONFIG_REG_NUM_VECTOR_1_WIDTH
+#define GB_CONTROL_DATA_OUT_ADDR_BITWIDTH                                      \
+  GB_CONTROL_CONFIG_REG_NUM_VECTOR_1_WIDTH
 
 #define GB_CONTROL_DATA_OUT_INDEX "gb_control_data_out_index"
 #define GB_CONTROL_DATA_OUT_INDEX_BITWIDTH 2
@@ -164,22 +167,25 @@ namespace ilang {
 #define GB_CONTROL_CHILD_STATE_SEND_BACK 7
 #define GB_CONTROL_CHILD_STATE_NEXT 8
 
-
 #define GB_CONTROL_CHILD_TIMESTEP_CNTR "gb_control_child_timestep_cntr"
-#define GB_CONTROL_CHILD_TIMESTEP_CNTR_BITWIDTH GB_CONTROL_CONFIG_REG_NUM_TIMESTEP_1_WIDTH
+#define GB_CONTROL_CHILD_TIMESTEP_CNTR_BITWIDTH                                \
+  GB_CONTROL_CONFIG_REG_NUM_TIMESTEP_1_WIDTH
 
 #define GB_CONTROL_CHILD_VECTOR_CNTR "gb_control_child_vector_cntr"
-#define GB_CONTROL_CHILD_VECTOR_CNTR_BITWIDTH GB_CONTROL_CONFIG_REG_NUM_VECTOR_1_WIDTH
+#define GB_CONTROL_CHILD_VECTOR_CNTR_BITWIDTH                                  \
+  GB_CONTROL_CONFIG_REG_NUM_VECTOR_1_WIDTH
 
 #define GB_CONTROL_CHILD_TIMESTEP_INDEX "gb_control_child_timestep_index"
-#define GB_CONTROL_CHILD_TIMESTEP_INDEX_BITWIDTH  GB_CONTROL_CONFIG_REG_NUM_TIMESTEP_1_WIDTH
+#define GB_CONTROL_CHILD_TIMESTEP_INDEX_BITWIDTH                               \
+  GB_CONTROL_CONFIG_REG_NUM_TIMESTEP_1_WIDTH
 
-#define GB_CONTROL_CHILD_TIMESTEP_BASE_ADDR "gb_control_child_timestep_base_addr"
-#define GB_CONTROL_CHILD_TIMESTEP_BASE_ADDR_BITWIDTH GB_CORE_STORE_LARGE_BITWIDTH
+#define GB_CONTROL_CHILD_TIMESTEP_BASE_ADDR                                    \
+  "gb_control_child_timestep_base_addr"
+#define GB_CONTROL_CHILD_TIMESTEP_BASE_ADDR_BITWIDTH                           \
+  GB_CORE_STORE_LARGE_BITWIDTH
 
+} // namespace flex
 
-
-
-}; // namespace ilang
+} // namespace ilang
 
 #endif // FLEX_GB_CONTROL_H__

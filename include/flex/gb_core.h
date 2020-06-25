@@ -29,6 +29,8 @@
 
 namespace ilang {
 
+namespace flex {
+
 // read 128-bits (16 bytes) at a time
 #define GB_CORE_SCALAR 16
 #define GB_CORE_SCALAR_BITWIDTH 4
@@ -58,8 +60,8 @@ namespace ilang {
   "gb_core_mem_mngr_large_num_vector_1"
 #define GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_NUM_VECTOR_1_WIDTH 8
 
-// The base address for large buffer is vector size, thus need to concat 4bit 0 into byte address
-// config register: base_large_1
+// The base address for large buffer is vector size, thus need to concat 4bit 0
+// into byte address config register: base_large_1
 #define GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_1                         \
   "gb_core_mem_mngr_large_base_large_1"
 #define GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_1_WIDTH 16
@@ -133,6 +135,8 @@ namespace ilang {
   "gb_core_mem_mngr_small_base_small_7"
 #define GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_7_WIDTH 16
 
-}; // namespace ilang
+} // namespace flex
+
+} // namespace ilang
 
 #endif // FLEX_GB_CORE_H__

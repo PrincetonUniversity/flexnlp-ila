@@ -24,12 +24,14 @@
 
 // File: arch_state_pe.cc
 
+#include <ilang/ilang++.h>
+
 #include <flex/pe_config.h>
 #include <flex/top_config.h>
 
-#include <ilang/ilang++.h>
-
 namespace ilang {
+
+namespace flex {
 
 void DefinePEOtherState(Ila& m, const int& pe_idx) {
 
@@ -56,19 +58,23 @@ void DefinePEOtherState(Ila& m, const int& pe_idx) {
   //
   // Define child states in the PE Core
   //
-  
+
   // state machine for PE Core module
   m.NewBvState(PEGetVarName(pe_idx, CORE_STATE), PE_CORE_STATE_BITWIDTH);
 
   // core activation vector
-  // act register needs to be defined at the top level, which are accessed by act child model.
+  // act register needs to be defined at the top level, which are accessed by
+  // act child model.
   for (auto i = 0; i < PE_CORE_ACT_VECTOR_LANES; i++) {
-    m.NewBvState(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECTOR), PE_CORE_ACT_VECTOR_BITWIDTH);
+    m.NewBvState(PEGetVarNameVector(pe_idx, i, CORE_ACT_VECTOR),
+                 PE_CORE_ACT_VECTOR_BITWIDTH);
   }
-  // valid bit for core act register, which are accessed by both pe_core and pe_act
-  // use it to immitate push function
-  m.NewBvState(PEGetVarName(pe_idx, CORE_ACT_REG_PORT_VALID), PE_CORE_ACT_REG_PORT_VALID_BITWIDTH);
-
+  // valid bit for core act register, which are accessed by both pe_core and
+  // pe_act use it to immitate push function
+  m.NewBvState(PEGetVarName(pe_idx, CORE_ACT_REG_PORT_VALID),
+               PE_CORE_ACT_REG_PORT_VALID_BITWIDTH);
 }
 
-}; // namespace ilang
+} // namespace flex
+
+} // namespace ilang

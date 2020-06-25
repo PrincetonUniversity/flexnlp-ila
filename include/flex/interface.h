@@ -33,7 +33,11 @@
 
 namespace ilang {
 
+namespace flex {
+
 Ila GetFlexIla(const std::string& model_name = "flex");
+
+} // namespace flex
 
 } // namespace ilang
 

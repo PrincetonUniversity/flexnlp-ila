@@ -31,6 +31,8 @@
 
 namespace ilang {
 
+namespace flex {
+
 // config register: is_valid
 #define GB_ATTENTION_CONFIG_REG_IS_VALID "gb_attention_is_valid"
 #define GB_ATTENTION_CONFIG_REG_IS_VALID_WIDTH 1
@@ -100,8 +102,6 @@ namespace ilang {
 #define GB_ATTENTION_CHILD_STATE_FIN 18
 #define GB_ATTENTION_CHILD_STATE_BMM_NEXT 19
 
-
-
 #define GB_ATTENTION_SUM_EXP "gb_attention_sum_exp"
 #define GB_ATTENTION_SUM_EXP_BITWIDTH ATTENTION_WORD_WIDTH
 
@@ -143,8 +143,8 @@ namespace ilang {
 #define GB_ATTENTION_TIMESTEP_CNTR "gb_attention_timestep_cntr"
 #define GB_ATTENTION_TIMESTEP_CNTR_BITWIDTH 16
 
+} // namespace flex
 
-
-}; // namespace ilang
+} // namespace ilang
 
 #endif // FLEX_GB_ATTENTION_H__

@@ -29,6 +29,8 @@
 
 namespace ilang {
 
+namespace flex {
+
 // config register: is_valid
 #define GB_ZERO_PADDING_CONFIG_REG_IS_VALID "gb_zero_padding_is_valid"
 #define GB_ZERO_PADDING_CONFIG_REG_IS_VALID_WIDTH 1
@@ -69,16 +71,18 @@ namespace ilang {
 #define GB_ZERO_PADDING_CHILD_STATE_DONE 5
 
 #define GB_ZERO_PADDING_TIMESTEP_CNTR "gb_zero_padding_timestep_cntr"
-#define GB_ZERO_PADDING_TIMESTEP_CNTR_BITWIDTH                                  \
+#define GB_ZERO_PADDING_TIMESTEP_CNTR_BITWIDTH                                 \
   GB_ZERO_PADDING_CONFIG_REG_NUM_TIMESTEP_1_WIDTH
 
 #define GB_ZERO_PADDING_VECTOR_CNTR "gb_zero_padding_vector_cntr"
-#define GB_ZERO_PADDING_VECTOR_CNTR_BITWIDTH                                    \
+#define GB_ZERO_PADDING_VECTOR_CNTR_BITWIDTH                                   \
   GB_ZERO_PADDING_CONFIG_REG_NUM_VECTOR_1_WIDTH
 
 #define GB_ZERO_PADDING_MEM_BASE_ADDR "gb_zero_padding_mem_base_addr"
-#define GB_ZERO_PADDING_MEM_BASE_ADDR_BITWIDTH                                  \
-  GB_CORE_STORE_LARGE_BITWIDTH
-}; // namespace ilang
+#define GB_ZERO_PADDING_MEM_BASE_ADDR_BITWIDTH GB_CORE_STORE_LARGE_BITWIDTH
+
+} // namespace flex
+
+} // namespace ilang
 
 #endif // FLEX_GB_ZERO_PADDING_H__

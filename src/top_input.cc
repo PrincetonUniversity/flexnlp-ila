@@ -28,44 +28,30 @@
 
 namespace ilang {
 
+namespace flex {
+
 void DefineTopInput(Ila& m) {
   m.NewBvInput(TOP_IF_WR, TOP_IF_WR_WIDTH);
-
   m.NewBvInput(TOP_IF_RD, TOP_IF_RD_WIDTH);
-
   m.NewBvInput(TOP_ADDR_IN, TOP_ADDR_IN_WIDTH);
-
   m.NewBvInput(TOP_DATA_IN_0, TOP_DATA_IN_WIDTH);
-
   m.NewBvInput(TOP_DATA_IN_1, TOP_DATA_IN_WIDTH);
-
   m.NewBvInput(TOP_DATA_IN_2, TOP_DATA_IN_WIDTH);
-
   m.NewBvInput(TOP_DATA_IN_3, TOP_DATA_IN_WIDTH);
-
   m.NewBvInput(TOP_DATA_IN_4, TOP_DATA_IN_WIDTH);
-
   m.NewBvInput(TOP_DATA_IN_5, TOP_DATA_IN_WIDTH);
-
   m.NewBvInput(TOP_DATA_IN_6, TOP_DATA_IN_WIDTH);
-
   m.NewBvInput(TOP_DATA_IN_7, TOP_DATA_IN_WIDTH);
-
   m.NewBvInput(TOP_DATA_IN_8, TOP_DATA_IN_WIDTH);
-
   m.NewBvInput(TOP_DATA_IN_9, TOP_DATA_IN_WIDTH);
-
   m.NewBvInput(TOP_DATA_IN_10, TOP_DATA_IN_WIDTH);
-
   m.NewBvInput(TOP_DATA_IN_11, TOP_DATA_IN_WIDTH);
-
   m.NewBvInput(TOP_DATA_IN_12, TOP_DATA_IN_WIDTH);
-
   m.NewBvInput(TOP_DATA_IN_13, TOP_DATA_IN_WIDTH);
-
   m.NewBvInput(TOP_DATA_IN_14, TOP_DATA_IN_WIDTH);
-
   m.NewBvInput(TOP_DATA_IN_15, TOP_DATA_IN_WIDTH);
 }
 
-}; // namespace ilang
+} // namespace flex
+
+} // namespace ilang

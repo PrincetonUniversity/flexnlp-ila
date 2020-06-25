@@ -24,12 +24,14 @@
 
 // File: arch_state_gb.cc
 
+#include <ilang/ilang++.h>
+
 #include <flex/gb_config.h>
 #include <flex/top_config.h>
 
-#include <ilang/ilang++.h>
-
 namespace ilang {
+
+namespace flex {
 
 void DefineGBOtherState(Ila& m) {
 
@@ -46,4 +48,6 @@ void DefineGBOtherState(Ila& m) {
   gb_core_small_buffer.SetEntryNum(GB_CORE_SMALL_BUFFER_SIZE);
 }
 
-}; // namespace ilang
+} // namespace flex
+
+} // namespace ilang

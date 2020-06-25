@@ -35,16 +35,25 @@
 #include <flex/gb_layer_reduce.h>
 #include <flex/gb_zero_padding.h>
 
-inline std::string GBGetVectorName(const int& idx, const std::string& var_name) {
+namespace ilang {
+
+namespace flex {
+
+inline std::string GBGetVectorName(const int& idx,
+                                   const std::string& var_name) {
   auto suffix = std::to_string(idx);
   return var_name + "_" + suffix;
 }
 
-inline std::string GBGetVectorName2D(const int& i, const int& j, 
+inline std::string GBGetVectorName2D(const int& i, const int& j,
                                      const std::string& var_name) {
   auto i_string = std::to_string(i);
   auto j_string = std::to_string(j);
   return var_name + "_" + i_string + "_" + j_string;
 }
+
+} // namespace flex
+
+} // namespace ilang
 
 #endif // FLEX_GB_CONFIG_H__

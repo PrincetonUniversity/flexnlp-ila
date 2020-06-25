@@ -27,10 +27,13 @@
 #ifndef FLEX_PE_ACT_UNIT_H__
 #define FLEX_PE_ACT_UNIT_H__
 
-#include <ilang/util/log.h>
 #include <string>
 
+#include <ilang/util/log.h>
+
 namespace ilang {
+
+namespace flex {
 
 #define ACT_SCALAR 16
 
@@ -211,7 +214,7 @@ namespace ilang {
 #define ACT_VECTOR_16_31_CONFIG_REG_INST15 "act_vector_16_31_Inst15"
 #define ACT_VECTOR_16_31_CONFIG_REG_INST15_WIDTH 8
 
-// PE Act Child instructions 
+// PE Act Child instructions
 // used to schedule PE sending data back to GB
 #define PE_ACT_OUTGB_CNTR "pe_act_outgb_cntr"
 #define PE_ACT_OUTGB_CNTR_BITWIDTH 3
@@ -291,10 +294,8 @@ namespace ilang {
 // temp registers for holding intermediate results for storing into the memory
 #define ACT_REG_TEMP "act_reg_temp"
 
+} // namespace flex
 
-
-
-
-}; // namespace ilang
+} // namespace ilang
 
 #endif // FLEX_PE_ACT_UNIT_H__

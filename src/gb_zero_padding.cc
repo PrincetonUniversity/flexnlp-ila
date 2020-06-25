@@ -28,10 +28,12 @@
 
 namespace ilang {
 
+namespace flex {
+
 void AddChild_ZeroPadding(Ila& m);
 
 void DefineStartGBZeroPadding(Ila& m) {
-  
+
   auto instr = m.NewInstr("GB_ZEROPADDING_START");
 
   // decode conditions
@@ -40,15 +42,16 @@ void DefineStartGBZeroPadding(Ila& m) {
   auto is_valid = m.state(GB_ZERO_PADDING_CONFIG_REG_IS_VALID);
 
   instr.SetDecode(is_write & is_valid & (m.input(TOP_ADDR_IN) == start_addr));
-  
+
   // state updates
   auto flag_child = m.state(GB_ZERO_PADDING_CHILD_VALID_FLAG);
   auto state = m.state(GB_ZERO_PADDING_CHILD_STATE);
 
-  instr.SetUpdate(flag_child, 
-                    BvConst(GB_ZERO_PADDING_FLAG_ON, GB_ZERO_PADDING_CHILD_VALID_FLAG_BITWIDTH));
-  instr.SetUpdate(state, 
-                    BvConst(GB_ZERO_PADDING_CHILD_STATE_PREP, GB_ZERO_PADDING_CHILD_STATE_BITWIDTH));
+  instr.SetUpdate(flag_child,
+                  BvConst(GB_ZERO_PADDING_FLAG_ON,
+                          GB_ZERO_PADDING_CHILD_VALID_FLAG_BITWIDTH));
+  instr.SetUpdate(state, BvConst(GB_ZERO_PADDING_CHILD_STATE_PREP,
+                                 GB_ZERO_PADDING_CHILD_STATE_BITWIDTH));
 
   AddChild_ZeroPadding(m);
 }
@@ -57,16 +60,16 @@ void AddChild_ZeroPadding(Ila& m) {
   auto child = m.NewChild("Child_GBZeroPadding");
   auto flag_child = m.state(GB_ZERO_PADDING_CHILD_VALID_FLAG);
   auto child_valid = (flag_child == GB_ZERO_PADDING_FLAG_ON);
-  
+
   child.SetValid(child_valid);
 
   // new child states
   auto cntr_timestep = child.NewBvState(GB_ZERO_PADDING_TIMESTEP_CNTR,
-                                          GB_ZERO_PADDING_TIMESTEP_CNTR_BITWIDTH);
+                                        GB_ZERO_PADDING_TIMESTEP_CNTR_BITWIDTH);
   auto cntr_vector = child.NewBvState(GB_ZERO_PADDING_VECTOR_CNTR,
-                                        GB_ZERO_PADDING_VECTOR_CNTR_BITWIDTH);
+                                      GB_ZERO_PADDING_VECTOR_CNTR_BITWIDTH);
   auto start_addr = child.NewBvState(GB_ZERO_PADDING_MEM_BASE_ADDR,
-                                        GB_ZERO_PADDING_MEM_BASE_ADDR_BITWIDTH);
+                                     GB_ZERO_PADDING_MEM_BASE_ADDR_BITWIDTH);
 
   // other states
   auto mem = m.state(GB_CORE_LARGE_BUFFER);
@@ -77,38 +80,43 @@ void AddChild_ZeroPadding(Ila& m) {
   auto index_timestep_2 = m.state(GB_ZERO_PADDING_CONFIG_REG_NUM_TIMESTEP_2);
   auto num_timestep = index_timestep_2 - index_timestep_1;
 
-  auto g_scalar = BvConst(GB_CORE_SCALAR, GB_ZERO_PADDING_CONFIG_REG_NUM_TIMESTEP_1_WIDTH);
+  auto g_scalar =
+      BvConst(GB_CORE_SCALAR, GB_ZERO_PADDING_CONFIG_REG_NUM_TIMESTEP_1_WIDTH);
 
-
-  {// instruction prep, set the configuration states for the child instructions
+  { // instruction prep, set the configuration states for the child instructions
     auto instr = child.NewInstr("gb_zero_padding_child_prep");
     instr.SetDecode(child_valid & (state == GB_ZERO_PADDING_CHILD_STATE_PREP));
 
-    auto next_state = BvConst(GB_ZERO_PADDING_CHILD_STATE_TIMESTEP, GB_ZERO_PADDING_CHILD_STATE_BITWIDTH);
-    
+    auto next_state = BvConst(GB_ZERO_PADDING_CHILD_STATE_TIMESTEP,
+                              GB_ZERO_PADDING_CHILD_STATE_BITWIDTH);
 
-    instr.SetUpdate(cntr_timestep, BvConst(0, GB_ZERO_PADDING_TIMESTEP_CNTR_BITWIDTH));
+    instr.SetUpdate(cntr_timestep,
+                    BvConst(0, GB_ZERO_PADDING_TIMESTEP_CNTR_BITWIDTH));
     instr.SetUpdate(state, next_state);
-
   }
 
-  {// instruction setting parameters for timestep level op
+  { // instruction setting parameters for timestep level op
     auto instr = child.NewInstr("gb_zero_padding_child_timestep");
-    instr.SetDecode(child_valid & (state == GB_ZERO_PADDING_CHILD_STATE_TIMESTEP));
+    instr.SetDecode(child_valid &
+                    (state == GB_ZERO_PADDING_CHILD_STATE_TIMESTEP));
 
     auto current_timestep = index_timestep_1 + cntr_timestep;
 
     auto memory_index = m.state(GB_ZERO_PADDING_CONFIG_REG_MEMORY_INDEX_1);
 
-    auto memory_base_addr =
-          Ite((memory_index == 0),
-              Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_0), BvConst(0, 4)),
-              Ite((memory_index == 1),
-                  Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_1), BvConst(0, 4)),
-                  Ite((memory_index == 2),
-                      Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_2), BvConst(0, 4)),
-                      Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3), BvConst(0, 4)))));
-    
+    auto memory_base_addr = Ite(
+        (memory_index == 0),
+        Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_0),
+               BvConst(0, 4)),
+        Ite((memory_index == 1),
+            Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_1),
+                   BvConst(0, 4)),
+            Ite((memory_index == 2),
+                Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_2),
+                       BvConst(0, 4)),
+                Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3),
+                       BvConst(0, 4)))));
+
     auto num_vector_20 = Concat(BvConst(0, 12), num_vector);
     auto timestep_size = num_vector_20 * GB_CORE_SCALAR;
     auto group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
@@ -119,40 +127,46 @@ void AddChild_ZeroPadding(Ila& m) {
     auto group_index_20 = Concat(BvConst(0, 4), group_index);
     auto group_offset_20 = Concat(BvConst(0, 4), group_offset);
 
-    // udpate 05022020: The group offset should be multiplied by gb_core_scalar!!!
-    auto start_addr_offset = group_index_20 * group_size + group_offset_20 * GB_CORE_SCALAR;
-    auto next_state = BvConst(GB_ZERO_PADDING_CHILD_STATE_VECTOR, GB_ZERO_PADDING_CHILD_STATE_BITWIDTH);
+    // udpate 05022020: The group offset should be multiplied by
+    // gb_core_scalar!!!
+    auto start_addr_offset =
+        group_index_20 * group_size + group_offset_20 * GB_CORE_SCALAR;
+    auto next_state = BvConst(GB_ZERO_PADDING_CHILD_STATE_VECTOR,
+                              GB_ZERO_PADDING_CHILD_STATE_BITWIDTH);
 
     instr.SetUpdate(start_addr, start_addr + start_addr_offset);
-    instr.SetUpdate(cntr_vector, BvConst(0, GB_ZERO_PADDING_VECTOR_CNTR_BITWIDTH));
+    instr.SetUpdate(cntr_vector,
+                    BvConst(0, GB_ZERO_PADDING_VECTOR_CNTR_BITWIDTH));
     instr.SetUpdate(cntr_timestep, cntr_timestep + 1);
     instr.SetUpdate(state, next_state);
+  }
 
-  }  
-
-  {// instruction setting parameters for vector level op
+  { // instruction setting parameters for vector level op
     auto instr = child.NewInstr("gb_zero_padding_child_vector");
-    instr.SetDecode(child_valid & (state == GB_ZERO_PADDING_CHILD_STATE_VECTOR));
+    instr.SetDecode(child_valid &
+                    (state == GB_ZERO_PADDING_CHILD_STATE_VECTOR));
 
     auto row_size = GB_CORE_SCALAR * GB_CORE_LARGE_NUM_BANKS;
     auto cntr_vector_20 = Concat(BvConst(0, 12), cntr_vector);
     auto start_addr_offset = cntr_vector_20 * row_size;
-    auto next_state = BvConst(GB_ZERO_PADDING_CHILD_STATE_BYTE, GB_ZERO_PADDING_CHILD_STATE_BITWIDTH);
+    auto next_state = BvConst(GB_ZERO_PADDING_CHILD_STATE_BYTE,
+                              GB_ZERO_PADDING_CHILD_STATE_BITWIDTH);
 
     instr.SetUpdate(start_addr, start_addr + start_addr_offset);
     instr.SetUpdate(cntr_vector, cntr_vector + 1);
     instr.SetUpdate(state, next_state);
   }
 
-  {// instruction do zero padding at the byte
+  { // instruction do zero padding at the byte
     auto instr = child.NewInstr("gb_zero_padding_child_byte");
     instr.SetDecode(child_valid & (state == GB_ZERO_PADDING_CHILD_STATE_BYTE));
     auto zero_0 = BvConst(0, TOP_DATA_IN_WIDTH);
     auto zero_1 = BvConst(0, TOP_DATA_IN_WIDTH);
     auto zero = zero_0 + zero_1;
     auto addr = Concat(BvConst(0, 12), start_addr);
-    
-    auto next_state = BvConst(GB_ZERO_PADDING_CHILD_STATE_NEXT, GB_ZERO_PADDING_CHILD_STATE_BITWIDTH);
+
+    auto next_state = BvConst(GB_ZERO_PADDING_CHILD_STATE_NEXT,
+                              GB_ZERO_PADDING_CHILD_STATE_BITWIDTH);
 
     auto mem_tmp = Store(mem, addr, zero);
     mem_tmp = Store(mem_tmp, addr + 1, zero);
@@ -172,10 +186,9 @@ void AddChild_ZeroPadding(Ila& m) {
 
     instr.SetUpdate(mem, Store(mem_tmp, addr + 15, zero));
     instr.SetUpdate(state, next_state);
-
   }
-  
-  {// instruction set the next step for the state machine
+
+  { // instruction set the next step for the state machine
     auto instr = child.NewInstr("gb_zero_padding_child_state_next");
     instr.SetDecode(child_valid & (state == GB_ZERO_PADDING_CHILD_STATE_NEXT));
 
@@ -183,16 +196,24 @@ void AddChild_ZeroPadding(Ila& m) {
     auto timestep_next = cntr_timestep < num_timestep;
     auto done = (!vector_next) & (!timestep_next);
 
-    auto next_state = Ite(vector_next, 
-                            BvConst(GB_ZERO_PADDING_CHILD_STATE_VECTOR,GB_ZERO_PADDING_CHILD_STATE_BITWIDTH),
-                            Ite(timestep_next, 
-                                  BvConst(GB_ZERO_PADDING_CHILD_STATE_TIMESTEP, GB_ZERO_PADDING_CHILD_STATE_BITWIDTH),
-                                  BvConst(GB_ZERO_PADDING_CHILD_STATE_DONE, GB_ZERO_PADDING_CHILD_STATE_BITWIDTH)));
+    auto next_state = Ite(vector_next,
+                          BvConst(GB_ZERO_PADDING_CHILD_STATE_VECTOR,
+                                  GB_ZERO_PADDING_CHILD_STATE_BITWIDTH),
+                          Ite(timestep_next,
+                              BvConst(GB_ZERO_PADDING_CHILD_STATE_TIMESTEP,
+                                      GB_ZERO_PADDING_CHILD_STATE_BITWIDTH),
+                              BvConst(GB_ZERO_PADDING_CHILD_STATE_DONE,
+                                      GB_ZERO_PADDING_CHILD_STATE_BITWIDTH)));
     instr.SetUpdate(state, next_state);
-    instr.SetUpdate(flag_child, Ite(done, 
-                                      BvConst(GB_ZERO_PADDING_FLAG_OFF, GB_ZERO_PADDING_CHILD_VALID_FLAG_BITWIDTH),
-                                      BvConst(GB_ZERO_PADDING_FLAG_ON, GB_ZERO_PADDING_CHILD_VALID_FLAG_BITWIDTH)));                                  
-
-  }  
+    instr.SetUpdate(flag_child,
+                    Ite(done,
+                        BvConst(GB_ZERO_PADDING_FLAG_OFF,
+                                GB_ZERO_PADDING_CHILD_VALID_FLAG_BITWIDTH),
+                        BvConst(GB_ZERO_PADDING_FLAG_ON,
+                                GB_ZERO_PADDING_CHILD_VALID_FLAG_BITWIDTH)));
+  }
 }
-}; // namespace ilang
+
+} // namespace flex
+
+} // namespace ilang
