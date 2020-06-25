@@ -20,14 +20,13 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 ##
 ## ilang
 ##
-find_package(ilang REQUIRED)
+find_package(ilang REQUIRED 1.0.5)
 
 # ---------------------------------------------------------------------------- #
 # TARGET
-# executable
+# library
 # ---------------------------------------------------------------------------- #
-add_executable(${MyTarget} 
-  app/main.cc
+add_library(${MyTarget}ila
   src/arch_state_shared.cc
   src/arch_state_gb.cc
   src/arch_state_pe.cc
@@ -54,6 +53,22 @@ add_executable(${MyTarget}
   src/util.cc
 )
 
-target_include_directories(${MyTarget} PRIVATE include)
+add_library(${PROJECT_NAME}::${MyTarget}ila ALIAS ${MyTarget}ila)
 
-target_link_libraries(${MyTarget} ilang::ilang)
+target_include_directories(${MyTarget}ila
+  PUBLIC
+    $<INSTALL_INTERFACE:include>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+)
+
+target_link_libraries(${MyTarget}ila ilang::ilang)
+
+# ---------------------------------------------------------------------------- #
+# TARGET
+# executable
+# ---------------------------------------------------------------------------- #
+add_executable(${MyTarget} 
+  app/main.cc
+)
+
+target_link_libraries(${MyTarget} PUBLIC ${MyTarget}ila)

@@ -28,9 +28,13 @@
 
 namespace ilang {
 
+namespace flex {
+
 void DefineStartPERnnLayerSizing(Ila& m, const int& pe_idx,
                                  const uint64_t& base) {
   // TODO
 }
 
-}; // namespace ilang
+} // namespace flex
+
+} // namespace ilang

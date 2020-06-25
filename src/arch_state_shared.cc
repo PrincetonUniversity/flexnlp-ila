@@ -25,13 +25,16 @@
 // File: arch_state_shared.cc
 // This file defines the shared states between PE and GB
 
+#include <ilang/ilang++.h>
+
+#include <flex/flex.h>
 #include <flex/gb_config.h>
 #include <flex/pe_config.h>
 #include <flex/top_config.h>
 
-#include <ilang/ilang++.h>
-
 namespace ilang {
+
+namespace flex {
 
 void DefineSharedState(Ila& m) {
 
@@ -40,13 +43,14 @@ void DefineSharedState(Ila& m) {
   m.NewBvState(PE_CORE_START_SIGNAL, PE_START_SIGNAL_SHARED_BITWIDTH);
   // can define one start signal for each PE cores to avoid using scheduler
   for (auto i = 0; i < PE_ACT_REGS_NUM; i++) {
-    m.NewBvState(PEGetVarName(i,ACT_START_SIGNAL), PE_START_SIGNAL_SHARED_BITWIDTH);
+    m.NewBvState(PEGetVarName(i, ACT_START_SIGNAL),
+                 PE_START_SIGNAL_SHARED_BITWIDTH);
   }
 
   // m.NewBvState(PE_ACT_START_SIGNAL, PE_START_SIGNAL_SHARED_BITWIDTH);
 
   m.NewBvState(PE_DONE_SIGNAL_SHARED, PE_DONE_SIGNAL_SHARED_BITWIDTH);
-  
+
   m.NewBvState(GB_CONTROL_DATA_IN_0, GB_CONTROL_DATA_IN_BITWIDTH);
   m.NewBvState(GB_CONTROL_DATA_IN_1, GB_CONTROL_DATA_IN_BITWIDTH);
   m.NewBvState(GB_CONTROL_DATA_IN_2, GB_CONTROL_DATA_IN_BITWIDTH);
@@ -65,7 +69,7 @@ void DefineSharedState(Ila& m) {
   m.NewBvState(GB_CONTROL_DATA_IN_15, GB_CONTROL_DATA_IN_BITWIDTH);
 
   m.NewBvState(GB_CONTROL_DATA_IN_ADDR, GB_CONTROL_DATA_IN_ADDR_BITWIDTH);
-  
+
   m.NewBvState(GB_CONTROL_DATA_OUT_0, GB_CONTROL_DATA_OUT_BITWIDTH);
   m.NewBvState(GB_CONTROL_DATA_OUT_1, GB_CONTROL_DATA_OUT_BITWIDTH);
   m.NewBvState(GB_CONTROL_DATA_OUT_2, GB_CONTROL_DATA_OUT_BITWIDTH);
@@ -89,9 +93,8 @@ void DefineSharedState(Ila& m) {
 
   m.NewBvState(GB_CONTROL_DATA_IN_VALID, GB_CONTROL_DATA_IN_VALID_BITWIDTH);
   m.NewBvState(GB_CONTROL_DATA_OUT_VALID, GB_CONTROL_DATA_OUT_VALID_BITWIDTH);
-  
-
-  
 }
 
-}; // namespace ilang
+} // namespace flex
+
+} // namespace ilang

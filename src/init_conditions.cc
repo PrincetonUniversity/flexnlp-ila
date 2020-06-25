@@ -27,22 +27,26 @@
 #include <flex/flex.h>
 
 namespace ilang {
-  void DefineInitConditons(Ila& m) {
 
-    // gb_layer_reduce_initial conditions
-    m.AddInit(m.state(GB_LAYER_REDUCE_START_FLAG) == 0);
-    
-    // pe_core instruction initial conditions
-    // initial conditions for PE cntr
-    m.AddInit(m.state(PE_CORE_CNTR) == 0);
-    m.AddInit(m.state(PE_ACT_OUTGB_CNTR) == 0);
-    m.AddInit(m.state(PE_ACT_DONE_CNTR) == 0);
-    // initial conditions for the PE core state machine
-    m.AddInit(m.state(PEGetVarName(0, CORE_STATE)) == PE_CORE_STATE_IDLE);
-    m.AddInit(m.state(PEGetVarName(1, CORE_STATE)) == PE_CORE_STATE_IDLE);
-    m.AddInit(m.state(PEGetVarName(2, CORE_STATE)) == PE_CORE_STATE_IDLE);
-    m.AddInit(m.state(PEGetVarName(3, CORE_STATE)) == PE_CORE_STATE_IDLE);
+namespace flex {
 
-    
-  }
+void DefineInitConditons(Ila& m) {
+
+  // gb_layer_reduce_initial conditions
+  m.AddInit(m.state(GB_LAYER_REDUCE_START_FLAG) == 0);
+
+  // pe_core instruction initial conditions
+  // initial conditions for PE cntr
+  m.AddInit(m.state(PE_CORE_CNTR) == 0);
+  m.AddInit(m.state(PE_ACT_OUTGB_CNTR) == 0);
+  m.AddInit(m.state(PE_ACT_DONE_CNTR) == 0);
+  // initial conditions for the PE core state machine
+  m.AddInit(m.state(PEGetVarName(0, CORE_STATE)) == PE_CORE_STATE_IDLE);
+  m.AddInit(m.state(PEGetVarName(1, CORE_STATE)) == PE_CORE_STATE_IDLE);
+  m.AddInit(m.state(PEGetVarName(2, CORE_STATE)) == PE_CORE_STATE_IDLE);
+  m.AddInit(m.state(PEGetVarName(3, CORE_STATE)) == PE_CORE_STATE_IDLE);
+}
+
+} // namespace flex
+
 } // namespace ilang

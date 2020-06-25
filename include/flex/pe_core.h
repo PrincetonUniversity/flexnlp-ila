@@ -29,6 +29,8 @@
 
 namespace ilang {
 
+namespace flex {
+
 // read 128-bits (16 bytes) at a time
 #define CORE_SCALAR 16
 
@@ -289,9 +291,7 @@ namespace ilang {
 #define RNN_LAYER_SIZING_CONFIG_REG_NUM_OUTPUT "rnn_layer_sizing_num_output"
 #define RNN_LAYER_SIZING_CONFIG_REG_NUM_OUTPUT_WIDTH 8
 
-
-
-// 
+//
 // Define PE Core states
 //
 #define PE_CORE_INVALID 0
@@ -349,12 +349,14 @@ namespace ilang {
 #define CORE_CHILD_RUN_MAC_CNTR "core_child_run_mac_cntr"
 #define PE_CORE_CHILD_RUN_MAC_CNTR_BITWIDTH 5
 
-#define CORE_CHILD_RUN_MAC_WEIGHT_BASE_VECTOR "core_child_run_mac_weight_base_vector"
-#define PE_CORE_CHILD_RUN_MAC_WEIGHT_BASE_VECTOR_BITWIDTH                               \
+#define CORE_CHILD_RUN_MAC_WEIGHT_BASE_VECTOR                                  \
+  "core_child_run_mac_weight_base_vector"
+#define PE_CORE_CHILD_RUN_MAC_WEIGHT_BASE_VECTOR_BITWIDTH                      \
   MEM_MNGR_FIRST_CONFIG_REG_BASE_WEIGHT_WIDTH
 
-#define CORE_CHILD_RUN_MAC_INPUT_BASE_VECTOR "core_child_run_mac_input_base_vector"
-#define PE_CORE_CHILD_RUN_MAC_INPUT_BASE_VECTOR_BITWIDTH                                \
+#define CORE_CHILD_RUN_MAC_INPUT_BASE_VECTOR                                   \
+  "core_child_run_mac_input_base_vector"
+#define PE_CORE_CHILD_RUN_MAC_INPUT_BASE_VECTOR_BITWIDTH                       \
   MEM_MNGR_FIRST_CONFIG_REG_BASE_INPUT_WIDTH
 
 #define CORE_RUN_MAC_CHILD_STATE "core_run_mac_child_state"
@@ -364,7 +366,6 @@ namespace ilang {
 #define PE_CORE_RUN_MAC_STATE_FETCH_CLUSTER 1
 #define PE_CORE_RUN_MAC_STATE_MUL 2
 #define PE_CORE_RUN_MAC_STATE_OUT 3
-
 
 #define CORE_RUN_MAC_CHILD_WEIGHT_BYTE "core_run_mac_child_weight_byte"
 #define PE_CORE_RUN_MAC_CHILD_WEIGHT_BYTE_BITWIDTH 8
@@ -379,7 +380,7 @@ namespace ilang {
 #define CORE_RUN_BIAS_CHILD_CNTR "core_run_bias_child_cntr"
 #define PE_CORE_RUN_BIAS_CHILD_CNTR_BITWIDTH 5
 
-//update 06022020: add temp registers for run_mac_mul to reduce overhead
+// update 06022020: add temp registers for run_mac_mul to reduce overhead
 #define CORE_RUN_MAC_CHILD_RESULT_TEMP "core_run_mac_child_result_temp"
 #define PE_CORE_RUN_MAC_CHILD_RESULT_TEMP_BITWIDTH PE_CORE_ACCUM_VECTOR_BITWIDTH
 
@@ -393,7 +394,6 @@ namespace ilang {
 #define PE_CORE_ACT_VECTOR_BITWIDTH 20
 #define PE_CORE_ACT_VECTOR_LANES CORE_SCALAR
 
-
 /****** uninterpreted function ******/
 #define PE_CORE_SCALAR_BITWIDTH 8
 #define PE_CORE_ACCUMSCALAR_BITWIDTH 32
@@ -401,6 +401,8 @@ namespace ilang {
 #define PE_CORE_ADPFLOAT_BIAS_B_BITWIDTH 3
 #define PE_CORE_ADPFLOAT_BIAS_BITWIDTH 3
 
-}; // namespace ilang
+} // namespace flex
+
+} // namespace ilang
 
 #endif // FLEX_PE_CORE_H__

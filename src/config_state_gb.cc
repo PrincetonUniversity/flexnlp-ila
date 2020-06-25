@@ -24,11 +24,13 @@
 
 // File: config_state_gb.cc
 
-#include <flex/gb_config.h>
-
 #include <ilang/ilang++.h>
 
+#include <flex/gb_config.h>
+
 namespace ilang {
+
+namespace flex {
 
 void DefineGBConfigState(Ila& m) {
 
@@ -201,4 +203,6 @@ void DefineGBConfigState(Ila& m) {
                GB_ZERO_PADDING_CONFIG_REG_NUM_TIMESTEP_2_WIDTH);
 };
 
-}; // namespace ilang
+} // namespace flex
+
+} // namespace ilang

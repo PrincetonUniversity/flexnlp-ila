@@ -31,6 +31,8 @@
 
 namespace ilang {
 
+namespace flex {
+
 // config register: is_valid
 #define GB_LAYER_NORM_CONFIG_REG_IS_VALID "gb_layer_norm_is_valid"
 #define GB_LAYER_NORM_CONFIG_REG_IS_VALID_WIDTH 1
@@ -70,29 +72,31 @@ namespace ilang {
 
 // 2nd level model counter
 #define GB_LAYER_NORM_CNTR_TIMESTEP "gb_layer_norm_cntr_timestep"
-#define GB_LAYER_NORM_CNTR_TIMESTEP_WIDTH GB_LAYER_NORM_CONFIG_REG_NUM_TIMESTEP_1_WIDTH
+#define GB_LAYER_NORM_CNTR_TIMESTEP_WIDTH                                      \
+  GB_LAYER_NORM_CONFIG_REG_NUM_TIMESTEP_1_WIDTH
 
 // state register, memory block min address
 #define GB_LAYER_NORM_MEM_MIN_ADDR_OFFSET "gb_layer_norm_mem_min_addr_offset"
 #define GB_LAYER_NORM_MEM_MIN_ADDR_OFFSET_WIDTH GB_CORE_STORE_LARGE_BITWIDTH
 
 // timestep level state, timestep base address
-#define GB_LAYER_NORM_TIMESTEP_LEVEL_BASE_ADDR "gb_layer_norm_timestep_level_base_addr"
-#define GB_LAYER_NORM_TIMESTEP_LEVEL_BASE_ADDR_WIDTH GB_CORE_STORE_LARGE_BITWIDTH
+#define GB_LAYER_NORM_TIMESTEP_LEVEL_BASE_ADDR                                 \
+  "gb_layer_norm_timestep_level_base_addr"
+#define GB_LAYER_NORM_TIMESTEP_LEVEL_BASE_ADDR_WIDTH                           \
+  GB_CORE_STORE_LARGE_BITWIDTH
 
-// timestep level state, vector base address (put at timestep level to be shared by both
-// vector level childs)
+// timestep level state, vector base address (put at timestep level to be shared
+// by both vector level childs)
 #define GB_LAYER_NORM_VECTOR_BASE_ADDR "gb_layer_norm_vector_base_addr"
 #define GB_LAYER_NORM_VECTOR_BASE_ADDR_WIDTH GB_CORE_STORE_LARGE_BITWIDTH
 
-
 // timestep level state, counter for vector level instructions
 #define GB_LAYER_NORM_CNTR_VECTOR "gb_layer_norm_cntr_vector"
-#define GB_LAYER_NORM_CNTR_VECTOR_WIDTH GB_LAYER_NORM_CONFIG_REG_NUM_VECTOR_1_WIDTH
+#define GB_LAYER_NORM_CNTR_VECTOR_WIDTH                                        \
+  GB_LAYER_NORM_CONFIG_REG_NUM_VECTOR_1_WIDTH
 
 // bitwidth for normalization sum registers
 #define GB_LAYER_NORM_SUM_TYPE_BITWIDTH 24
-
 
 // timestep level state, sum for elements' values
 #define GB_LAYER_NORM_SUM_X "gb_layer_norm_sum_X"
@@ -122,18 +126,20 @@ namespace ilang {
 #define GB_LAYER_NORM_CNTR_BYTE_WIDTH (GB_CORE_SCALAR_BITWIDTH + 1)
 
 // vector level state, base address for gamma and beta in the small buffer
-// bitwidth use 20 here, in order to hold the byte level address for the small buffer
-#define GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA                          \
+// bitwidth use 20 here, in order to hold the byte level address for the small
+// buffer
+#define GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA                             \
   "gb_layer_norm_vector_level_base_addr_gamma"
-#define GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA_WIDTH                    \
+#define GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA_WIDTH                       \
   GB_CORE_STORE_LARGE_BITWIDTH
 
-#define GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_BETA                           \
+#define GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_BETA                              \
   "gb_layer_norm_vector_level_base_addr_beta"
-#define GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDT_BETA_WIDTH                     \
+#define GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDT_BETA_WIDTH                        \
   GB_CORE_STORE_LARGE_BITWIDTH
 
-// update: 04082020: use only one child to organize the child instructions of GBLayerNorm
+// update: 04082020: use only one child to organize the child instructions of
+// GBLayerNorm
 #define GB_LAYER_NORM_VALID 1
 #define GB_LAYER_NORM_INVALID 0
 
@@ -150,9 +156,8 @@ namespace ilang {
 #define GB_LAYER_NORM_CHILD_STATE_NORM_BYTE_OP 5
 #define GB_LAYER_NORM_CHILD_STATE_NEXT 6
 
+} // namespace flex
 
-
-// timestep level state, 
-}; // namespace ilang
+} // namespace ilang
 
 #endif // FLEX_GB_LAYER_NORM_H__

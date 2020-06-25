@@ -23,12 +23,15 @@
 // =============================================================================
 
 // File: pe_internal.cc
-#include <flex/pe_config.h>
-#include <flex/top_config.h>
 
 #include <ilang/ilang++.h>
 
+#include <flex/pe_config.h>
+#include <flex/top_config.h>
+
 namespace ilang {
+
+namespace flex {
 
 void DefinePEInternalStates(Ila& m) {
   // define PE shared internal states here
@@ -37,15 +40,15 @@ void DefinePEInternalStates(Ila& m) {
   // counter for pe sending back data to GB
   m.NewBvState(PE_ACT_OUTGB_CNTR, PE_ACT_OUTGB_CNTR_BITWIDTH);
   // counter for pe seding pe_done to GB
-  m.NewBvState(PE_ACT_DONE_CNTR, PE_ACT_DONE_CNTR_BITWIDTH); 
+  m.NewBvState(PE_ACT_DONE_CNTR, PE_ACT_DONE_CNTR_BITWIDTH);
   // number of valid pe
   m.NewBvState(PE_VALID_NUM, PE_VALID_NUM_BITWIDTH);
-
 }
 
 void DefinePEInternalStates(Ila& m, const int& pe_idx) {
   // Define PE own internal states here
-  
 }
 
-}; // namespace ilang
+} // namespace flex
+
+} // namespace ilang

@@ -24,12 +24,14 @@
 
 // File: config_instr_gb.cc
 
-#include <flex/flex.h>
-
-#include <flex/util.h>
 #include <ilang/ilang++.h>
 
+#include <flex/flex.h>
+#include <flex/util.h>
+
 namespace ilang {
+
+namespace flex {
 
 void DefineGBConfigInstr(Ila& m) {
   auto is_write = m.input(TOP_IF_WR) & ~m.input(TOP_IF_RD);
@@ -346,9 +348,8 @@ void DefineGBConfigInstr(Ila& m) {
     SetUpdateForConfigWr(m, instr, num_timestep_2_next,
                          GB_ZERO_PADDING_CONFIG_REG_NUM_TIMESTEP_2);
   }
-
-  // PE
-  // - ?
 }
 
-}; // namespace ilang
+} // namespace flex
+
+} // namespace ilang

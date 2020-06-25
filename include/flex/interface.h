@@ -22,32 +22,23 @@
 // SOFTWARE.
 // =============================================================================
 
-// File: arch_state_gb.cc
+// File: interface.h
+
+#ifndef FLEX_INTERFACE_H__
+#define FLEX_INTERFACE_H__
+
+#include <string>
 
 #include <ilang/ilang++.h>
-
-#include <flex/gb_config.h>
-#include <flex/top_config.h>
 
 namespace ilang {
 
 namespace flex {
 
-void DefineGBOtherState(Ila& m) {
-
-  // GB core large buffer
-  // XXX one load/store unit is 128-bit; modeled using 8-bit
-  auto gb_core_large_buffer =
-      m.NewMemState(GB_CORE_LARGE_BUFFER, TOP_ADDR_IN_WIDTH, TOP_DATA_IN_WIDTH);
-  gb_core_large_buffer.SetEntryNum(GB_CORE_LARGE_BUFFER_SIZE);
-
-  // GB core small buffer
-  // XXX one load/store unit is 128-bit; modeled using 8-bit
-  auto gb_core_small_buffer =
-      m.NewMemState(GB_CORE_SMALL_BUFFER, TOP_ADDR_IN_WIDTH, TOP_DATA_IN_WIDTH);
-  gb_core_small_buffer.SetEntryNum(GB_CORE_SMALL_BUFFER_SIZE);
-}
+Ila GetFlexIla(const std::string& model_name = "flex");
 
 } // namespace flex
 
 } // namespace ilang
+
+#endif // FLEX_INTERFACE_H__

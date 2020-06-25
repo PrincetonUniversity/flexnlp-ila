@@ -30,6 +30,9 @@
 #include <ilang/ilang++.h>
 
 namespace ilang {
+
+namespace flex {
+
 // define the adaptive flow related specs here
 #define ADPTFLOW_WIDTH 8
 #define ADPTFLOW_EXP_WIDTH 3
@@ -48,6 +51,8 @@ namespace ilang {
 #define ATTENTION_NUM_INT (ATTENTION_WORD_WIDTH - ATTENTION_NUM_FRAC)
 #define ATTENTION_WORD_MIN 0xC0000000
 #define ATTENTION_HIGH_NEG 0xFC000000
+
+} // namespace flex
 
 } // namespace ilang
 #endif

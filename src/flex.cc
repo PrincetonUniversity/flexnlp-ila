@@ -28,6 +28,8 @@
 
 namespace ilang {
 
+namespace flex {
+
 Ila GetFlexIla(const std::string& model_name) {
   auto m = Ila(model_name);
 
@@ -39,7 +41,7 @@ Ila GetFlexIla(const std::string& model_name) {
   DefineTopInput(m);
 
   DefineSharedState(m);
-  
+
   DefineGBConfigState(m);
   DefineGBOtherState(m);
 
@@ -61,8 +63,8 @@ Ila GetFlexIla(const std::string& model_name) {
   DefinePEInternalStates(m, 0);
   DefinePEInternalStates(m, 1);
   DefinePEInternalStates(m, 2);
-  DefinePEInternalStates(m, 3); 
-  
+  DefinePEInternalStates(m, 3);
+
   // define initial conditions
   DefineInitConditons(m);
 
@@ -89,9 +91,10 @@ Ila GetFlexIla(const std::string& model_name) {
   // store instructions
   // This instruction have conflicts with other buffer write instructions.
   DefineGBCoreStore(m);
-  
+
   // define PE core store instructions for 4 PE cores
-  // update: change the PECoreStore to PEStore to include the store instruction for Act buffer
+  // update: change the PECoreStore to PEStore to include the store instruction
+  // for Act buffer
   DefinePEStore(m, 0, TOP_PE0_ADDR_MIN);
   DefinePEStore(m, 1, TOP_PE1_ADDR_MIN);
   DefinePEStore(m, 2, TOP_PE2_ADDR_MIN);
@@ -124,4 +127,6 @@ Ila GetFlexIla(const std::string& model_name) {
   return m;
 }
 
-}; // namespace ilang
+} // namespace flex
+
+} // namespace ilang

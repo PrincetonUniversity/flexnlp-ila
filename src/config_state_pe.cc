@@ -24,11 +24,13 @@
 
 // File: config_state_pe.cc
 
-#include <flex/pe_config.h>
-
 #include <ilang/ilang++.h>
 
+#include <flex/pe_config.h>
+
 namespace ilang {
+
+namespace flex {
 
 void DefinePEConfigState(Ila& m, const int& pe_idx) {
 
@@ -330,4 +332,6 @@ void DefinePEConfigState(Ila& m, const int& pe_idx) {
                RNN_LAYER_SIZING_CONFIG_REG_NUM_OUTPUT_WIDTH);
 };
 
-}; // namespace ilang
+} // namespace flex
+
+} // namespace ilang

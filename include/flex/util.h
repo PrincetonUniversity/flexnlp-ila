@@ -31,6 +31,8 @@
 
 namespace ilang {
 
+namespace flex {
+
 #define SetDecodeForConfigWr(addr)                                             \
   instr.SetDecode(is_write&(m.input(TOP_ADDR_IN) == (TOP_GB_ADDR_MIN + addr)));
 
@@ -48,6 +50,8 @@ ExprRef GBGetSmallBufBase(Ila& m, const ExprRef& mem_small_index);
 
 void PECoreRunMacOut(Ila& m, const int& pe_idx, const int& idx);
 
-}; // namespace ilang
+} // namespace flex
+
+} // namespace ilang
 
 #endif // FLEX_UTIL_H__
