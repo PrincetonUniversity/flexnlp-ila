@@ -26,11 +26,7 @@
 
 #include <flex/flex.h>
 
-#include <iostream>
-#include <queue>
-
-#include <ilang/ila/instr_lvl_abs.h>
-#include <ilang/target-sc/ila_sim.h>
+#include <ilang/ilang++.h>
 #include <ilang/util/log.h>
 
 using namespace ilang;
@@ -50,12 +46,7 @@ int main(int argc, char* argv[]) {
   }
 
   // simulation generation
-  IlaSim simulator_generator;
-  std::string sim_gen_dir = "./sim_model";
-
-  simulator_generator.set_instr_lvl_abs(flex.get());
-  simulator_generator.enable_cmake_support();
-  simulator_generator.sim_gen(sim_gen_dir, false, true, false);
+  ExportSysCSim(flex, "./sim_model");
 
   return 0;
 }

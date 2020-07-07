@@ -3,10 +3,10 @@
 #include <string>
 #include <systemc>
 
-#include "flex_sim.h"
+#include "flex.h"
 
 // source module of the testbench
-// creating signals for flex_sim model
+// creating signals for flex model
 SC_MODULE(Source) {
   sc_in<bool> clk{"clk"};
   // sc_in<bool> rst;
@@ -112,7 +112,7 @@ SC_MODULE(Source) {
 
 SC_MODULE(testbench) {
   SC_HAS_PROCESS(testbench);
-  flex_sim flex;
+  flex flex_i;
   Source src;
 
   sc_clock clk;
@@ -122,7 +122,8 @@ SC_MODULE(testbench) {
   sc_signal<sc_biguint<8>> flex_data_signal[16];
 
   testbench(sc_module_name name)
-      : sc_module(name), clk("clk", 1, SC_NS), src("source"), flex("flexnlp") {
+      : sc_module(name), clk("clk", 1, SC_NS), src("source"),
+        flex_i("flexnlp") {
     // binding the signals from the source
     src.clk(clk);
     src.flex_wr_in(flex_wr_signal);
@@ -133,27 +134,27 @@ SC_MODULE(testbench) {
     }
 
     // binding the signals for the model
-    flex.flex_sim_if_axi_rd_in(flex_rd_signal);
-    flex.flex_sim_if_axi_wr_in(flex_wr_signal);
-    flex.flex_sim_addr_in_in(flex_addr_signal);
-    flex.flex_sim_data_in_0_in(flex_data_signal[0]);
-    flex.flex_sim_data_in_1_in(flex_data_signal[1]);
-    flex.flex_sim_data_in_2_in(flex_data_signal[2]);
-    flex.flex_sim_data_in_3_in(flex_data_signal[3]);
-    flex.flex_sim_data_in_4_in(flex_data_signal[4]);
-    flex.flex_sim_data_in_5_in(flex_data_signal[5]);
-    flex.flex_sim_data_in_6_in(flex_data_signal[6]);
-    flex.flex_sim_data_in_7_in(flex_data_signal[7]);
-    flex.flex_sim_data_in_8_in(flex_data_signal[8]);
-    flex.flex_sim_data_in_9_in(flex_data_signal[9]);
-    flex.flex_sim_data_in_10_in(flex_data_signal[10]);
-    flex.flex_sim_data_in_11_in(flex_data_signal[11]);
-    flex.flex_sim_data_in_12_in(flex_data_signal[12]);
-    flex.flex_sim_data_in_13_in(flex_data_signal[13]);
-    flex.flex_sim_data_in_14_in(flex_data_signal[14]);
-    flex.flex_sim_data_in_15_in(flex_data_signal[15]);
+    flex_i.flex_if_axi_rd_in(flex_rd_signal);
+    flex_i.flex_if_axi_wr_in(flex_wr_signal);
+    flex_i.flex_addr_in_in(flex_addr_signal);
+    flex_i.flex_data_in_0_in(flex_data_signal[0]);
+    flex_i.flex_data_in_1_in(flex_data_signal[1]);
+    flex_i.flex_data_in_2_in(flex_data_signal[2]);
+    flex_i.flex_data_in_3_in(flex_data_signal[3]);
+    flex_i.flex_data_in_4_in(flex_data_signal[4]);
+    flex_i.flex_data_in_5_in(flex_data_signal[5]);
+    flex_i.flex_data_in_6_in(flex_data_signal[6]);
+    flex_i.flex_data_in_7_in(flex_data_signal[7]);
+    flex_i.flex_data_in_8_in(flex_data_signal[8]);
+    flex_i.flex_data_in_9_in(flex_data_signal[9]);
+    flex_i.flex_data_in_10_in(flex_data_signal[10]);
+    flex_i.flex_data_in_11_in(flex_data_signal[11]);
+    flex_i.flex_data_in_12_in(flex_data_signal[12]);
+    flex_i.flex_data_in_13_in(flex_data_signal[13]);
+    flex_i.flex_data_in_14_in(flex_data_signal[14]);
+    flex_i.flex_data_in_15_in(flex_data_signal[15]);
 
-    flex.instr_log;
+    flex_i.instr_log;
     SC_THREAD(run);
   }
 
@@ -170,23 +171,23 @@ SC_MODULE(testbench) {
     wait(10, SC_NS);
 
     while (undone) {
-      if (flex.flex_sim_addr_in.to_int() == stop_addr) {
+      if (flex_i.flex_addr_in.to_int() == stop_addr) {
         undone = false;
       }
 
       fout << "@ " << sc_time_stamp() << '\t';
-      fout << "is write? :" << '\t' << flex.flex_sim_if_axi_wr_in << '\t';
-      fout << "addr in:" << '\t' << hex << flex.flex_sim_addr_in << '\t';
+      fout << "is write? :" << '\t' << flex_i.flex_if_axi_wr_in << '\t';
+      fout << "addr in:" << '\t' << hex << flex_i.flex_addr_in << '\t';
       fout << "data in:" << '\t';
       for (int k = 0; k < 16; k++) {
         fout << hex << flex_data_signal[15 - k] << ' ';
       }
       fout << endl;
       fout << "flex status:" << '\t';
-      fout << "reduce valid: " << '\t' << flex.flex_sim_gb_layer_reduce_is_valid
+      fout << "reduce valid: " << '\t' << flex_i.flex_gb_layer_reduce_is_valid
            << '\t';
       fout << "grouping num: " << '\t'
-           << flex.flex_sim_gb_layer_reduce_grouping_num << '\n'
+           << flex_i.flex_gb_layer_reduce_grouping_num << '\n'
            << endl;
       wait(10, SC_NS);
     }
@@ -203,14 +204,14 @@ SC_MODULE(testbench) {
       fout << "data:" << '\t';
       for (int k = 0; k < 16; k++) {
         index = 16 * j + 15 - k;
-        fout << hex << flex.flex_sim_gb_core_large_buffer[index] << ' ';
+        fout << hex << flex_i.flex_gb_core_large_buffer[index] << ' ';
       }
       fout << endl;
     }
 
     wait(1000, SC_NS);
     cout << "test for accessing flex:  " << hex
-         << flex.flex_sim_gb_core_large_buffer[12] << endl;
+         << flex_i.flex_gb_core_large_buffer[12] << endl;
     cout << "test for uninterpreted function" << endl;
     sc_biguint<8> in0 = "0x98";
     sc_biguint<8> in1 = "0x0c";
