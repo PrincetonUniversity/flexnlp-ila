@@ -3,7 +3,7 @@
 #include <queue>
 #include <string>
 
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 #include <systemc>
 
 #include <flex.h>
