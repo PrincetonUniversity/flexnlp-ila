@@ -1,119 +1,82 @@
 #include <fstream>
 #include <iostream>
+#include <queue>
 #include <string>
+
+#include <json.hpp>
 #include <systemc>
 
-#include "flex_sim.h"
+#include <flex.h>
 
-// source module of the testbench
-// creating signals for flex_sim model
-SC_MODULE(Source) {
-  sc_in<bool> clk{"clk"};
-  // sc_in<bool> rst;
+using json = nlohmann::json;
 
-  sc_out<sc_biguint<1>> flex_wr_in;
-  sc_out<sc_biguint<1>> flex_rd_in;
-  sc_out<sc_biguint<32>> flex_addr_in;
-  sc_out<sc_biguint<8>> flex_data_in[16];
+typedef unsigned long long VAL_T;
 
-  //  void source_input();
+typedef struct FlexCmd {
+  VAL_T is_rd;
+  VAL_T is_wr;
+  VAL_T addr;
+  VAL_T data[16];
+} FlexCmd;
 
-  SC_CTOR(Source) {
-    SC_THREAD(source_input);
-    sensitive << clk.pos();
-    // reset_signal_is(rst, true);
+static std::queue<FlexCmd*> commands;
+
+void ParseInput(const std::string& file) {
+  std::ifstream fin(file);
+  if (!fin.is_open()) {
+    return;
   }
+  json cmds;
+  fin >> cmds;
+  fin.close();
 
-  void source_input() {
-    // reset
-    flex_wr_in = 0;
-    flex_rd_in = 0;
-    flex_addr_in = "0x0";
-    for (int i = 0; i < 16; i++) {
-      flex_data_in[i] = "0x0";
+  auto RemoveHexPrefix = [](const std::string& org) {
+    if (org.size() <= 2) {
+      return org;
     }
+    auto prefix = org.substr(0, 2);
+    return (prefix == "0x") ? org.substr(2, org.size() - 2) : org;
+  };
 
-    wait(10, SC_NS);
+  auto GetHexVal = [](const std::string& str) {
+    return std::stoull(str, NULL, 16);
+  };
 
-    std::ifstream fin;
-    std::string mode, addr, data;
-    std::string data_format;
-    std::string temp;
-    std::string hex_hdr = "0x";
-    std::string addr_format;
-
-    const char* addr_c;
-    const char* data_byte_c;
-
-    wait(10, SC_NS);
-
-    fin.open("/u/yl29/3LA/test_input.csv", ios::in);
-
-    while (std::getline(fin, temp, ',')) {
-      std::getline(fin, mode, ',');
-      std::getline(fin, addr, ',');
-      std::getline(fin, data, '\n');
-
-      // cout << mode << '\t' << addr << '\t' << data << endl;
-      // set the WR/RD mode
-      if (mode.compare("W") == 0) {
-        flex_wr_in = 1;
-        flex_rd_in = 0;
-      } else {
-        flex_wr_in = 0;
-        flex_rd_in = 1;
-      }
-      // extract the address
-      addr = addr.substr(2);
-      addr_format = "0x00" + addr;
-      addr_c = addr_format.c_str();
-      flex_addr_in = addr_c;
-
-      // extract the data
-      data_format.clear();
-      if (data.length() <= 34) {
-        data_format.append(34 - data.length(), '0');
-        data_format.append(data.substr(2));
-      } else {
-        data_format.append(data.substr(data.length() - 32));
-      }
-
-      std::string data_byte;
-      for (int i = 0; i < 16; i++) {
-        data_byte = data_format.substr(30 - 2 * i, 2);
-        data_byte_c = ("0x" + data_byte).c_str();
-        // cout << data_byte << ' ';
-        flex_data_in[i] = data_byte_c;
-      }
-      // cout << endl;
-
-#if 0
-      cout << "@" << sc_time_stamp() << " :" << '\t';
-      cout << "mode:" << mode << '\t';
-      cout << "addr:" << addr_c << '\t';
-      cout << "data:" << data_format << '\t';
-      cout << "sc_addr" << '\t';
-      cout << hex << flex_addr_in << '\t';
-      cout << "sc_mode" << '\t';
-      cout << flex_wr_in << '\t';
-      cout << flex_rd_in << endl;
-      for (int j = 0; j < 16; j++) {
-        cout << hex << flex_data_in[15 - j] << ' ';
-      }
-      cout << endl;
-#endif
-
-      wait(10, SC_NS);
+  auto ZeroPad = [](const std::string& str, const int& length) {
+    if (str.size() < length) {
+      return std::string(length - str.size(), '0') + str;
     }
+    return str;
+  };
 
-    // cout << "source created for testbench" << endl;
+  try {
+    for (const auto& cmd : cmds.at("command inputs")) {
+      auto addr_str = cmd["addr"].get<std::string>();
+      auto data_str = cmd["data"].get<std::string>();
+      auto is_rd_str = cmd["is_rd"].get<std::string>();
+      auto is_wr_str = cmd["is_wr"].get<std::string>();
+
+      auto new_cmd = new FlexCmd();
+      new_cmd->is_rd = GetHexVal(is_rd_str);
+      new_cmd->is_wr = GetHexVal(is_wr_str);
+      new_cmd->addr = GetHexVal(RemoveHexPrefix(addr_str));
+      data_str = RemoveHexPrefix(data_str);
+      data_str = ZeroPad(data_str, 32);
+      for (auto i = 0; i < 16; i++) {
+        new_cmd->data[i] = GetHexVal(data_str.substr(30 - (2 * i), 2));
+      }
+      commands.push(new_cmd);
+    }
+  } catch (std::exception& e) {
+    std::cerr << e.what() << std::endl;
+    std::cerr << "Fail parsing input command file\n";
+    return;
   }
-};
+}
 
 SC_MODULE(testbench) {
   SC_HAS_PROCESS(testbench);
-  flex_sim flex;
-  Source src;
+  flex flex_i;
 
   sc_clock clk;
   sc_signal<sc_biguint<1>> flex_wr_signal;
@@ -122,45 +85,34 @@ SC_MODULE(testbench) {
   sc_signal<sc_biguint<8>> flex_data_signal[16];
 
   testbench(sc_module_name name)
-      : sc_module(name), clk("clk", 1, SC_NS), src("source"), flex("flexnlp") {
-    // binding the signals from the source
-    src.clk(clk);
-    src.flex_wr_in(flex_wr_signal);
-    src.flex_rd_in(flex_rd_signal);
-    src.flex_addr_in(flex_addr_signal);
-    for (int i = 0; i < 16; i++) {
-      src.flex_data_in[i](flex_data_signal[i]);
-    }
+      : sc_module(name), clk("clk", 1, SC_NS), flex_i("flexnlp") {
 
     // binding the signals for the model
-    flex.flex_sim_if_axi_rd_in(flex_rd_signal);
-    flex.flex_sim_if_axi_wr_in(flex_wr_signal);
-    flex.flex_sim_addr_in_in(flex_addr_signal);
-    flex.flex_sim_data_in_0_in(flex_data_signal[0]);
-    flex.flex_sim_data_in_1_in(flex_data_signal[1]);
-    flex.flex_sim_data_in_2_in(flex_data_signal[2]);
-    flex.flex_sim_data_in_3_in(flex_data_signal[3]);
-    flex.flex_sim_data_in_4_in(flex_data_signal[4]);
-    flex.flex_sim_data_in_5_in(flex_data_signal[5]);
-    flex.flex_sim_data_in_6_in(flex_data_signal[6]);
-    flex.flex_sim_data_in_7_in(flex_data_signal[7]);
-    flex.flex_sim_data_in_8_in(flex_data_signal[8]);
-    flex.flex_sim_data_in_9_in(flex_data_signal[9]);
-    flex.flex_sim_data_in_10_in(flex_data_signal[10]);
-    flex.flex_sim_data_in_11_in(flex_data_signal[11]);
-    flex.flex_sim_data_in_12_in(flex_data_signal[12]);
-    flex.flex_sim_data_in_13_in(flex_data_signal[13]);
-    flex.flex_sim_data_in_14_in(flex_data_signal[14]);
-    flex.flex_sim_data_in_15_in(flex_data_signal[15]);
+    flex_i.flex_if_axi_rd_in(flex_rd_signal);
+    flex_i.flex_if_axi_wr_in(flex_wr_signal);
+    flex_i.flex_addr_in_in(flex_addr_signal);
+    flex_i.flex_data_in_0_in(flex_data_signal[0]);
+    flex_i.flex_data_in_1_in(flex_data_signal[1]);
+    flex_i.flex_data_in_2_in(flex_data_signal[2]);
+    flex_i.flex_data_in_3_in(flex_data_signal[3]);
+    flex_i.flex_data_in_4_in(flex_data_signal[4]);
+    flex_i.flex_data_in_5_in(flex_data_signal[5]);
+    flex_i.flex_data_in_6_in(flex_data_signal[6]);
+    flex_i.flex_data_in_7_in(flex_data_signal[7]);
+    flex_i.flex_data_in_8_in(flex_data_signal[8]);
+    flex_i.flex_data_in_9_in(flex_data_signal[9]);
+    flex_i.flex_data_in_10_in(flex_data_signal[10]);
+    flex_i.flex_data_in_11_in(flex_data_signal[11]);
+    flex_i.flex_data_in_12_in(flex_data_signal[12]);
+    flex_i.flex_data_in_13_in(flex_data_signal[13]);
+    flex_i.flex_data_in_14_in(flex_data_signal[14]);
+    flex_i.flex_data_in_15_in(flex_data_signal[15]);
 
-    flex.instr_log;
+    flex_i.instr_log;
     SC_THREAD(run);
   }
 
   void run() {
-    int i = 0;
-    bool undone = true;
-    int stop_addr = 0xdead;
     std::ofstream fout;
     fout.open("./test_output.txt", ofstream::out | ofstream::trunc);
 
@@ -169,25 +121,35 @@ SC_MODULE(testbench) {
               << " ********* simulation start *********" << std::endl;
     wait(10, SC_NS);
 
-    while (undone) {
-      if (flex.flex_sim_addr_in.to_int() == stop_addr) {
-        undone = false;
+    while (!commands.empty()) {
+      // get new input command
+      auto current_cmd = commands.front();
+      flex_wr_signal = current_cmd->is_wr;
+      flex_rd_signal = current_cmd->is_rd;
+      flex_addr_signal = current_cmd->addr;
+      for (auto i = 0; i < 16; i++) {
+        flex_data_signal[i] = current_cmd->data[i];
       }
+      delete current_cmd;
+      commands.pop();
 
+      // debug log
       fout << "@ " << sc_time_stamp() << '\t';
-      fout << "is write? :" << '\t' << flex.flex_sim_if_axi_wr_in << '\t';
-      fout << "addr in:" << '\t' << hex << flex.flex_sim_addr_in << '\t';
+      fout << "is write? :" << '\t' << flex_i.flex_if_axi_wr_in << '\t';
+      fout << "addr in:" << '\t' << hex << flex_i.flex_addr_in << '\t';
       fout << "data in:" << '\t';
       for (int k = 0; k < 16; k++) {
         fout << hex << flex_data_signal[15 - k] << ' ';
       }
       fout << endl;
       fout << "flex status:" << '\t';
-      fout << "reduce valid: " << '\t' << flex.flex_sim_gb_layer_reduce_is_valid
+      fout << "reduce valid: " << '\t' << flex_i.flex_gb_layer_reduce_is_valid
            << '\t';
       fout << "grouping num: " << '\t'
-           << flex.flex_sim_gb_layer_reduce_grouping_num << '\n'
+           << flex_i.flex_gb_layer_reduce_grouping_num << '\n'
            << endl;
+
+      // next
       wait(10, SC_NS);
     }
 
@@ -203,23 +165,10 @@ SC_MODULE(testbench) {
       fout << "data:" << '\t';
       for (int k = 0; k < 16; k++) {
         index = 16 * j + 15 - k;
-        fout << hex << flex.flex_sim_gb_core_large_buffer[index] << ' ';
+        fout << hex << flex_i.flex_gb_core_large_buffer[index] << ' ';
       }
       fout << endl;
     }
-
-    wait(1000, SC_NS);
-    cout << "test for accessing flex:  " << hex
-         << flex.flex_sim_gb_core_large_buffer[12] << endl;
-    cout << "test for uninterpreted function" << endl;
-    sc_biguint<8> in0 = "0x98";
-    sc_biguint<8> in1 = "0x0c";
-    cout << "test in0: " << (in0.to_int() >> 7) << '\t'
-         << "test in1: " << (in1.to_int() >> 7) << endl;
-    cout << hex << ((~in0.to_int() + 1) & 127) << '\t'
-         << ((~in1.to_int() + 1) & 127) << endl;
-    cout << hex << (((~in0.to_int() + 1) & 127) > ((~in1.to_int() + 1) & 127))
-         << endl;
 
     std::cout << "@" << sc_time_stamp()
               << " *********     sc_stop      *********" << std::endl;
@@ -228,9 +177,16 @@ SC_MODULE(testbench) {
 };
 
 int sc_main(int argc, char* argv[]) {
-  cout << "test started" << endl;
+  if (argc == 2) {
+    ParseInput(std::string(argv[1]));
+  } else {
+    std::cerr << "No input file specified\n";
+    return 0;
+  }
+
   testbench tb("tb");
   sc_start();
+
   return 0;
 }
 

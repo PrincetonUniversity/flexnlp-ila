@@ -1,5 +1,5 @@
 #include "systemc.h"
-#include "flex_sim.h"
+#include "flex.h"
 #include <nvhls_int.h>
 #include <nvhls_types.h>
 #include <nvhls_vector.h>
@@ -22,7 +22,7 @@
 static int counter = 0;
 
 // GBAttentionLSH: left-shift function used in gb_attention
-sc_biguint<32> flex_sim::GBAttentionLSH(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
+sc_biguint<32> flex::GBAttentionLSH(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
   sc_bigint<32> arg_0_s = arg_0;
   sc_bigint<32> arg_1_s = arg_1;
   NVINT32 tmp_out = arg_0_s.to_int();
@@ -35,7 +35,7 @@ sc_biguint<32> flex_sim::GBAttentionLSH(sc_biguint<32> arg_0, sc_biguint<32> arg
 }
 
 // GBAttentionRSH: right-shift function used in gb_attention
-sc_biguint<32> flex_sim::GBAttentionRSH(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
+sc_biguint<32> flex::GBAttentionRSH(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
   sc_bigint<32> arg_0_s = arg_0;
   sc_bigint<32> arg_1_s = arg_1;
   NVINT32 tmp_out = arg_0_s.to_int();
@@ -48,7 +48,7 @@ sc_biguint<32> flex_sim::GBAttentionRSH(sc_biguint<32> arg_0, sc_biguint<32> arg
 }
 
 // GBAttentionMax: finding the maximum values used in gb_attention
-sc_biguint<32> flex_sim::GBAttentionMax(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
+sc_biguint<32> flex::GBAttentionMax(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
   sc_bigint<32> arg_0_s = arg_0;
   sc_bigint<32> arg_1_s = arg_1;
   spec::AttentionScalarType max_val_next = arg_0_s.to_int();
@@ -61,7 +61,7 @@ sc_biguint<32> flex_sim::GBAttentionMax(sc_biguint<32> arg_0, sc_biguint<32> arg
 }
 
 // GBAttentionSUb: attention scalar sub used in gb_attention
-sc_biguint<32> flex_sim::GBAttentionSub(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
+sc_biguint<32> flex::GBAttentionSub(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
   sc_bigint<32> arg_0_s = arg_0;
   sc_bigint<32> arg_1_s = arg_1;
   spec::AttentionScalarType in_0 = arg_0_s.to_int();
@@ -74,7 +74,7 @@ sc_biguint<32> flex_sim::GBAttentionSub(sc_biguint<32> arg_0, sc_biguint<32> arg
 }
 
 // GBAttentionExp: attention scalar exponential used in gb_attention
-sc_biguint<32> flex_sim::GBAttentionExp(sc_biguint<32> arg_0) {
+sc_biguint<32> flex::GBAttentionExp(sc_biguint<32> arg_0) {
   sc_bigint<32> arg_0_s = arg_0;
   spec::AttentionScalarType in = arg_0_s.to_int();
   spec::AttentionScalarType out_tmp;
@@ -96,7 +96,7 @@ sc_biguint<32> flex_sim::GBAttentionExp(sc_biguint<32> arg_0) {
 }
 
 // GBAttentionDiv: attention scalar div used in gb_attention
-sc_biguint<32> flex_sim::GBAttentionDiv(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
+sc_biguint<32> flex::GBAttentionDiv(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
   sc_bigint<32> arg_0_s = arg_0;
   sc_bigint<32> arg_1_s = arg_1;
   spec::AttentionScalarType in_0 = arg_0_s.to_int();
@@ -128,7 +128,7 @@ sc_biguint<32> flex_sim::GBAttentionDiv(sc_biguint<32> arg_0, sc_biguint<32> arg
 }
 
 // GBAttentionCompress: attention scalar compress used in gb_attention
-sc_biguint<8> flex_sim::GBAttentionCompress(sc_biguint<32> arg_0, sc_biguint<3> arg_1) {
+sc_biguint<8> flex::GBAttentionCompress(sc_biguint<32> arg_0, sc_biguint<3> arg_1) {
   sc_bigint<32> arg_0_s = arg_0;
 
   AdpfloatType<8,3> tmp;
@@ -145,7 +145,7 @@ sc_biguint<8> flex_sim::GBAttentionCompress(sc_biguint<32> arg_0, sc_biguint<3> 
 
 
 // GBNormAdd used in LayerNorm
-sc_biguint<24> flex_sim::GBNormAdd_24_20(sc_biguint<24> arg_0, sc_biguint<20> arg_1) {
+sc_biguint<24> flex::GBNormAdd_24_20(sc_biguint<24> arg_0, sc_biguint<20> arg_1) {
   sc_bigint<24> arg_0_s = arg_0;
   sc_bigint<20> arg_1_s = arg_1;
   spec::LayerNormSumType in_0 = arg_0_s.to_int();
@@ -158,7 +158,7 @@ sc_biguint<24> flex_sim::GBNormAdd_24_20(sc_biguint<24> arg_0, sc_biguint<20> ar
 }
 
 // GBNormDivide
-sc_biguint<20> flex_sim::GBNormDivide_24(sc_biguint<24> arg_0, sc_biguint<24> arg_1) {
+sc_biguint<20> flex::GBNormDivide_24(sc_biguint<24> arg_0, sc_biguint<24> arg_1) {
   sc_bigint<24> arg_0_s = arg_0;
   sc_bigint<24> arg_1_s = arg_1;
   spec::LayerNormSumType in_0 = arg_0_s.to_int();
@@ -171,7 +171,7 @@ sc_biguint<20> flex_sim::GBNormDivide_24(sc_biguint<24> arg_0, sc_biguint<24> ar
 }
 
 // ActSignedMinus
-sc_biguint<20> flex_sim::ActSignedMinus(sc_biguint<20> arg_0, sc_biguint<20> arg_1) {
+sc_biguint<20> flex::ActSignedMinus(sc_biguint<20> arg_0, sc_biguint<20> arg_1) {
   sc_bigint<20> arg_0_s = arg_0;
   sc_bigint<20> arg_1_s = arg_1;
   spec::ActScalarType in_0 = arg_0_s.to_int();
@@ -184,7 +184,7 @@ sc_biguint<20> flex_sim::ActSignedMinus(sc_biguint<20> arg_0, sc_biguint<20> arg
 }
 
 // SInvSqrt
-sc_biguint<20> flex_sim::SInvSqrt(sc_biguint<20> arg_0) {
+sc_biguint<20> flex::SInvSqrt(sc_biguint<20> arg_0) {
   
   sc_bigint<20> arg_0_s = arg_0;
   spec::ActScalarType in = arg_0_s.to_int();
@@ -204,7 +204,7 @@ sc_biguint<20> flex_sim::SInvSqrt(sc_biguint<20> arg_0) {
 }
 
 // adpfloat_max used in Maxpooling of LayerReduce
-sc_biguint<8> flex_sim::GBAdpfloat_max(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
+sc_biguint<8> flex::GBAdpfloat_max(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
 
   ac_int<8,false> arg_0_ac = arg_0.to_uint();
   ac_int<8,false> arg_1_ac = arg_1.to_uint();
@@ -220,7 +220,7 @@ sc_biguint<8> flex_sim::GBAdpfloat_max(sc_biguint<8> arg_0, sc_biguint<8> arg_1)
 }
 
 // adpfloat_mean used in LayerReduce
-sc_biguint<8> flex_sim::GBAdpfloat_mean(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
+sc_biguint<8> flex::GBAdpfloat_mean(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
   ac_int<8,false> arg_0_ac = arg_0.to_uint();
   ac_int<8,false> arg_1_ac = arg_1.to_uint();
   AdpfloatType<spec::kAdpfloatWordWidth,spec::kAdpfloatExpWidth> in_a = arg_0_ac;
@@ -235,7 +235,7 @@ sc_biguint<8> flex_sim::GBAdpfloat_mean(sc_biguint<8> arg_0, sc_biguint<8> arg_1
 }
 
 // adpfloat_add used in LayerReduce
-sc_biguint<8> flex_sim::GBAdpfloat_add(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
+sc_biguint<8> flex::GBAdpfloat_add(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
   ac_int<8,false> arg_0_ac = arg_0.to_uint();
   ac_int<8,false> arg_1_ac = arg_1.to_uint();
   AdpfloatType<spec::kAdpfloatWordWidth,spec::kAdpfloatExpWidth> in_a = arg_0_ac;
@@ -251,7 +251,7 @@ sc_biguint<8> flex_sim::GBAdpfloat_add(sc_biguint<8> arg_0, sc_biguint<8> arg_1)
 
 // Function: PECoreAccumRightShift
 // used in right shifting the accumulation results in PE_Core: RunBias()
-sc_biguint<32> flex_sim::PECoreAccumRightShift(sc_biguint<32> arg_0,
+sc_biguint<32> flex::PECoreAccumRightShift(sc_biguint<32> arg_0,
                 sc_biguint<3> arg_1, sc_biguint<3> arg_2) {
   
   ac_int<3,false> arg_1_ac = arg_1.to_uint();
@@ -277,7 +277,7 @@ sc_biguint<32> flex_sim::PECoreAccumRightShift(sc_biguint<32> arg_0,
 
 // Function: PECoreAccumGetBiasOut
 // used in adding the input_bias and adaptive-float bias in PE_Core: RunBias()
-sc_biguint<32> flex_sim::PECoreAccumGetBiasOut(sc_biguint<32> arg_0, sc_biguint<8> arg_1, sc_biguint<3> arg_2) {
+sc_biguint<32> flex::PECoreAccumGetBiasOut(sc_biguint<32> arg_0, sc_biguint<8> arg_1, sc_biguint<3> arg_2) {
   
   sc_bigint<32> arg_0_s = arg_0;
   ac_int<32,true> arg_0_ac = arg_0_s.to_int();
@@ -303,7 +303,7 @@ sc_biguint<32> flex_sim::PECoreAccumGetBiasOut(sc_biguint<32> arg_0, sc_biguint<
 
 // Function: PECoreAccumOverflowCheck
 // used in checking whether the accumulation result is overflow in PECore: RunBias()
-sc_biguint<32> flex_sim::PECoreAccumOverflowCheck(sc_biguint<32> arg_0) {
+sc_biguint<32> flex::PECoreAccumOverflowCheck(sc_biguint<32> arg_0) {
   
   sc_bigint<32> arg_0_s = arg_0;
   ac_int<32,true> arg_0_ac = arg_0_s.to_int();
@@ -322,7 +322,7 @@ sc_biguint<32> flex_sim::PECoreAccumOverflowCheck(sc_biguint<32> arg_0) {
 
 // Function: PECoreAccum2ActReg
 // used to truncate the AccumScalar to ActScalar in PECore: RunBias()
-sc_biguint<20> flex_sim::PECoreAccum2ActReg(sc_biguint<32> arg_0) {
+sc_biguint<20> flex::PECoreAccum2ActReg(sc_biguint<32> arg_0) {
   
   sc_bigint<32> arg_0_s = arg_0;
   ac_int<32, true> arg_0_ac = arg_0_s.to_int();
@@ -337,7 +337,7 @@ sc_biguint<20> flex_sim::PECoreAccum2ActReg(sc_biguint<32> arg_0) {
 
 // Function: ProductSum
 // used to calculate the product of two adpfloat scalar in PECore: RunMac()
-sc_biguint<32> flex_sim::ProductSum(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
+sc_biguint<32> flex::ProductSum(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
   
   ac_int<8,false> arg_0_ac = arg_0.to_uint();
   ac_int<8,false> arg_1_ac = arg_1.to_uint();
@@ -358,7 +358,7 @@ sc_biguint<32> flex_sim::ProductSum(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
 
 // Function: AccumAdd
 // used to add accum_tmp to accumulate register
-sc_biguint<32> flex_sim::AccumAdd(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
+sc_biguint<32> flex::AccumAdd(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
 
   sc_bigint<32> arg_0_s = arg_0;
   sc_bigint<32> arg_1_s = arg_1;
@@ -379,7 +379,7 @@ sc_biguint<32> flex_sim::AccumAdd(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
 
 // Function: AccumAdd2
 // used to update values in accumulator vector registers
-sc_biguint<32> flex_sim::AccumAdd2(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
+sc_biguint<32> flex::AccumAdd2(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
 
   sc_bigint<32> arg_0_s = arg_0;
   sc_bigint<32> arg_1_s = arg_1;
@@ -400,7 +400,7 @@ sc_biguint<32> flex_sim::AccumAdd2(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
 
 // Function: PEActEadd
 // element-wise add, used in PE_Act
-sc_biguint<20> flex_sim::PEActEadd(sc_biguint<20> arg_0, sc_biguint<20> arg_1) {
+sc_biguint<20> flex::PEActEadd(sc_biguint<20> arg_0, sc_biguint<20> arg_1) {
 
   sc_bigint<20> arg_0_s = arg_0;
   sc_bigint<20> arg_1_s = arg_1;
@@ -422,7 +422,7 @@ sc_biguint<20> flex_sim::PEActEadd(sc_biguint<20> arg_0, sc_biguint<20> arg_1) {
 
 // Function : PEActEmul
 // element-wise multiplication, used in PE_Act
-sc_biguint<20> flex_sim::PEActEmul(sc_biguint<20> arg_0, sc_biguint<20> arg_1) {
+sc_biguint<20> flex::PEActEmul(sc_biguint<20> arg_0, sc_biguint<20> arg_1) {
 
   sc_bigint<20> arg_0_s = arg_0;
   sc_bigint<20> arg_1_s = arg_1;
@@ -447,7 +447,7 @@ sc_biguint<20> flex_sim::PEActEmul(sc_biguint<20> arg_0, sc_biguint<20> arg_1) {
 
 // Function: PEActSigmoid
 // element-wise Sigmoid funtion, used in PE_Act
-sc_biguint<20> flex_sim::PEActSigmoid(sc_biguint<20> arg_0) {
+sc_biguint<20> flex::PEActSigmoid(sc_biguint<20> arg_0) {
 
   sc_bigint<20> arg_0_s = arg_0;
   //std::cout << "arg_0_s" << arg_0_s << '\t';
@@ -486,7 +486,7 @@ sc_biguint<20> flex_sim::PEActSigmoid(sc_biguint<20> arg_0) {
 
 // Function: PEActTanh
 // element-wise Tanh funtion, used in PE_Act
-sc_biguint<20> flex_sim::PEActTanh(sc_biguint<20> arg_0) {
+sc_biguint<20> flex::PEActTanh(sc_biguint<20> arg_0) {
 
   sc_bigint<20> arg_0_s = arg_0;
 //  std::cout << "arg_0_s" << arg_0_s << '\t';
@@ -525,7 +525,7 @@ sc_biguint<20> flex_sim::PEActTanh(sc_biguint<20> arg_0) {
 
 // Function: PEActRelu
 // element-wise Relu, used in PE_Act
-sc_biguint<20> flex_sim::PEActRelu(sc_biguint<20> arg_0) {
+sc_biguint<20> flex::PEActRelu(sc_biguint<20> arg_0) {
 
   sc_bigint<20> arg_0_s = arg_0;
 
@@ -549,7 +549,7 @@ sc_biguint<20> flex_sim::PEActRelu(sc_biguint<20> arg_0) {
 
 // Function: PEActOneX
 // element-wise OneX, used in PE_Act
-sc_biguint<20> flex_sim::PEActOnex(sc_biguint<20> arg_0) {
+sc_biguint<20> flex::PEActOnex(sc_biguint<20> arg_0) {
 
   sc_bigint<20> arg_0_s = arg_0;
 
@@ -571,7 +571,7 @@ sc_biguint<20> flex_sim::PEActOnex(sc_biguint<20> arg_0) {
 // Function: Adptfloat2Fixed
 // transfer Adptfloat point type to fixed point type, used in PE_Act
 // Will implement another version for GB_LayerNorm
-sc_biguint<20> flex_sim::Adptfloat2Fixed(sc_biguint<8> arg_0, sc_biguint<3> arg_1) {
+sc_biguint<20> flex::Adptfloat2Fixed(sc_biguint<8> arg_0, sc_biguint<3> arg_1) {
 
   spec::ScalarType in = arg_0.to_uint();
   spec::AdpfloatBiasType bias = arg_1.to_uint(); 
@@ -594,7 +594,7 @@ sc_biguint<20> flex_sim::Adptfloat2Fixed(sc_biguint<8> arg_0, sc_biguint<3> arg_
 // Function: Fixed2Adaptfloat
 // transfer fixed point type to adaptive-float point type, used in PE_Act
 // will implement another version for GB_LayerNorm
-sc_biguint<8> flex_sim::Fixed2Adaptfloat(sc_biguint<20> arg_0, sc_biguint<3> arg_1) {
+sc_biguint<8> flex::Fixed2Adaptfloat(sc_biguint<20> arg_0, sc_biguint<3> arg_1) {
 
   sc_bigint<20> arg_0_s = arg_0;
   spec::ActScalarType in = arg_0_s.to_int();
