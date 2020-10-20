@@ -240,6 +240,7 @@ void AddChild_LayerReduce(Ila& m) {
   }
 
   { // instruction 3 ---- byte level reduce operation
+    // [Par2Seq]: FlexNLP perform pooling for the whole vector (16 bytes)
     auto instr = child.NewInstr("gb_layer_reduce_byte_level_op");
     auto state_byte = (state == GB_LAYER_REDUCE_CHILD_STATE_BYTE_OP);
 

@@ -118,11 +118,6 @@ Ila GetFlexIla(const std::string& model_name) {
   DefineStartGBLayerReduce(m);
   DefineStartGBZeroPadding(m);
 
-  // PE specific start instruction
-  DefineStartPERnnLayerSizing(m, 0, TOP_PE0_ADDR_MIN);
-  DefineStartPERnnLayerSizing(m, 1, TOP_PE1_ADDR_MIN);
-  DefineStartPERnnLayerSizing(m, 2, TOP_PE2_ADDR_MIN);
-  DefineStartPERnnLayerSizing(m, 3, TOP_PE3_ADDR_MIN);
 
   return m;
 }

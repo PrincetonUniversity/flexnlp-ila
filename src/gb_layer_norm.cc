@@ -246,6 +246,7 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
   }
 
   { // instr 2 ---- compute sum of the current vector
+    // [Par2Seq]: FlexNLP computes the sum of the vector in parallel
     auto instr = child.NewInstr("gb_layer_norm_sum_byte_op");
     auto state_sb = (state == GB_LAYER_NORM_CHILD_STATE_SUM_BYTE_OP);
 
@@ -385,6 +386,7 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
   }
 
   { // instr 5 ---- calculating norm for each byte in current vector
+    // [Par2Seq]: FlexNLP calculates the norm at vector level
     auto instr = child.NewInstr("gb_layer_norm_norm_byte_op");
     auto state_nb = (state == GB_LAYER_NORM_CHILD_STATE_NORM_BYTE_OP);
 
