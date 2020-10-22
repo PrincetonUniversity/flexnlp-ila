@@ -66,6 +66,7 @@ void AddChild_GB_Attention(Ila& m) {
   auto num_vector = m.state(GB_ATTENTION_CONFIG_REG_NUM_VECTOR_1);
   auto num_timestep = m.state(GB_ATTENTION_CONFIG_REG_NUM_TIMESTEP_1);
 
+  // These child states have corresponding states in HLS design.
   // declare child states
   auto sum_exp =
       child.NewBvState(GB_ATTENTION_SUM_EXP, GB_ATTENTION_SUM_EXP_BITWIDTH);

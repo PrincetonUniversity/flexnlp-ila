@@ -10,11 +10,11 @@ int main() {
   cin >> iterations;
 
   cout << "please input the template string below" << endl;
-  cout << "use # to replace the number, use Ctrl+D to enter EOF to stop" << endl;
+  cout << "use $ to replace the number, use Ctrl+D to enter EOF to stop" << endl;
 
   vector<string> t;
   string tmp;
-  while(getline(cin, tmp, '#')) {
+  while(getline(cin, tmp, '$')) {
     t.push_back(tmp);
   }
   int v;

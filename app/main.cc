@@ -45,6 +45,16 @@ int main(int argc, char* argv[]) {
     ILA_INFO << flex.instr(i);
   }
 
+  for (auto i = 0; i < flex.child_num(); i++) {
+      ILA_INFO << "";
+      ILA_INFO << "flex child No." << i << ": " << flex.child(i);
+      ILA_INFO << "child #instr: " << flex.child(i).instr_num();
+      ILA_INFO << "child #state: " << flex.child(i).state_num() - flex.state_num();
+      for (auto j = 0; j < flex.child(i).instr_num(); j++) {
+          ILA_INFO << flex.child(i).instr(j);
+      }
+  }
+
   // simulation generation
   ExportSysCSim(flex, "./sim_model");
 
