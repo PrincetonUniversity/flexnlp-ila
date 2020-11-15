@@ -43,6 +43,8 @@ namespace flex {
 
 void DefineTopInput(Ila& m);
 
+void DefineTopOutput(Ila& m);
+
 void DefineSharedState(Ila& m);
 
 void DefineGBConfigState(Ila& m);
@@ -57,6 +59,7 @@ void DefineGBConfigInstr(Ila& m);
 void DefinePEConfigInstr(Ila& m, const int& pe_idx, const uint64_t& base);
 
 void DefineGBCoreStore(Ila& m);
+void DefineGBCoreLoad(Ila& m);
 
 void DefinePEStore(Ila& m, const int& pe_idx, const uint64_t& base);
 

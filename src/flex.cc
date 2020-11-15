@@ -39,6 +39,7 @@ Ila GetFlexIla(const std::string& model_name) {
   // define interface (I/O) and architectural states
   //
   DefineTopInput(m);
+  DefineTopOutput(m);
 
   DefineSharedState(m);
 
@@ -91,6 +92,8 @@ Ila GetFlexIla(const std::string& model_name) {
   // store instructions
   // This instruction have conflicts with other buffer write instructions.
   DefineGBCoreStore(m);
+
+  DefineGBCoreLoad(m);
 
   // define PE core store instructions for 4 PE cores
   // update: change the PECoreStore to PEStore to include the store instruction

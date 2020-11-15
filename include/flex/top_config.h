@@ -110,6 +110,24 @@ namespace flex {
 #define TOP_PE3_ADDR_MIN (TOP_ADDR_BASE + 0x04000000)
 #define TOP_PE3_ADDR_MAX (TOP_ADDR_BASE + 0x04FFFFFF)
 
+// TOP OUTPUT
+#define TOP_DATA_OUT_0 "data_out_0"
+#define TOP_DATA_OUT_1 "data_out_1"
+#define TOP_DATA_OUT_2 "data_out_2"
+#define TOP_DATA_OUT_3 "data_out_3"
+#define TOP_DATA_OUT_4 "data_out_4"
+#define TOP_DATA_OUT_5 "data_out_5"
+#define TOP_DATA_OUT_6 "data_out_6"
+#define TOP_DATA_OUT_7 "data_out_7"
+#define TOP_DATA_OUT_8 "data_out_8"
+#define TOP_DATA_OUT_9 "data_out_9"
+#define TOP_DATA_OUT_10 "data_out_10"
+#define TOP_DATA_OUT_11 "data_out_11"
+#define TOP_DATA_OUT_12 "data_out_12"
+#define TOP_DATA_OUT_13 "data_out_13"
+#define TOP_DATA_OUT_14 "data_out_14"
+#define TOP_DATA_OUT_15 "data_out_15"
+
 } // namespace flex
 
 } // namespace ilang
