@@ -46,6 +46,10 @@ void DefineGBOtherState(Ila& m) {
   auto gb_core_small_buffer =
       m.NewMemState(GB_CORE_SMALL_BUFFER, TOP_ADDR_IN_WIDTH, TOP_DATA_IN_WIDTH);
   gb_core_small_buffer.SetEntryNum(GB_CORE_SMALL_BUFFER_SIZE);
+
+
+  // create a helper memory for storing output
+  m.NewMemState("VIR_OUTPUT_MEM", TOP_ADDR_IN_WIDTH, TOP_DATA_IN_WIDTH);
 }
 
 } // namespace flex

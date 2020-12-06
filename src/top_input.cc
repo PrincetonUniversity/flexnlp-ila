@@ -52,6 +52,26 @@ void DefineTopInput(Ila& m) {
   m.NewBvInput(TOP_DATA_IN_15, TOP_DATA_IN_WIDTH);
 }
 
+// add ports for reading data
+void DefineTopOutput(Ila& m) {
+  m.NewBvState(TOP_DATA_OUT_0, TOP_DATA_IN_WIDTH);
+  m.NewBvState(TOP_DATA_OUT_1, TOP_DATA_IN_WIDTH);
+  m.NewBvState(TOP_DATA_OUT_2, TOP_DATA_IN_WIDTH);
+  m.NewBvState(TOP_DATA_OUT_3, TOP_DATA_IN_WIDTH);
+  m.NewBvState(TOP_DATA_OUT_4, TOP_DATA_IN_WIDTH);
+  m.NewBvState(TOP_DATA_OUT_5, TOP_DATA_IN_WIDTH);
+  m.NewBvState(TOP_DATA_OUT_6, TOP_DATA_IN_WIDTH);
+  m.NewBvState(TOP_DATA_OUT_7, TOP_DATA_IN_WIDTH);
+  m.NewBvState(TOP_DATA_OUT_8, TOP_DATA_IN_WIDTH);
+  m.NewBvState(TOP_DATA_OUT_9, TOP_DATA_IN_WIDTH);
+  m.NewBvState(TOP_DATA_OUT_10, TOP_DATA_IN_WIDTH);
+  m.NewBvState(TOP_DATA_OUT_11, TOP_DATA_IN_WIDTH);
+  m.NewBvState(TOP_DATA_OUT_12, TOP_DATA_IN_WIDTH);
+  m.NewBvState(TOP_DATA_OUT_13, TOP_DATA_IN_WIDTH);
+  m.NewBvState(TOP_DATA_OUT_14, TOP_DATA_IN_WIDTH);
+  m.NewBvState(TOP_DATA_OUT_15, TOP_DATA_IN_WIDTH);
+}
+
 } // namespace flex
 
 } // namespace ilang
