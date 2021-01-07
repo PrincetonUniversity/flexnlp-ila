@@ -134,7 +134,10 @@ void AddChild_ZeroPadding(Ila& m) {
     auto next_state = BvConst(GB_ZERO_PADDING_CHILD_STATE_VECTOR,
                               GB_ZERO_PADDING_CHILD_STATE_BITWIDTH);
 
-    instr.SetUpdate(start_addr, start_addr + start_addr_offset);
+    // updated start address should not include previous value
+    // instr.SetUpdate(start_addr, start_addr + start_addr_offset);
+    instr.SetUpdate(start_addr, start_addr_offset);
+
     instr.SetUpdate(cntr_vector,
                     BvConst(0, GB_ZERO_PADDING_VECTOR_CNTR_BITWIDTH));
     instr.SetUpdate(cntr_timestep, cntr_timestep + 1);
