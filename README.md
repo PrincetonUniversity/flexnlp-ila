@@ -1,6 +1,6 @@
-# Instruction-Level Abstraction (ILA) of FlexNLP
+# Instruction-Level Abstraction (ILA) of FlexASR (Former Name: FlexNLP)
 
-This is the ILA model of the [FlexNLP](https://github.com/ttambe/FlexNLP) accelerator (all rights reserved - Harvard University). 
+This is the ILA model of the [FlexASR](https://github.com/harvard-acc/FlexASR) accelerator (all rights reserved - Harvard University). 
 
 ## Directory Structure
 
