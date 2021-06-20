@@ -320,7 +320,9 @@ void AddChild_GB_Attention(Ila& m) {
     instr.SetDecode(child_valid & state_bmm_next);
 
     auto is_end_vector = (vector_cntr >= num_vector - 1);
-    auto is_end_timestep = (timestep_cntr >= num_timestep - 16);
+    //auto is_end_timestep = (timestep_cntr >= num_timestep - 16);
+    //Fix: the num_timestep may be smaller than 16, thus not suitable for unsigned op
+    auto is_end_timestep = (timestep_cntr + 16 >= num_timestep);
 
     auto vector_cntr_next =
         Ite(bmm_cntr == 0,
@@ -461,7 +463,10 @@ void AddChild_GB_Attention(Ila& m) {
 
     // constrol state updates
     auto is_end1 = (softmax_cntr >= GB_ATTENTION_VECTOR_NUM - 1);
-    auto is_end2 = (timestep_cntr >= num_timestep - 16);
+    // auto is_end2 = (timestep_cntr >= num_timestep - 16);
+    // Same fix here, num_timestep may smaller than 16, thus not suitable 
+    // for unsigned operations
+    auto is_end2 = (timestep_cntr + 16 >= num_timestep);
 
     auto softmax_cntr_next =
         Ite(is_end1, BvConst(0, GB_ATTENTION_SOFTMAX_CNTR_BITWIDTH),
@@ -558,7 +563,8 @@ void AddChild_GB_Attention(Ila& m) {
 
     // constrol state updates
     auto is_end1 = (softmax_cntr >= GB_ATTENTION_VECTOR_NUM - 1);
-    auto is_end2 = (timestep_cntr >= num_timestep - 16);
+    // auto is_end2 = (timestep_cntr >= num_timestep - 16);
+    auto is_end2 = (timestep_cntr + 16 >= num_timestep);
 
     auto softmax_cntr_next =
         Ite(is_end1, BvConst(0, GB_ATTENTION_SOFTMAX_CNTR_BITWIDTH),
@@ -795,7 +801,8 @@ void AddChild_GB_Attention(Ila& m) {
     instr.SetUpdate(mem_small, mem_small_next);
 
     // control state update
-    auto is_end = (timestep_cntr >= num_timestep - 16);
+    //auto is_end = (timestep_cntr >= num_timestep - 16);
+    auto is_end = (timestep_cntr + 16 >= num_timestep);
     auto bmm_cntr_next =
         Ite(is_end, BvConst(1, GB_ATTENTION_BMM_CNTR_BITWIDTH), bmm_cntr);
     auto timestep_cntr_next =
