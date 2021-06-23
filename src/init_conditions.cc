@@ -45,6 +45,8 @@ void DefineInitConditons(Ila& m) {
   m.AddInit(m.state(PEGetVarName(1, CORE_STATE)) == PE_CORE_STATE_IDLE);
   m.AddInit(m.state(PEGetVarName(2, CORE_STATE)) == PE_CORE_STATE_IDLE);
   m.AddInit(m.state(PEGetVarName(3, CORE_STATE)) == PE_CORE_STATE_IDLE);
+  // initial condition for interrupt signal
+  m.AddInit(m.state(TOP_IRQ) == BvConst(0, TOP_IRQ_BITWIDTH));
 }
 
 } // namespace flex

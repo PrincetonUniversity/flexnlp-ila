@@ -306,6 +306,8 @@ void AddChild_LayerReduce(Ila& m) {
     instr.SetUpdate(m.state(GB_LAYER_REDUCE_CHILD_VALID_FLAG),
                     BvConst(GB_LAYER_REDUCE_INVALID,
                             GB_LAYER_REDUCE_CHILD_VALID_FLAG_BITWIDTH));
+    // add modeling of the interrupt signal
+    instr.SetUpdate(m.state(TOP_IRQ), BvConst(1, TOP_IRQ_BITWIDTH));
   }
 }
 

@@ -473,6 +473,11 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
                                 GB_LAYER_NORM_CHILD_VALID_FLAG_BITWIDTH),
                         BvConst(GB_LAYER_NORM_VALID,
                                 GB_LAYER_NORM_CHILD_VALID_FLAG_BITWIDTH)));
+    
+    // add modeling of the interrupt signal
+    instr.SetUpdate(m.state(TOP_IRQ),
+        Ite(is_done, BvConst(1, TOP_IRQ_BITWIDTH), 
+                     BvConst(0, TOP_IRQ_BITWIDTH)));
   }
 
   ILA_INFO << "gb_layernorm summary: #state: "

@@ -128,6 +128,10 @@ namespace flex {
 #define TOP_DATA_OUT_14 "data_out_14"
 #define TOP_DATA_OUT_15 "data_out_15"
 
+// TOP interrupt signal
+#define TOP_IRQ "top_interrupt_request"
+#define TOP_IRQ_BITWIDTH 1
+
 } // namespace flex
 
 } // namespace ilang

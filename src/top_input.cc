@@ -70,6 +70,9 @@ void DefineTopOutput(Ila& m) {
   m.NewBvState(TOP_DATA_OUT_13, TOP_DATA_IN_WIDTH);
   m.NewBvState(TOP_DATA_OUT_14, TOP_DATA_IN_WIDTH);
   m.NewBvState(TOP_DATA_OUT_15, TOP_DATA_IN_WIDTH);
+
+  // add state for top interrupt signal
+  m.NewBvState(TOP_IRQ, TOP_IRQ_BITWIDTH);
 }
 
 } // namespace flex

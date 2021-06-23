@@ -916,6 +916,9 @@ void AddChild_GB_Attention(Ila& m) {
     instr.SetUpdate(
         m.state(GB_ATTENTION_CHILD_VALID_FLAG),
         BvConst(GB_ATTENTION_INVALID, GB_ATTENTION_CHILD_VALID_FLAG_BITWIDTH));
+    
+    // add modeling of the interrupt signal
+    instr.SetUpdate(m.state(TOP_IRQ), BvConst(1, TOP_IRQ_BITWIDTH));
   }
 
   ILA_INFO << "gb_attention summary: #state: "

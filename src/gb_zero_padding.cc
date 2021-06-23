@@ -214,6 +214,10 @@ void AddChild_ZeroPadding(Ila& m) {
                                 GB_ZERO_PADDING_CHILD_VALID_FLAG_BITWIDTH),
                         BvConst(GB_ZERO_PADDING_FLAG_ON,
                                 GB_ZERO_PADDING_CHILD_VALID_FLAG_BITWIDTH)));
+    // add modeling of the interrupt signal
+    auto irq_next = 
+        Ite(done, BvConst(1, TOP_IRQ_BITWIDTH), BvConst(0, TOP_IRQ_BITWIDTH));
+    instr.SetUpdate(m.state(TOP_IRQ), irq_next);  
   }
 }
 

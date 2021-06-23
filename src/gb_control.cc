@@ -842,6 +842,11 @@ void AddChild_GB_Control(Ila& m) {
     instr.SetUpdate(state, next_state);
     instr.SetUpdate(flag_child, flag_child_next);
     instr.SetUpdate(cntr_timestep, cntr_timestep_tmp);
+
+    // add modeling of the interrupt signal
+    auto irq_next = 
+        Ite(done, BvConst(1, TOP_IRQ_BITWIDTH), BvConst(0, TOP_IRQ_BITWIDTH));
+    instr.SetUpdate(m.state(TOP_IRQ), irq_next);
   }
 }
 
