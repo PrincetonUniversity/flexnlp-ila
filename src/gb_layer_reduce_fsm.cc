@@ -75,32 +75,22 @@ void AddChild_LayerReduce(Ila& m) {
   // Parameters form the GB_CORE_MEM_MNGR_LARGE
   auto memory_min_addr_offset = Ite(
       (memory_index == 0),
-      Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_0),
-             BvConst(0, 4)),
+      ZExt(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_0), 20) << GB_CORE_SCALAR_BITWIDTH,
       Ite((memory_index == 1),
-          Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_1),
-                 BvConst(0, 4)),
+          ZExt(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_1), 20) << GB_CORE_SCALAR_BITWIDTH,
           Ite((memory_index == 2),
-              Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_2),
-                     BvConst(0, 4)),
-              Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3),
-                     BvConst(0, 4)))));
+              ZExt(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_2), 20) << GB_CORE_SCALAR_BITWIDTH,
+              ZExt(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3), 20) << GB_CORE_SCALAR_BITWIDTH)));
 
   // uncertain about the max addr offset for some memory managing instructions
   auto memory_max_addr_offset = Ite(
       (memory_index == 0),
-      Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_1),
-             BvConst(0, 4)) -
-          16,
+      ZExt(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_1)-1, 20) << GB_CORE_SCALAR_BITWIDTH,
       Ite((memory_index == 1),
-          Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_2),
-                 BvConst(0, 4)) -
-              16,
+          ZExt(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_2)-1, 20) << GB_CORE_SCALAR_BITWIDTH,
           Ite((memory_index == 2),
-              Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3),
-                     BvConst(0, 4)) -
-                  16,
-              BvConst(GB_CORE_STORE_LARGE_SIZE,
+              ZExt(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3)-1, 20) << GB_CORE_SCALAR_BITWIDTH,
+              BvConst(GB_CORE_STORE_LARGE_SIZE-1,
                       GB_CORE_STORE_LARGE_BITWIDTH))));
 
   // the size of the targeted memory block
@@ -162,33 +152,31 @@ void AddChild_LayerReduce(Ila& m) {
 
     instr.SetDecode(child_valid & state_ts);
 
-    auto num_vector_20 =
-        Concat(BvConst(0, 20 - num_vector.bit_width()), num_vector);
-    auto timestep_size = num_vector_20 * GB_CORE_SCALAR;
-    auto group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
+    auto num_vector_20 = ZExt(num_vector, 20);
+    auto timestep_size = num_vector_20 << GB_CORE_SCALAR_BITWIDTH;
+    auto group_size = timestep_size  << GB_CORE_SCALAR_BITWIDTH; // * GB_CORE_LARGE_NUM_BANKS;
 
-    auto cntr_timestep_20 =
-        Concat(BvConst(0, 20 - cntr_timestep.bit_width()), cntr_timestep);
+    auto cntr_timestep_20 = ZExt(cntr_timestep, 20);
     auto ts_index_0 = cntr_timestep_20;
     auto ts_index_1 = cntr_timestep_20 + 1;
     auto ts_index_out =
-        cntr_timestep_20 / BvConst(2, cntr_timestep_20.bit_width());
+        cntr_timestep_20 >> 1; // / BvConst(2, cntr_timestep_20.bit_width());
 
-    auto group_index_0 = ts_index_0 / BvConst(GB_CORE_SCALAR, 20);
-    auto group_offset_0 = URem(ts_index_0, BvConst(GB_CORE_SCALAR, 20));
+    auto group_index_0 = ts_index_0 >> GB_CORE_SCALAR_BITWIDTH;  // divide by GB_CORE_SCALAR
+    auto group_offset_0 = ZExt(ts_index_0(GB_CORE_SCALAR_BITWIDTH, 0), 20);
 
-    auto group_index_1 = ts_index_1 / BvConst(GB_CORE_SCALAR, 20);
-    auto group_offset_1 = URem(ts_index_1, BvConst(GB_CORE_SCALAR, 20));
+    auto group_index_1 = ts_index_1 >> GB_CORE_SCALAR_BITWIDTH;
+    auto group_offset_1 = ZExt(ts_index_1(GB_CORE_SCALAR_BITWIDTH, 0), 20);
 
-    auto group_index_out = ts_index_out / BvConst(GB_CORE_SCALAR, 20);
-    auto group_offset_out = URem(ts_index_out, BvConst(GB_CORE_SCALAR, 20));
+    auto group_index_out = ts_index_out >> GB_CORE_SCALAR_BITWIDTH;
+    auto group_offset_out = ZExt(ts_index_out(GB_CORE_SCALAR_BITWIDTH, 0), 20);
 
     auto base_addr_offset_0 =
-        group_index_0 * group_size + group_offset_0 * GB_CORE_SCALAR;
+        group_index_0 * group_size + group_offset_0 << GB_CORE_SCALAR_BITWIDTH;
     auto base_addr_offset_1 =
-        group_index_1 * group_size + group_offset_1 * GB_CORE_SCALAR;
+        group_index_1 * group_size + group_offset_1 << GB_CORE_SCALAR_BITWIDTH;
     auto base_addr_offset_out =
-        group_index_out * group_size + group_offset_out * GB_CORE_SCALAR;
+        group_index_out * group_size + group_offset_out << GB_CORE_SCALAR_BITWIDTH;
 
     auto base_addr_ts_0_next = base_addr_offset_0 + memory_min_addr_offset;
     auto base_addr_ts_1_next = base_addr_offset_1 + memory_min_addr_offset;
@@ -216,9 +204,8 @@ void AddChild_LayerReduce(Ila& m) {
 
     instr.SetDecode(child_valid & state_v);
 
-    auto cntr_vector_20 =
-        Concat(BvConst(0, 20 - cntr_vector.bit_width()), cntr_vector);
-    auto v_addr_offset = cntr_vector_20 * GROUPING_SCALAR * GB_CORE_SCALAR;
+    auto cntr_vector_20 = ZExt(cntr_vector, 20);
+    auto v_addr_offset = (cntr_vector_20 << GB_CORE_SCALAR_BITWIDTH) << GB_CORE_SCALAR_BITWIDTH;
 
     auto v_addr_0 = base_addr_ts_0 + v_addr_offset;
     auto v_addr_1 = base_addr_ts_1 + v_addr_offset;
@@ -246,20 +233,12 @@ void AddChild_LayerReduce(Ila& m) {
 
     instr.SetDecode(child_valid & state_byte);
 
-    auto cntr_byte_20 =
-        Concat(BvConst(0, 20 - cntr_byte.bit_width()), cntr_byte);
+    auto cntr_byte_20 = ZExt(cntr_byte, 20);
 
-    auto addr_0 =
-        Concat(BvConst(0, 32 - base_addr_v_0.bit_width()), base_addr_v_0) +
-        Concat(BvConst(0, 32 - cntr_byte_20.bit_width()), cntr_byte_20);
+    auto addr_0 = ZExt(base_addr_v_0, 32) + ZExt(cntr_byte_20, 32);
+    auto addr_1 = ZExt(base_addr_v_1, 32) + ZExt(cntr_byte_20, 32);
 
-    auto addr_1 =
-        Concat(BvConst(0, 32 - base_addr_v_1.bit_width()), base_addr_v_1) +
-        Concat(BvConst(0, 32 - cntr_byte_20.bit_width()), cntr_byte_20);
-
-    auto addr_out =
-        Concat(BvConst(0, 32 - base_addr_v_out.bit_width()), base_addr_v_out) +
-        Concat(BvConst(0, 32 - cntr_byte_20.bit_width()), cntr_byte_20);
+    auto addr_out = ZExt(base_addr_v_out, 32) + ZExt(cntr_byte_20, 32);
 
     auto mem = m.state(GB_CORE_LARGE_BUFFER);
     auto op_mode = m.state(GB_LAYER_REDUCE_CONFIG_REG_MODE);
