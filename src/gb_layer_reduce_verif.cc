@@ -73,73 +73,48 @@ void AddChild_LayerReduce(Ila& m) {
   auto num_timestep = m.state(GB_LAYER_REDUCE_CONFIG_REG_NUM_TIMESTEP_1);
 
   // Parameters form the GB_CORE_MEM_MNGR_LARGE
-  auto memory_min_addr_offset = Ite(
-      (memory_index == 0),
-      Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_0),
-             BvConst(0, 4)),
-      Ite((memory_index == 1),
-          Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_1),
-                 BvConst(0, 4)),
-          Ite((memory_index == 2),
-              Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_2),
-                     BvConst(0, 4)),
-              Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3),
-                     BvConst(0, 4)))));
-
-  // uncertain about the max addr offset for some memory managing instructions
-  auto memory_max_addr_offset = Ite(
-      (memory_index == 0),
-      Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_1),
-             BvConst(0, 4)) -
-          16,
-      Ite((memory_index == 1),
-          Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_2),
-                 BvConst(0, 4)) -
-              16,
-          Ite((memory_index == 2),
-              Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3),
-                     BvConst(0, 4)) -
-                  16,
-              BvConst(GB_CORE_STORE_LARGE_SIZE,
-                      GB_CORE_STORE_LARGE_BITWIDTH))));
-
-  // the size of the targeted memory block
-  // for now, I assume memory manager will not skip memory index, if
-  // max_addr_offset == 0, assume the max addr for the block is the largest
-  // address.
-  auto block_size =
-      Ite((memory_max_addr_offset == 0),
-          BvConst(GB_CORE_STORE_LARGE_SIZE, GB_CORE_STORE_LARGE_BITWIDTH) -
-              memory_min_addr_offset,
-          memory_max_addr_offset - memory_min_addr_offset);
+  auto memory_min_addr_offset = ZExt(
+    Ite(memory_index == 0,
+      m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_0),
+      Ite(memory_index == 1,
+        m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_1),
+        Ite(memory_index == 2,
+          m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_2),
+          m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3))
+    )), TOP_ADDR_IN_WIDTH) * GB_CORE_SCALAR;
 
   // child states
   // cntr & iteraions
-  auto cntr_timestep = child.NewBvState(GB_LAYER_REDUCE_TIMESTEP_CNTR,
-                                        GB_LAYER_REDUCE_TIMESTEP_CNTR_BITWIDTH);
-  auto cntr_vector = child.NewBvState(GB_LAYER_REDUCE_VECTOR_CNTR,
-                                      GB_LAYER_REDUCE_VECTOR_CNTR_BITWIDTH);
-  auto cntr_byte = child.NewBvState(GB_LAYER_REDUCE_BYTE_LEVEL_CNTR,
-                                    GB_LAYER_REDUCE_BYTE_LEVEL_CNTR_WIDTH);
+  auto ctr_ts_grp = child.NewBvState("gb_layer_reduce_tgrp_ctr", TOP_ADDR_IN_WIDTH);
+  auto ctr_ts = child.NewBvState("gb_layer_reduce_ts_ctr", TOP_ADDR_IN_WIDTH);
+  auto ctr_hs_vec = child.NewBvState("gb_layer_reduce_hvec_ctr", TOP_ADDR_IN_WIDTH);
+  auto ctr_hs = child.NewBvState("gb_layer_reduce_hs_ctr", TOP_ADDR_IN_WIDTH);
+
+  auto ts_max = child.NewBvState("gb_layer_reduce_ts_grp_max", TOP_ADDR_IN_WIDTH);
+  auto hs_vec_max = child.NewBvState("gb_layer_reduce_hs_vec_max", TOP_ADDR_IN_WIDTH);
+
   // addresss related state variables
   auto base_addr_ts_0 =
       child.NewBvState(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_0,
-                       GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_0_WIDTH);
+                       TOP_ADDR_IN_WIDTH);
   auto base_addr_ts_1 =
       child.NewBvState(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_1,
-                       GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_1_WIDTH);
+                       TOP_ADDR_IN_WIDTH);
   auto base_addr_ts_out =
       child.NewBvState(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_RESULT,
-                       GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_RESULT_WIDTH);
+                       TOP_ADDR_IN_WIDTH);
   auto base_addr_v_0 =
       child.NewBvState(GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_0,
-                       GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_0_WIDTH);
+                       TOP_ADDR_IN_WIDTH);
   auto base_addr_v_1 =
       child.NewBvState(GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_1,
-                       GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_1_WIDTH);
+                       TOP_ADDR_IN_WIDTH);
   auto base_addr_v_out =
       child.NewBvState(GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_RESULT,
-                       GB_LAYER_REDUCE_VECTOR_LEVEL_ADDR_RESULT_WIDTH);
+                       TOP_ADDR_IN_WIDTH);
+
+  auto ZERO = BvConst(0, TOP_ADDR_IN_WIDTH);
+  auto ONE = BvConst(1, TOP_ADDR_IN_WIDTH);
 
   { // instruction 0 ---- initiate all the parameters
     auto instr = child.NewInstr("gb_layer_reduce_prep");
@@ -147,8 +122,11 @@ void AddChild_LayerReduce(Ila& m) {
 
     instr.SetDecode(child_valid & state_prep);
 
-    instr.SetUpdate(cntr_timestep,
-                    BvConst(0, GB_LAYER_REDUCE_TIMESTEP_CNTR_BITWIDTH));
+    instr.SetUpdate(ts_max, ZExt(num_timestep, TOP_ADDR_IN_WIDTH));
+    instr.SetUpdate(hs_vec_max, ZExt(num_vector, TOP_ADDR_IN_WIDTH));
+
+    instr.SetUpdate(ctr_ts_grp, ZERO);
+    instr.SetUpdate(ctr_ts, ZERO);
 
     auto next_state = BvConst(GB_LAYER_REDUCE_CHILD_STATE_TIMESTEP_OP,
                               GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH);
@@ -162,31 +140,19 @@ void AddChild_LayerReduce(Ila& m) {
 
     instr.SetDecode(child_valid & state_ts);
 
-    auto num_vector_20 = ZExt(num_vector, 20);
-    auto timestep_size = num_vector_20 * GB_CORE_SCALAR;
+    auto timestep_size = hs_vec_max * GB_CORE_SCALAR;
     auto group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
 
-    auto cntr_timestep_20 = ZExt(cntr_timestep, 20);
-    auto ts_index_0 = cntr_timestep_20;
-    auto ts_index_1 = cntr_timestep_20 + 1;
-    auto ts_index_out =
-        cntr_timestep_20 / BvConst(2, cntr_timestep_20.bit_width());
-
-    auto group_index_0 = ts_index_0 / BvConst(GB_CORE_SCALAR, 20);
-    auto group_offset_0 = URem(ts_index_0, BvConst(GB_CORE_SCALAR, 20));
-
-    auto group_index_1 = ts_index_1 / BvConst(GB_CORE_SCALAR, 20);
-    auto group_offset_1 = URem(ts_index_1, BvConst(GB_CORE_SCALAR, 20));
-
-    auto group_index_out = ts_index_out / BvConst(GB_CORE_SCALAR, 20);
-    auto group_offset_out = URem(ts_index_out, BvConst(GB_CORE_SCALAR, 20));
+    auto carry = Ite(ctr_ts * 2 < GB_CORE_LARGE_NUM_BANKS, 
+                     ZERO, ONE);
+    auto rem = ctr_ts * 2 - carry * GB_CORE_LARGE_NUM_BANKS;
 
     auto base_addr_offset_0 =
-        group_index_0 * group_size + group_offset_0 * GB_CORE_SCALAR;
+        (ctr_ts_grp * 2 + carry) * group_size + rem * GB_CORE_SCALAR;
     auto base_addr_offset_1 =
-        group_index_1 * group_size + group_offset_1 * GB_CORE_SCALAR;
+        (ctr_ts_grp * 2 + carry) * group_size + (rem + 1) * GB_CORE_SCALAR;
     auto base_addr_offset_out =
-        group_index_out * group_size + group_offset_out * GB_CORE_SCALAR;
+        ctr_ts_grp * group_size + ctr_ts * GB_CORE_SCALAR;
 
     auto base_addr_ts_0_next = base_addr_offset_0 + memory_min_addr_offset;
     auto base_addr_ts_1_next = base_addr_offset_1 + memory_min_addr_offset;
@@ -197,9 +163,10 @@ void AddChild_LayerReduce(Ila& m) {
     instr.SetUpdate(base_addr_ts_1, base_addr_ts_1_next);
     instr.SetUpdate(base_addr_ts_out, base_addr_ts_out_next);
 
-    instr.SetUpdate(cntr_timestep, cntr_timestep + 2);
-    instr.SetUpdate(cntr_vector,
-                    BvConst(0, GB_LAYER_REDUCE_VECTOR_CNTR_BITWIDTH));
+    auto ts_end = (ctr_ts == GB_CORE_LARGE_NUM_BANKS - 1);
+    instr.SetUpdate(ctr_ts_grp, ctr_ts + Ite(ts_end, ONE, ZERO));
+    instr.SetUpdate(ctr_ts, Ite(ts_end, ZERO, ctr_ts + 1));
+    instr.SetUpdate(ctr_hs_vec, ZERO);
 
     // next state
     auto next_state = BvConst(GB_LAYER_REDUCE_CHILD_STATE_VECTOR_OP,
@@ -214,21 +181,18 @@ void AddChild_LayerReduce(Ila& m) {
 
     instr.SetDecode(child_valid & state_v);
 
-    auto cntr_vector_20 =
-        ZExt(cntr_vector, 20);
-    auto v_addr_offset = cntr_vector_20 * GROUPING_SCALAR * GB_CORE_SCALAR;
+    auto v_addr_offset = ctr_hs_vec * GB_CORE_LARGE_NUM_BANKS * GB_CORE_SCALAR;
 
     auto v_addr_0 = base_addr_ts_0 + v_addr_offset;
     auto v_addr_1 = base_addr_ts_1 + v_addr_offset;
     auto v_addr_out = base_addr_ts_out + v_addr_offset;
 
-    instr.SetUpdate(cntr_vector, cntr_vector + 1);
+    instr.SetUpdate(ctr_hs_vec, ctr_hs_vec + 1);
     instr.SetUpdate(base_addr_v_0, v_addr_0);
     instr.SetUpdate(base_addr_v_1, v_addr_1);
     instr.SetUpdate(base_addr_v_out, v_addr_out);
 
-    instr.SetUpdate(cntr_byte,
-                    BvConst(0, GB_LAYER_REDUCE_BYTE_LEVEL_CNTR_WIDTH));
+    instr.SetUpdate(ctr_hs, ZERO);
 
     // next state
     auto next_state = BvConst(GB_LAYER_REDUCE_CHILD_STATE_BYTE_OP,
@@ -244,11 +208,9 @@ void AddChild_LayerReduce(Ila& m) {
 
     instr.SetDecode(child_valid & state_byte);
 
-    auto cntr_byte_20 = ZExt(cntr_byte, 20);
-
-    auto addr_0 = ZExt(base_addr_v_0, 32) + ZExt(cntr_byte_20, 32);
-    auto addr_1 = ZExt(base_addr_v_1, 32) + ZExt(cntr_byte_20, 32);
-    auto addr_out = ZExt(base_addr_v_out, 32) + ZExt(cntr_byte_20, 32);
+    auto addr_0 = base_addr_v_0 + ctr_hs;
+    auto addr_1 = base_addr_v_1 + ctr_hs;
+    auto addr_out = base_addr_v_out + ctr_hs;
 
     auto mem = m.state(GB_CORE_LARGE_BUFFER);
     auto op_mode = m.state(GB_LAYER_REDUCE_CONFIG_REG_MODE);
@@ -264,20 +226,21 @@ void AddChild_LayerReduce(Ila& m) {
             GBAdpfloat_mean(data_0, data_1), GBAdpfloat_add(data_0, data_1)));
 
     instr.SetUpdate(mem, Store(mem, addr_out, result));
-    instr.SetUpdate(cntr_byte, cntr_byte + 1);
+    instr.SetUpdate(ctr_hs, ctr_hs);
 
-    auto timestep_done = (cntr_timestep > num_timestep - 2);
-    auto vector_done = (cntr_vector > num_vector - 1);
-    auto byte_done = (cntr_byte >= (GB_CORE_SCALAR - 1));
+    auto timesteps_done = (
+      ctr_ts_grp * 2 * GB_CORE_LARGE_NUM_BANKS + ctr_ts * 2 > ts_max - 2);
+    auto ts_done = (ctr_hs_vec > hs_vec_max - 1);
+    auto vec_done = (ctr_hs >= (GB_CORE_SCALAR - 1));
 
     auto next_state =
-        Ite(timestep_done & vector_done & byte_done,
+        Ite(timesteps_done & ts_done & vec_done,
             BvConst(GB_LAYER_REDUCE_CHILD_STATE_DONE,
                     GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH),
-            Ite(vector_done & byte_done,
+            Ite(ts_done & vec_done,
                 BvConst(GB_LAYER_REDUCE_CHILD_STATE_TIMESTEP_OP,
                         GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH),
-                Ite(byte_done,
+                Ite(vec_done,
                     BvConst(GB_LAYER_REDUCE_CHILD_STATE_VECTOR_OP,
                             GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH),
                     BvConst(GB_LAYER_REDUCE_CHILD_STATE_BYTE_OP,

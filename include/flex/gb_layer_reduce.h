@@ -107,7 +107,7 @@ namespace flex {
 
 #define GB_LAYER_REDUCE_TIMESTEP_LEVEL_CNTR                                    \
   "gb_layer_reduce_timestep_level_cntr"
-#define GB_LAYER_REDUCE_TIMESTEP_LEVEL_CNTR_WIDTH GB_CORE_SCALAR_BITWIDTH + 1
+// #define GB_LAYER_REDUCE_TIMESTEP_LEVEL_CNTR_WIDTH GB_CORE_SCALAR_BITWIDTH + 1
 
 #define GB_LAYER_REDUCE_GROUP_LEVEL_TS_NUM "gb_layer_reduce_group_level_ts_num"
 #define GB_LAYER_REDUCE_GROUP_LEVEL_TS_NUM_WIDTH                               \
