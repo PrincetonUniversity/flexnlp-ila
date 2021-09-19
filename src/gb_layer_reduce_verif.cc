@@ -90,7 +90,7 @@ void AddChild_LayerReduce(Ila& m) {
   auto ctr_hs_vec = child.NewBvState("gb_layer_reduce_hvec_ctr", TOP_ADDR_IN_WIDTH);
   auto ctr_hs = child.NewBvState("gb_layer_reduce_hs_ctr", TOP_ADDR_IN_WIDTH);
 
-  auto ts_max = child.NewBvState("gb_layer_reduce_ts_grp_max", TOP_ADDR_IN_WIDTH);
+  auto ts_max = child.NewBvState("gb_layer_reduce_ts_max", TOP_ADDR_IN_WIDTH);
   auto hs_vec_max = child.NewBvState("gb_layer_reduce_hs_vec_max", TOP_ADDR_IN_WIDTH);
 
   // addresss related state variables
@@ -164,8 +164,8 @@ void AddChild_LayerReduce(Ila& m) {
     instr.SetUpdate(base_addr_ts_out, base_addr_ts_out_next);
 
     auto ts_end = (ctr_ts == GB_CORE_LARGE_NUM_BANKS - 1);
-    instr.SetUpdate(ctr_ts_grp, ctr_ts + Ite(ts_end, ONE, ZERO));
     instr.SetUpdate(ctr_ts, Ite(ts_end, ZERO, ctr_ts + 1));
+    instr.SetUpdate(ctr_ts_grp, Ite(ts_end, ctr_ts_grp + 1, ZERO));
     instr.SetUpdate(ctr_hs_vec, ZERO);
 
     // next state
@@ -226,18 +226,18 @@ void AddChild_LayerReduce(Ila& m) {
             GBAdpfloat_mean(data_0, data_1), GBAdpfloat_add(data_0, data_1)));
 
     instr.SetUpdate(mem, Store(mem, addr_out, result));
-    instr.SetUpdate(ctr_hs, ctr_hs);
+    instr.SetUpdate(ctr_hs, ctr_hs + 1);
 
     auto timesteps_done = (
       ctr_ts_grp * 2 * GB_CORE_LARGE_NUM_BANKS + ctr_ts * 2 > ts_max - 2);
-    auto ts_done = (ctr_hs_vec > hs_vec_max - 1);
+    auto cur_ts_done = (ctr_hs_vec > hs_vec_max - 1);
     auto vec_done = (ctr_hs >= (GB_CORE_SCALAR - 1));
 
     auto next_state =
-        Ite(timesteps_done & ts_done & vec_done,
+        Ite(timesteps_done & cur_ts_done & vec_done,
             BvConst(GB_LAYER_REDUCE_CHILD_STATE_DONE,
                     GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH),
-            Ite(ts_done & vec_done,
+            Ite(cur_ts_done & vec_done,
                 BvConst(GB_LAYER_REDUCE_CHILD_STATE_TIMESTEP_OP,
                         GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH),
                 Ite(vec_done,
