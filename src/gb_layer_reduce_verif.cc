@@ -165,7 +165,7 @@ void AddChild_LayerReduce(Ila& m) {
 
     auto ts_end = (ctr_ts == GB_CORE_LARGE_NUM_BANKS - 1);
     instr.SetUpdate(ctr_ts, Ite(ts_end, ZERO, ctr_ts + 1));
-    instr.SetUpdate(ctr_ts_grp, Ite(ts_end, ctr_ts_grp + 1, ZERO));
+    instr.SetUpdate(ctr_ts_grp, Ite(ts_end, ctr_ts_grp + 1, ctr_ts_grp));
     instr.SetUpdate(ctr_hs_vec, ZERO);
 
     // next state
