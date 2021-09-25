@@ -53,6 +53,12 @@ sc_biguint<32> flex::PECoreAccumOverflowCheck(sc_biguint<32> arg_0) {
   return arg_0;
 }
 
+sc_biguint<20> flex::PECoreAccum2ActReg(sc_biguint<32> arg_0) {
+  sc_bigint<32> arg_0_s = arg_0;
+  sc_bigint<20> result = arg_0.to_int();
+  return result;
+}
+
 sc_biguint<32> flex::ProductSum(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
   // used to calculate the product of two numbers
   sc_bigint<8> arg_0_s = arg_0;
