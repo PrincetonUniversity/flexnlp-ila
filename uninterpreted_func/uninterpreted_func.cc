@@ -143,7 +143,6 @@ sc_biguint<8> flex::GBAttentionCompress(sc_biguint<32> arg_0, sc_biguint<3> arg_
   return result;
 }
 
-
 // GBNormAdd used in LayerNorm
 sc_biguint<24> flex::GBNormAdd_24_20(sc_biguint<24> arg_0, sc_biguint<20> arg_1) {
   sc_bigint<24> arg_0_s = arg_0;
@@ -608,8 +607,10 @@ sc_biguint<8> flex::Fixed2Adaptfloat(sc_biguint<20> arg_0, sc_biguint<3> arg_1) 
   sc_biguint<8> result = out_tmp.to_uint();
 
   //std::cout << dec << "No." << counter << " " << "PEFixed2Adpfloat: ";
-  //std::cout << hex << "arg_0: " << arg_0 << '\t' << "arg_1: " << arg_1 << '\t';
-  //std::cout << "result: " << result << std::endl;
+  // std::cout << hex << "arg_0: " << arg_0 << '\t' << "arg_1: " << arg_1 << '\t';
+  // std::cout << dec << "input float: " << arg_0_s.to_int() << '\t';
+  // std::cout << hex << "result: " << result  << '\t';//<< std::endl;
+  // std::cout << dec << "float: " << out_adpfloat.to_float(bias) << std::endl;
   counter++;
   return result;
 }
