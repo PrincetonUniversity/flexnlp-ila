@@ -10,7 +10,9 @@
 
 // uninterpreted functions used in LayerReduce
 sc_biguint<8> flex::GBAdpfloat_max(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
-  sc_bigint<8> result = (arg_0.to_int() > arg_1.to_int()) ? arg_0 : arg_1;
+  sc_bigint<8> arg_0_s = arg_0;
+  sc_bigint<8> arg_1_s = arg_1;
+  sc_bigint<8> result = (arg_0_s > arg_1_s) ? arg_0 : arg_1;
   return result;
 }
 
@@ -132,7 +134,9 @@ sc_biguint<20> flex::PEActOnex(sc_biguint<20> arg_0) {
 
 // uninterpreted function used in gb_layernorm
 sc_biguint<24> flex::GBNormAdd_24_20(sc_biguint<24> arg_0, sc_biguint<20> arg_1) {
-  sc_bigint<24> result = arg_0.to_int() + arg_1_s.to_int();
+  sc_bigint<24> arg_0_s = arg_0;
+  sc_bigint<20> arg_1_s = arg_1;
+  sc_bigint<24> result = arg_0_s.to_int() + arg_1_s.to_int();
   return result;
 }
 
@@ -171,7 +175,9 @@ sc_biguint<32> flex::GBAttentionRSH(sc_biguint<32> arg_0, sc_biguint<32> arg_1) 
 }
 
 sc_biguint<32> flex::GBAttentionMax(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
-  return (arg_0.to_int() > arg_1.to_int()) ? arg_0 : arg_1;
+  sc_bigint<32> arg_0_s = arg_0;
+  sc_bigint<32> arg_1_s = arg_1;
+  return (arg_0_s.to_int() > arg_1_s.to_int()) ? arg_0 : arg_1;
 }
 
 sc_biguint<32> flex::GBAttentionSub(sc_biguint<32> arg_0, sc_biguint<32> arg_1) {
@@ -196,7 +202,8 @@ sc_biguint<32> flex::GBAttentionDiv(sc_biguint<32> arg_0, sc_biguint<32> arg_1) 
 
 sc_biguint<8> flex::GBAttentionCompress(sc_biguint<32> arg_0, sc_biguint<3> arg_1) {
   // TODO: check the gb attention compress
-  sc_bigint<8> result = arg_0.to_int();
+  sc_bigint<32> arg_0_s = arg_0;
+  sc_bigint<8> result = arg_0_s.to_int();
   return result;
 }
 
