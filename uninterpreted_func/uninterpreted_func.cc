@@ -131,7 +131,7 @@ sc_biguint<32> flex::GBAttentionDiv(sc_biguint<32> arg_0, sc_biguint<32> arg_1) 
 sc_biguint<8> flex::GBAttentionCompress(sc_biguint<32> arg_0, sc_biguint<3> arg_1) {
   sc_bigint<32> arg_0_s = arg_0;
 
-  AdpfloatType<8,3> tmp;
+  AdpfloatType<spec::kAdpfloatWordWidth,spec::kAdpfloatExpWidth> tmp;
   NVINTW(26) reduce = arg_0_s.to_int();
   spec::AdpfloatBiasType adpbias = arg_1.to_uint();
   tmp.set_value_fixed<26, spec::kAttentionNumFrac>(reduce, adpbias);
@@ -345,8 +345,8 @@ sc_biguint<32> flex::ProductSum(sc_biguint<8> arg_0, sc_biguint<8> arg_1) {
   spec::ScalarType in_1 = arg_0_ac;
   spec::ScalarType in_2 = arg_1_ac;
 
-  AdpfloatType<8,3> in_1_adpfloat(in_1);
-  AdpfloatType<8,3> in_2_adpfloat(in_2);
+  AdpfloatType<spec::kAdpfloatWordWidth,spec::kAdpfloatExpWidth> in_1_adpfloat(in_1);
+  AdpfloatType<spec::kAdpfloatWordWidth,spec::kAdpfloatExpWidth> in_2_adpfloat(in_2);
   spec::AccumScalarType acc_tmp;
   adpfloat_mul(in_1_adpfloat, in_2_adpfloat, acc_tmp);
 
