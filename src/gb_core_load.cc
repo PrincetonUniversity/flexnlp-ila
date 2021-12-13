@@ -66,22 +66,22 @@ void DefineGBCoreLoad(Ila& m) {
     auto vir_mem = m.state("VIR_OUTPUT_MEM");
     auto vir_mem_next = vir_mem;
     
-    vir_mem_next = Store(vir_mem_next, base_addr+0, Load(mem, base_addr+0));
-    vir_mem_next = Store(vir_mem_next, base_addr+1, Load(mem, base_addr+1));
-    vir_mem_next = Store(vir_mem_next, base_addr+2, Load(mem, base_addr+2));
-    vir_mem_next = Store(vir_mem_next, base_addr+3, Load(mem, base_addr+3));
-    vir_mem_next = Store(vir_mem_next, base_addr+4, Load(mem, base_addr+4));
-    vir_mem_next = Store(vir_mem_next, base_addr+5, Load(mem, base_addr+5));
-    vir_mem_next = Store(vir_mem_next, base_addr+6, Load(mem, base_addr+6));
-    vir_mem_next = Store(vir_mem_next, base_addr+7, Load(mem, base_addr+7));
-    vir_mem_next = Store(vir_mem_next, base_addr+8, Load(mem, base_addr+8));
-    vir_mem_next = Store(vir_mem_next, base_addr+9, Load(mem, base_addr+9));
-    vir_mem_next = Store(vir_mem_next, base_addr+10, Load(mem, base_addr+10));
-    vir_mem_next = Store(vir_mem_next, base_addr+11, Load(mem, base_addr+11));
-    vir_mem_next = Store(vir_mem_next, base_addr+12, Load(mem, base_addr+12));
-    vir_mem_next = Store(vir_mem_next, base_addr+13, Load(mem, base_addr+13));
-    vir_mem_next = Store(vir_mem_next, base_addr+14, Load(mem, base_addr+14));
-    vir_mem_next = Store(vir_mem_next, base_addr+15, Load(mem, base_addr+15));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+0, Load(mem, base_addr+0));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+1, Load(mem, base_addr+1));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+2, Load(mem, base_addr+2));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+3, Load(mem, base_addr+3));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+4, Load(mem, base_addr+4));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+5, Load(mem, base_addr+5));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+6, Load(mem, base_addr+6));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+7, Load(mem, base_addr+7));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+8, Load(mem, base_addr+8));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+9, Load(mem, base_addr+9));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+10, Load(mem, base_addr+10));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+11, Load(mem, base_addr+11));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+12, Load(mem, base_addr+12));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+13, Load(mem, base_addr+13));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+14, Load(mem, base_addr+14));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+15, Load(mem, base_addr+15));
 
     instr.SetUpdate(vir_mem, vir_mem_next);
   }
@@ -120,22 +120,22 @@ void DefineGBCoreLoad(Ila& m) {
     auto vir_mem = m.state("VIR_OUTPUT_MEM");
     auto vir_mem_next = vir_mem;
     
-    vir_mem_next = Store(vir_mem_next, base_addr+0, Load(mem, base_addr+0));
-    vir_mem_next = Store(vir_mem_next, base_addr+1, Load(mem, base_addr+1));
-    vir_mem_next = Store(vir_mem_next, base_addr+2, Load(mem, base_addr+2));
-    vir_mem_next = Store(vir_mem_next, base_addr+3, Load(mem, base_addr+3));
-    vir_mem_next = Store(vir_mem_next, base_addr+4, Load(mem, base_addr+4));
-    vir_mem_next = Store(vir_mem_next, base_addr+5, Load(mem, base_addr+5));
-    vir_mem_next = Store(vir_mem_next, base_addr+6, Load(mem, base_addr+6));
-    vir_mem_next = Store(vir_mem_next, base_addr+7, Load(mem, base_addr+7));
-    vir_mem_next = Store(vir_mem_next, base_addr+8, Load(mem, base_addr+8));
-    vir_mem_next = Store(vir_mem_next, base_addr+9, Load(mem, base_addr+9));
-    vir_mem_next = Store(vir_mem_next, base_addr+10, Load(mem, base_addr+10));
-    vir_mem_next = Store(vir_mem_next, base_addr+11, Load(mem, base_addr+11));
-    vir_mem_next = Store(vir_mem_next, base_addr+12, Load(mem, base_addr+12));
-    vir_mem_next = Store(vir_mem_next, base_addr+13, Load(mem, base_addr+13));
-    vir_mem_next = Store(vir_mem_next, base_addr+14, Load(mem, base_addr+14));
-    vir_mem_next = Store(vir_mem_next, base_addr+15, Load(mem, base_addr+15));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+0, Load(mem, base_addr+0));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+1, Load(mem, base_addr+1));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+2, Load(mem, base_addr+2));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+3, Load(mem, base_addr+3));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+4, Load(mem, base_addr+4));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+5, Load(mem, base_addr+5));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+6, Load(mem, base_addr+6));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+7, Load(mem, base_addr+7));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+8, Load(mem, base_addr+8));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+9, Load(mem, base_addr+9));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+10, Load(mem, base_addr+10));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+11, Load(mem, base_addr+11));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+12, Load(mem, base_addr+12));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+13, Load(mem, base_addr+13));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+14, Load(mem, base_addr+14));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+15, Load(mem, base_addr+15));
 
     instr.SetUpdate(vir_mem, vir_mem_next);
   }
