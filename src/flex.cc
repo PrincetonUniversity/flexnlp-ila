@@ -94,7 +94,6 @@ Ila GetFlexIla(const std::string& model_name) {
   DefineGBCoreStore(m);
 
   DefineGBCoreLoad(m);
-
   // define PE core store instructions for 4 PE cores
   // update: change the PECoreStore to PEStore to include the store instruction
   // for Act buffer
@@ -113,6 +112,12 @@ Ila GetFlexIla(const std::string& model_name) {
   DefinePEAct(m, 1, TOP_PE1_ADDR_MIN);
   DefinePEAct(m, 2, TOP_PE2_ADDR_MIN);
   DefinePEAct(m, 3, TOP_PE3_ADDR_MIN);
+
+  // Define PE Act Buffer Load instructions
+  DefinePEActLoad(m, 0, TOP_PE0_ADDR_MIN);
+  DefinePEActLoad(m, 1, TOP_PE1_ADDR_MIN);
+  DefinePEActLoad(m, 2, TOP_PE2_ADDR_MIN);
+  DefinePEActLoad(m, 3, TOP_PE3_ADDR_MIN);
 
   // GB specific start instructions
   DefineStartGBAttention(m);

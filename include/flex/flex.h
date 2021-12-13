@@ -66,6 +66,8 @@ void DefinePEStore(Ila& m, const int& pe_idx, const uint64_t& base);
 void DefinePECore(Ila& m, const int& pe_idx, const uint64_t& base);
 void DefinePEAct(Ila& m, const int& pe_idx, const uint64_t& base);
 
+void DefinePEActLoad(Ila& m, const int& pe_idx, const uint64_t& base);
+
 void DefineStartGBAttention(Ila& m);
 void DefineStartGBControl(Ila& m);
 void DefineStartGBLayerNorm(Ila& m);

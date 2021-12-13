@@ -25,12 +25,13 @@
 // File: gb_core_load.cc
 
 #include <flex/flex.h>
+#include <flex/pe_config.h>
 
 namespace ilang{
 namespace flex{
 
 void DefineGBCoreLoad(Ila& m) {
-
+  
   { // instruction for reading data from GB large buffer
     auto instr = m.NewInstr("GB_CORE_LOAD_LARGE");
     // decode condition
@@ -117,6 +118,69 @@ void DefineGBCoreLoad(Ila& m) {
     instr.SetUpdate(m.state(TOP_DATA_OUT_14), Load(mem, base_addr + 14));
     instr.SetUpdate(m.state(TOP_DATA_OUT_15), Load(mem, base_addr + 15));
 
+    auto vir_mem = m.state("VIR_OUTPUT_MEM");
+    auto vir_mem_next = vir_mem;
+    
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+0, Load(mem, base_addr+0));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+1, Load(mem, base_addr+1));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+2, Load(mem, base_addr+2));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+3, Load(mem, base_addr+3));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+4, Load(mem, base_addr+4));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+5, Load(mem, base_addr+5));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+6, Load(mem, base_addr+6));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+7, Load(mem, base_addr+7));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+8, Load(mem, base_addr+8));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+9, Load(mem, base_addr+9));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+10, Load(mem, base_addr+10));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+11, Load(mem, base_addr+11));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+12, Load(mem, base_addr+12));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+13, Load(mem, base_addr+13));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+14, Load(mem, base_addr+14));
+    vir_mem_next = Store(vir_mem_next, m.input(TOP_ADDR_IN)+15, Load(mem, base_addr+15));
+
+    instr.SetUpdate(vir_mem, vir_mem_next);
+  }
+
+}
+
+void DefinePEActLoad(Ila& m, const int& pe_idx, const uint64_t& base) {
+  // instruction for reading data out from the Act buffer
+  {
+    auto instr = m.NewInstr(PEGetInstrName(pe_idx, "LOAD_ACT_BUFFER"));
+    auto act_buff_addr_base = TOP_ADDR_BASE + 
+                              pe_idx * TOP_PARTITION_OFFSET + 
+                              TOP_PE_ACT_BUF_BASE;
+    auto act_buff_addr_bound = TOP_ADDR_BASE + 
+                               pe_idx * TOP_PARTITION_OFFSET + 
+                               TOP_PE_ACT_BUF_BOUND;
+    auto is_valid_addr = (m.input(TOP_ADDR_IN) >= act_buff_addr_base) & 
+                          (m.input(TOP_ADDR_IN) <= act_buff_addr_bound);
+    auto is_read = (~m.input(TOP_IF_WR) & m.input(TOP_IF_RD));
+    
+    instr.SetDecode(is_valid_addr & is_read);
+
+    auto base_addr = m.input(TOP_ADDR_IN) - act_buff_addr_base;
+    auto mem = m.state(PEGetVarName(pe_idx, ACT_BUFFER));
+
+    // update the interface output port
+    instr.SetUpdate(m.state(TOP_DATA_OUT_0), Load(mem, base_addr + 0));
+    instr.SetUpdate(m.state(TOP_DATA_OUT_1), Load(mem, base_addr + 1));
+    instr.SetUpdate(m.state(TOP_DATA_OUT_2), Load(mem, base_addr + 2));
+    instr.SetUpdate(m.state(TOP_DATA_OUT_3), Load(mem, base_addr + 3));
+    instr.SetUpdate(m.state(TOP_DATA_OUT_4), Load(mem, base_addr + 4));
+    instr.SetUpdate(m.state(TOP_DATA_OUT_5), Load(mem, base_addr + 5));
+    instr.SetUpdate(m.state(TOP_DATA_OUT_6), Load(mem, base_addr + 6));
+    instr.SetUpdate(m.state(TOP_DATA_OUT_7), Load(mem, base_addr + 7));
+    instr.SetUpdate(m.state(TOP_DATA_OUT_8), Load(mem, base_addr + 8));
+    instr.SetUpdate(m.state(TOP_DATA_OUT_9), Load(mem, base_addr + 9));
+    instr.SetUpdate(m.state(TOP_DATA_OUT_10), Load(mem, base_addr + 10));
+    instr.SetUpdate(m.state(TOP_DATA_OUT_11), Load(mem, base_addr + 11));
+    instr.SetUpdate(m.state(TOP_DATA_OUT_12), Load(mem, base_addr + 12));
+    instr.SetUpdate(m.state(TOP_DATA_OUT_13), Load(mem, base_addr + 13));
+    instr.SetUpdate(m.state(TOP_DATA_OUT_14), Load(mem, base_addr + 14));
+    instr.SetUpdate(m.state(TOP_DATA_OUT_15), Load(mem, base_addr + 15));
+
+    // load and store the data into the virtual_memory
     auto vir_mem = m.state("VIR_OUTPUT_MEM");
     auto vir_mem_next = vir_mem;
     

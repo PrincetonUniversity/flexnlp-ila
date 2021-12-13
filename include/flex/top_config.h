@@ -87,7 +87,9 @@ namespace flex {
 // FIXME: The address is inconsistent with the specs.
 // The start address of GB buffer should be 0x33500000
 #define TOP_ADDR_BASE 0x33000000
+#define TOP_PARTITION_OFFSET 0x01000000
 
+// 
 // #define TOP_GB_ADDR_MIN (TOP_ADDR_BASE + 0x10000000) // 0x43000000
 // #define TOP_GB_ADDR_MAX (TOP_ADDR_BASE + 0x10FFFFFF)
 
@@ -109,6 +111,11 @@ namespace flex {
 #define TOP_PE3_ADDR_OFFSET 0x04000000
 #define TOP_PE3_ADDR_MIN (TOP_ADDR_BASE + 0x04000000)
 #define TOP_PE3_ADDR_MAX (TOP_ADDR_BASE + 0x04FFFFFF)
+
+// PE Act Buffer 
+#define TOP_PE_ACT_BUF_BASE 0x00900000
+#define TOP_PE_ACT_BUF_BOUND 0x009001F0
+
 
 // TOP OUTPUT
 #define TOP_DATA_OUT_0 "data_out_0"
