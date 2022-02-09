@@ -50,6 +50,9 @@ ExprRef GBGetSmallBufBase(Ila& m, const ExprRef& mem_small_index);
 
 void PECoreRunMacOut(Ila& m, const int& pe_idx, const int& idx);
 
+// helper function to get the base address of GBLarge buffer
+ExprRef GetGBLargeBaseAddr(const ExprRef& timestep_idx, const ExprRef& timestep_size);
+
 } // namespace flex
 
 } // namespace ilang

@@ -29,6 +29,7 @@
 // states instead of flag variables as decode conditions
 
 #include <flex/flex.h>
+#include <flex/util.h>
 #include <flex/uninterpreted_func.h>
 
 namespace ilang {
@@ -164,31 +165,36 @@ void AddChild_LayerReduce(Ila& m) {
 
     auto num_vector_20 =
         Concat(BvConst(0, 20 - num_vector.bit_width()), num_vector);
-    auto timestep_size = num_vector_20 * GB_CORE_SCALAR;
-    auto group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
+    // auto timestep_size = num_vector_20 * GB_CORE_SCALAR;
+    // auto group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
 
     auto cntr_timestep_20 =
         Concat(BvConst(0, 20 - cntr_timestep.bit_width()), cntr_timestep);
     auto ts_index_0 = cntr_timestep_20;
     auto ts_index_1 = cntr_timestep_20 + 1;
-    auto ts_index_out =
-        cntr_timestep_20 / BvConst(2, cntr_timestep_20.bit_width());
+    // auto ts_index_out =
+    //     cntr_timestep_20 / BvConst(2, cntr_timestep_20.bit_width());
+    auto ts_index_out = cntr_timestep_20 >> 1;
 
-    auto group_index_0 = ts_index_0 / BvConst(GB_CORE_SCALAR, 20);
-    auto group_offset_0 = URem(ts_index_0, BvConst(GB_CORE_SCALAR, 20));
+    // auto group_index_0 = ts_index_0 / BvConst(GB_CORE_SCALAR, 20);
+    // auto group_offset_0 = URem(ts_index_0, BvConst(GB_CORE_SCALAR, 20));
 
-    auto group_index_1 = ts_index_1 / BvConst(GB_CORE_SCALAR, 20);
-    auto group_offset_1 = URem(ts_index_1, BvConst(GB_CORE_SCALAR, 20));
+    // auto group_index_1 = ts_index_1 / BvConst(GB_CORE_SCALAR, 20);
+    // auto group_offset_1 = URem(ts_index_1, BvConst(GB_CORE_SCALAR, 20));
 
-    auto group_index_out = ts_index_out / BvConst(GB_CORE_SCALAR, 20);
-    auto group_offset_out = URem(ts_index_out, BvConst(GB_CORE_SCALAR, 20));
+    // auto group_index_out = ts_index_out / BvConst(GB_CORE_SCALAR, 20);
+    // auto group_offset_out = URem(ts_index_out, BvConst(GB_CORE_SCALAR, 20));
 
-    auto base_addr_offset_0 =
-        group_index_0 * group_size + group_offset_0 * GB_CORE_SCALAR;
-    auto base_addr_offset_1 =
-        group_index_1 * group_size + group_offset_1 * GB_CORE_SCALAR;
-    auto base_addr_offset_out =
-        group_index_out * group_size + group_offset_out * GB_CORE_SCALAR;
+    // auto base_addr_offset_0 =
+    //     group_index_0 * group_size + group_offset_0 * GB_CORE_SCALAR;
+    // auto base_addr_offset_1 =
+    //     group_index_1 * group_size + group_offset_1 * GB_CORE_SCALAR;
+    // auto base_addr_offset_out =
+    //     group_index_out * group_size + group_offset_out * GB_CORE_SCALAR;
+
+    auto base_addr_offset_0 = GetGBLargeBaseAddr(ts_index_0, num_vector_20);
+    auto base_addr_offset_1 = GetGBLargeBaseAddr(ts_index_1, num_vector_20);
+    auto base_addr_offset_out = GetGBLargeBaseAddr(ts_index_out, num_vector_20);
 
     auto base_addr_ts_0_next = base_addr_offset_0 + memory_min_addr_offset;
     auto base_addr_ts_1_next = base_addr_offset_1 + memory_min_addr_offset;
