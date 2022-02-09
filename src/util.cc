@@ -27,7 +27,7 @@
 #include <ilang/ilang++.h>
 #include <ilang/util/log.h>
 
-#include <flex/flex.h>
+#include <flex/pe_config.h>
 #include <flex/uninterpreted_func.h>
 #include <flex/util.h>
 
@@ -251,20 +251,6 @@ void PECoreRunMacOut(Ila& m, const int& pe_idx, const int& idx) {
     instr.SetUpdate(run_mac_cntr, run_mac_cntr + 1);
     instr.SetUpdate(run_mac_flag, run_mac_flag_next);
   }
-}
-
-// add a function to calculate the base address of GB Large given the timestep index
-ExprRef GetGBLargeBaseAddr(const ExprRef& timestep_idx, const ExprRef& num_vector) {
-    // assume the argument and return values are all 20-bit
-    // lower timestep idx is the URem of the timestep groups
-    auto lower_timestep_idx = Concat(BvConst(0, 16), Extract(timestep_idx, 3, 0));
-    // number of the timestep groups of 16
-    auto upper_timestep_idx = Concat(BvConst(0, 4), Extract(timestep_idx, 19, 4));
-    auto base_addr_offset = (
-        lower_timestep_idx + 
-        upper_timestep_idx * num_vector * GB_CORE_LARGE_NUM_BANKS
-    ) * GB_CORE_SCALAR;
-    return base_addr_offset;
 }
 
 } // namespace flex
