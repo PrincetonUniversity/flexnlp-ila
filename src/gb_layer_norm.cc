@@ -359,10 +359,7 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
                 m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_6))
          << 4) +
         counter_v_20 * GB_CORE_SCALAR;
-    // auto base_addr_beta_tmp =
-    //       Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_6),
-    //       BvConst(0, 4)) + counter_v_20 * GB_CORE_SCALAR;
-
+  
     auto counter_byte = child.state(GB_LAYER_NORM_CNTR_BYTE);
     auto base_addr_gamma =
         child.state(GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA);
