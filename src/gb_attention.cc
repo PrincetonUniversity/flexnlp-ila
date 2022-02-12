@@ -176,22 +176,12 @@ void AddChild_GB_Attention(Ila& m) {
                 Concat(m.state(GB_CORE_MEM_MNGR_LARGE_CONFIG_REG_BASE_LARGE_3),
                        BvConst(0, 4)))));
 
-    // // calculating the address for the large memory
-    auto num_vector_32 =
-        Concat(BvConst(0, 32 - num_vector.bit_width()), num_vector);
-    auto timestep_size = num_vector_32 * GB_CORE_SCALAR;
-    auto group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
-
-    auto group_index =
-        timestep_cntr / BvConst(GB_CORE_SCALAR, timestep_cntr.bit_width());
-    // auto group_offset = URem(timestep_cntr, BvConst(GB_CORE_SCALAR,
-    // timestep_cntr.bit_width()));
-    auto group_index_32 =
-        Concat(BvConst(0, 32 - group_index.bit_width()), group_index);
-    // auto group_offset_32 =
-    //       Concat(BvConst(0, 32 - group_offset.bit_width()), group_offset);
-
-    auto ts_base_addr_offset = group_index_32 * group_size;
+    auto ts_base_addr_offset = Concat(
+      BvConst(0, 12), 
+      GetGBLargeBaseAddr(
+        Concat(BvConst(0, 4), timestep_cntr), 
+        Concat(BvConst(0, 20-num_vector.bit_width()), num_vector)
+    ));
     auto ts_base_addr = Concat(BvConst(0, 32 - mem_large_base_enc.bit_width()),
                                mem_large_base_enc) +
                         ts_base_addr_offset;

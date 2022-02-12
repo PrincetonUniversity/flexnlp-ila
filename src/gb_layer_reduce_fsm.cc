@@ -72,6 +72,8 @@ void AddChild_LayerReduce(Ila& m) {
   auto num_vector = m.state(GB_LAYER_REDUCE_CONFIG_REG_NUM_VECTOR_1);
   auto num_timestep = m.state(GB_LAYER_REDUCE_CONFIG_REG_NUM_TIMESTEP_1);
 
+  auto op_mode = m.state(GB_LAYER_REDUCE_CONFIG_REG_MODE);
+
   // Parameters form the GB_CORE_MEM_MNGR_LARGE
   auto memory_min_addr_offset = Ite(
       (memory_index == 0),
@@ -164,31 +166,16 @@ void AddChild_LayerReduce(Ila& m) {
 
     auto num_vector_20 =
         Concat(BvConst(0, 20 - num_vector.bit_width()), num_vector);
-    auto timestep_size = num_vector_20 * GB_CORE_SCALAR;
-    auto group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
 
     auto cntr_timestep_20 =
         Concat(BvConst(0, 20 - cntr_timestep.bit_width()), cntr_timestep);
     auto ts_index_0 = cntr_timestep_20;
     auto ts_index_1 = cntr_timestep_20 + 1;
-    auto ts_index_out =
-        cntr_timestep_20 / BvConst(2, cntr_timestep_20.bit_width());
+    auto ts_index_out = cntr_timestep_20 >> 1;
 
-    auto group_index_0 = ts_index_0 / BvConst(GB_CORE_SCALAR, 20);
-    auto group_offset_0 = URem(ts_index_0, BvConst(GB_CORE_SCALAR, 20));
-
-    auto group_index_1 = ts_index_1 / BvConst(GB_CORE_SCALAR, 20);
-    auto group_offset_1 = URem(ts_index_1, BvConst(GB_CORE_SCALAR, 20));
-
-    auto group_index_out = ts_index_out / BvConst(GB_CORE_SCALAR, 20);
-    auto group_offset_out = URem(ts_index_out, BvConst(GB_CORE_SCALAR, 20));
-
-    auto base_addr_offset_0 =
-        group_index_0 * group_size + group_offset_0 * GB_CORE_SCALAR;
-    auto base_addr_offset_1 =
-        group_index_1 * group_size + group_offset_1 * GB_CORE_SCALAR;
-    auto base_addr_offset_out =
-        group_index_out * group_size + group_offset_out * GB_CORE_SCALAR;
+    auto base_addr_offset_0 = GetGBLargeBaseAddr(ts_index_0, num_vector_20);
+    auto base_addr_offset_1 = GetGBLargeBaseAddr(ts_index_1, num_vector_20);
+    auto base_addr_offset_out = GetGBLargeBaseAddr(ts_index_out, num_vector_20);
 
     auto base_addr_ts_0_next = base_addr_offset_0 + memory_min_addr_offset;
     auto base_addr_ts_1_next = base_addr_offset_1 + memory_min_addr_offset;
@@ -233,67 +220,117 @@ void AddChild_LayerReduce(Ila& m) {
                     BvConst(0, GB_LAYER_REDUCE_BYTE_LEVEL_CNTR_WIDTH));
 
     // next state
-    auto next_state = BvConst(GB_LAYER_REDUCE_CHILD_STATE_BYTE_OP,
+    auto next_state = BvConst(GB_LAYER_REDUCE_CHILD_STATE_VECTOR_REDUCE,
                               GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH);
 
     instr.SetUpdate(state, next_state);
   }
 
-  { // instruction 3 ---- byte level reduce operation
-    // [Par2Seq]: FlexNLP perform pooling for the whole vector (16 bytes)
-    auto instr = child.NewInstr("gb_layer_reduce_byte_level_op");
-    auto state_byte = (state == GB_LAYER_REDUCE_CHILD_STATE_BYTE_OP);
-
-    instr.SetDecode(child_valid & state_byte);
-
-    auto cntr_byte_20 =
-        Concat(BvConst(0, 20 - cntr_byte.bit_width()), cntr_byte);
-
-    auto addr_0 =
-        Concat(BvConst(0, 32 - base_addr_v_0.bit_width()), base_addr_v_0) +
-        Concat(BvConst(0, 32 - cntr_byte_20.bit_width()), cntr_byte_20);
-
-    auto addr_1 =
-        Concat(BvConst(0, 32 - base_addr_v_1.bit_width()), base_addr_v_1) +
-        Concat(BvConst(0, 32 - cntr_byte_20.bit_width()), cntr_byte_20);
-
-    auto addr_out =
-        Concat(BvConst(0, 32 - base_addr_v_out.bit_width()), base_addr_v_out) +
-        Concat(BvConst(0, 32 - cntr_byte_20.bit_width()), cntr_byte_20);
+  { // instruction 3 --- maxpooling operation for the given vector
+    auto instr = child.NewInstr("gb_layer_reduce_vector_max");
+    auto state_v = (state == GB_LAYER_REDUCE_CHILD_STATE_VECTOR_REDUCE &
+                    op_mode == GB_LAYER_REDUCE_OP_MAX);
+    instr.SetDecode(child_valid & state_v);
 
     auto mem = m.state(GB_CORE_LARGE_BUFFER);
-    auto op_mode = m.state(GB_LAYER_REDUCE_CONFIG_REG_MODE);
+    auto mem_next = mem;
 
-    auto data_0 = Load(mem, addr_0);
-    auto data_1 = Load(mem, addr_1);
+    // perform reduction on the vector level
+    for (auto i = 0; i < GB_CORE_SCALAR; i++) {
+        auto addr_0 = Concat(BvConst(0, 32 - base_addr_v_0.bit_width()), base_addr_v_0) + 
+                        BvConst(i, 32);
+        auto addr_1 = Concat(BvConst(0, 32 - base_addr_v_1.bit_width()), base_addr_v_1) + 
+                        BvConst(i, 32);
+        auto addr_out = Concat(BvConst(0, 32 - base_addr_v_out.bit_width()), base_addr_v_out) +
+                            BvConst(i, 32);
+        // reduce the value and store back into the large buffer
+        auto result = GBAdpfloat_max(Load(mem, addr_0), Load(mem, addr_1));
+        mem_next = Store(mem_next, addr_out, result);
+    }
 
-    // TODO: add pooling is not correct!
-    // update 05272020: use uninterpreted functions to implement the algorithms
-    auto result = Ite(
-        (op_mode == GB_LAYER_REDUCE_OP_MAX), GBAdpfloat_max(data_0, data_1),
-        Ite((op_mode == GB_LAYER_REDUCE_OP_MEAN),
-            GBAdpfloat_mean(data_0, data_1), GBAdpfloat_add(data_0, data_1)));
-
-    instr.SetUpdate(mem, Store(mem, addr_out, result));
-    instr.SetUpdate(cntr_byte, cntr_byte + 1);
-
+    instr.SetUpdate(mem, mem_next);
+    
     auto timestep_done = (cntr_timestep > num_timestep - 2);
     auto vector_done = (cntr_vector > num_vector - 1);
-    auto byte_done = (cntr_byte >= (GB_CORE_SCALAR - 1));
+    // next state logic
+    auto next_state = 
+        Ite(timestep_done & vector_done,
+            BvConst(GB_LAYER_REDUCE_CHILD_STATE_DONE, GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH),
+        Ite(vector_done,
+            BvConst(GB_LAYER_REDUCE_CHILD_STATE_TIMESTEP_OP, GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH),
+            BvConst(GB_LAYER_REDUCE_CHILD_STATE_VECTOR_OP, GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH)));
+    instr.SetUpdate(state, next_state);
+  }
 
-    auto next_state =
-        Ite(timestep_done & vector_done & byte_done,
-            BvConst(GB_LAYER_REDUCE_CHILD_STATE_DONE,
-                    GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH),
-            Ite(vector_done & byte_done,
-                BvConst(GB_LAYER_REDUCE_CHILD_STATE_TIMESTEP_OP,
-                        GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH),
-                Ite(byte_done,
-                    BvConst(GB_LAYER_REDUCE_CHILD_STATE_VECTOR_OP,
-                            GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH),
-                    BvConst(GB_LAYER_REDUCE_CHILD_STATE_BYTE_OP,
-                            GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH))));
+  { // instruction 4 --- meanpooling operation for the given vector
+    auto instr = child.NewInstr("gb_layer_reduce_vector_mean");
+    auto state_v = (state == GB_LAYER_REDUCE_CHILD_STATE_VECTOR_REDUCE &
+                    op_mode == GB_LAYER_REDUCE_OP_MEAN);
+    instr.SetDecode(child_valid & state_v);
 
+    auto mem = m.state(GB_CORE_LARGE_BUFFER);
+    auto mem_next = mem;
+
+    // perform reduction on the vector level
+    for (auto i = 0; i < GB_CORE_SCALAR; i++) {
+        auto addr_0 = Concat(BvConst(0, 32 - base_addr_v_0.bit_width()), base_addr_v_0) + 
+                        BvConst(i, 32);
+        auto addr_1 = Concat(BvConst(0, 32 - base_addr_v_1.bit_width()), base_addr_v_1) + 
+                        BvConst(i, 32);
+        auto addr_out = Concat(BvConst(0, 32 - base_addr_v_out.bit_width()), base_addr_v_out) +
+                            BvConst(i, 32);
+        // reduce the value and store back into the large buffer
+        auto result = GBAdpfloat_mean(Load(mem, addr_0), Load(mem, addr_1));
+        mem_next = Store(mem_next, addr_out, result);
+    }
+
+    instr.SetUpdate(mem, mem_next);
+    
+    auto timestep_done = (cntr_timestep > num_timestep - 2);
+    auto vector_done = (cntr_vector > num_vector - 1);
+    // next state logic
+    auto next_state = 
+        Ite(timestep_done & vector_done,
+            BvConst(GB_LAYER_REDUCE_CHILD_STATE_DONE, GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH),
+        Ite(vector_done,
+            BvConst(GB_LAYER_REDUCE_CHILD_STATE_TIMESTEP_OP, GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH),
+            BvConst(GB_LAYER_REDUCE_CHILD_STATE_VECTOR_OP, GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH)));
+    instr.SetUpdate(state, next_state);
+  }
+
+  { // instruction 5 --- add-pooling operation for the given vector
+    auto instr = child.NewInstr("gb_layer_reduce_vector_add");
+    auto state_v = (state == GB_LAYER_REDUCE_CHILD_STATE_VECTOR_REDUCE &
+                    op_mode == GB_LAYER_REDUCE_OP_ADD);
+    instr.SetDecode(child_valid & state_v);
+
+    auto mem = m.state(GB_CORE_LARGE_BUFFER);
+    auto mem_next = mem;
+
+    // perform reduction on the vector level
+    for (auto i = 0; i < GB_CORE_SCALAR; i++) {
+        auto addr_0 = Concat(BvConst(0, 32 - base_addr_v_0.bit_width()), base_addr_v_0) + 
+                        BvConst(i, 32);
+        auto addr_1 = Concat(BvConst(0, 32 - base_addr_v_1.bit_width()), base_addr_v_1) + 
+                        BvConst(i, 32);
+        auto addr_out = Concat(BvConst(0, 32 - base_addr_v_out.bit_width()), base_addr_v_out) +
+                            BvConst(i, 32);
+        // reduce the value and store back into the large buffer
+        auto result = GBAdpfloat_add(Load(mem, addr_0), Load(mem, addr_1));
+        mem_next = Store(mem_next, addr_out, result);
+    }
+
+    instr.SetUpdate(mem, mem_next);
+    
+    auto timestep_done = (cntr_timestep > num_timestep - 2);
+    auto vector_done = (cntr_vector > num_vector - 1);
+    // next state logic
+    auto next_state = 
+        Ite(timestep_done & vector_done,
+            BvConst(GB_LAYER_REDUCE_CHILD_STATE_DONE, GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH),
+        Ite(vector_done,
+            BvConst(GB_LAYER_REDUCE_CHILD_STATE_TIMESTEP_OP, GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH),
+            BvConst(GB_LAYER_REDUCE_CHILD_STATE_VECTOR_OP, GB_LAYER_REDUCE_CHILD_STATE_BITWIDTH)));
     instr.SetUpdate(state, next_state);
   }
 
