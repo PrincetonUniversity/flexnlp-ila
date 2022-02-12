@@ -118,24 +118,12 @@ void AddChild_ZeroPadding(Ila& m) {
                        BvConst(0, 4)))));
 
     auto num_vector_20 = Concat(BvConst(0, 12), num_vector);
-    auto timestep_size = num_vector_20 * GB_CORE_SCALAR;
-    auto group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
-
-    auto group_index = current_timestep / g_scalar;
-    auto group_offset = URem(current_timestep, g_scalar);
-
-    auto group_index_20 = Concat(BvConst(0, 4), group_index);
-    auto group_offset_20 = Concat(BvConst(0, 4), group_offset);
-
-    // udpate 05022020: The group offset should be multiplied by
-    // gb_core_scalar!!!
-    auto start_addr_offset =
-        group_index_20 * group_size + group_offset_20 * GB_CORE_SCALAR;
+    auto start_addr_offset = GetGBLargeBaseAddr(
+      Concat(BvConst(0, 4), current_timestep), num_vector_20) + memory_base_addr;
     auto next_state = BvConst(GB_ZERO_PADDING_CHILD_STATE_VECTOR,
                               GB_ZERO_PADDING_CHILD_STATE_BITWIDTH);
 
     // updated start address should not include previous value
-    // instr.SetUpdate(start_addr, start_addr + start_addr_offset);
     instr.SetUpdate(start_addr, start_addr_offset);
 
     instr.SetUpdate(cntr_vector,
@@ -172,22 +160,10 @@ void AddChild_ZeroPadding(Ila& m) {
                               GB_ZERO_PADDING_CHILD_STATE_BITWIDTH);
 
     auto mem_tmp = Store(mem, addr, zero);
-    mem_tmp = Store(mem_tmp, addr + 1, zero);
-    mem_tmp = Store(mem_tmp, addr + 2, zero);
-    mem_tmp = Store(mem_tmp, addr + 3, zero);
-    mem_tmp = Store(mem_tmp, addr + 4, zero);
-    mem_tmp = Store(mem_tmp, addr + 5, zero);
-    mem_tmp = Store(mem_tmp, addr + 6, zero);
-    mem_tmp = Store(mem_tmp, addr + 7, zero);
-    mem_tmp = Store(mem_tmp, addr + 8, zero);
-    mem_tmp = Store(mem_tmp, addr + 9, zero);
-    mem_tmp = Store(mem_tmp, addr + 10, zero);
-    mem_tmp = Store(mem_tmp, addr + 11, zero);
-    mem_tmp = Store(mem_tmp, addr + 12, zero);
-    mem_tmp = Store(mem_tmp, addr + 13, zero);
-    mem_tmp = Store(mem_tmp, addr + 14, zero);
-
-    instr.SetUpdate(mem, Store(mem_tmp, addr + 15, zero));
+    for (auto i = 0; i < CORE_SCALAR; i++) {
+      mem_tmp = Store(mem_tmp, addr+i, zero);
+    }
+    instr.SetUpdate(mem, mem_tmp);
     instr.SetUpdate(state, next_state);
   }
 

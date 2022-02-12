@@ -121,8 +121,6 @@ void AddChild_LayerReduce(Ila& m) {
                                         GB_LAYER_REDUCE_TIMESTEP_CNTR_BITWIDTH);
   auto cntr_vector = child.NewBvState(GB_LAYER_REDUCE_VECTOR_CNTR,
                                       GB_LAYER_REDUCE_VECTOR_CNTR_BITWIDTH);
-  auto cntr_byte = child.NewBvState(GB_LAYER_REDUCE_BYTE_LEVEL_CNTR,
-                                    GB_LAYER_REDUCE_BYTE_LEVEL_CNTR_WIDTH);
   // addresss related state variables
   auto base_addr_ts_0 =
       child.NewBvState(GB_LAYER_REDUCE_TIMESTEP_LEVEL_BASE_ADDR_0,
@@ -215,9 +213,6 @@ void AddChild_LayerReduce(Ila& m) {
     instr.SetUpdate(base_addr_v_0, v_addr_0);
     instr.SetUpdate(base_addr_v_1, v_addr_1);
     instr.SetUpdate(base_addr_v_out, v_addr_out);
-
-    instr.SetUpdate(cntr_byte,
-                    BvConst(0, GB_LAYER_REDUCE_BYTE_LEVEL_CNTR_WIDTH));
 
     // next state
     auto next_state = BvConst(GB_LAYER_REDUCE_CHILD_STATE_VECTOR_REDUCE,
