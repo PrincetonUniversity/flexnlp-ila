@@ -29,7 +29,6 @@
 // states instead of flag variables as decode conditions
 
 #include <flex/flex.h>
-#include <flex/util.h>
 #include <flex/uninterpreted_func.h>
 
 namespace ilang {

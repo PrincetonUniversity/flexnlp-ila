@@ -25,7 +25,6 @@
 // File: gb_layer_norm.cc
 
 #include <flex/flex.h>
-#include <flex/util.h>
 #include <flex/uninterpreted_func.h>
 
 namespace ilang {
@@ -176,18 +175,16 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
     // fixed all the parameters to 20 bit
     auto num_vector_20 =
         Concat(BvConst(0, 20 - num_vector.bit_width()), num_vector);
-    // auto timestep_size = num_vector_20 * GB_CORE_SCALAR;
-    // auto group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
+    auto timestep_size = num_vector_20 * GB_CORE_SCALAR;
+    auto group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
 
-    // auto cntr_ts_20 =
-    //     Concat(BvConst(0, 20 - counter_ts.bit_width()), counter_ts);
-    // auto group_index = cntr_ts_20 / BvConst(GB_CORE_SCALAR, 20);
-    // auto group_offset = URem(cntr_ts_20, BvConst(GB_CORE_SCALAR, 20));
+    auto cntr_ts_20 =
+        Concat(BvConst(0, 20 - counter_ts.bit_width()), counter_ts);
+    auto group_index = cntr_ts_20 / BvConst(GB_CORE_SCALAR, 20);
+    auto group_offset = URem(cntr_ts_20, BvConst(GB_CORE_SCALAR, 20));
 
-    // auto base_addr_offset =
-    //     group_index * group_size + group_offset * GB_CORE_SCALAR;
-    auto ts_idx_20 = Concat(BvConst(0, 20 - counter_ts.bit_width()), counter_ts);
-    auto base_addr_offset = GetGBLargeBaseAddr(ts_idx_20, num_vector_20);
+    auto base_addr_offset =
+        group_index * group_size + group_offset * GB_CORE_SCALAR;
 
     // update the base addr for the current timestep
     instr.SetUpdate(base_addr_ts, memory_min_addr_offset + base_addr_offset);
@@ -362,7 +359,10 @@ void AddChild_GB_LayerNorm_Child(Ila& m) {
                 m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_6))
          << 4) +
         counter_v_20 * GB_CORE_SCALAR;
-  
+    // auto base_addr_beta_tmp =
+    //       Concat(m.state(GB_CORE_MEM_MNGR_SMALL_CONFIG_REG_BASE_SMALL_6),
+    //       BvConst(0, 4)) + counter_v_20 * GB_CORE_SCALAR;
+
     auto counter_byte = child.state(GB_LAYER_NORM_CNTR_BYTE);
     auto base_addr_gamma =
         child.state(GB_LAYER_NORM_VECTOR_LEVEL_BASE_ADDR_GAMMA);

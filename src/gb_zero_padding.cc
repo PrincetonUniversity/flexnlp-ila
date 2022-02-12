@@ -25,7 +25,6 @@
 // File: gb_zero_padding.cc
 
 #include <flex/flex.h>
-#include <flex/util.h>
 
 namespace ilang {
 
@@ -119,23 +118,19 @@ void AddChild_ZeroPadding(Ila& m) {
                        BvConst(0, 4)))));
 
     auto num_vector_20 = Concat(BvConst(0, 12), num_vector);
-    // auto timestep_size = num_vector_20 * GB_CORE_SCALAR;
-    // auto group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
+    auto timestep_size = num_vector_20 * GB_CORE_SCALAR;
+    auto group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
 
-    // auto group_index = current_timestep / g_scalar;
-    // auto group_offset = URem(current_timestep, g_scalar);
+    auto group_index = current_timestep / g_scalar;
+    auto group_offset = URem(current_timestep, g_scalar);
 
-    // auto group_index_20 = Concat(BvConst(0, 4), group_index);
-    // auto group_offset_20 = Concat(BvConst(0, 4), group_offset);
+    auto group_index_20 = Concat(BvConst(0, 4), group_index);
+    auto group_offset_20 = Concat(BvConst(0, 4), group_offset);
 
-    // // udpate 05022020: The group offset should be multiplied by
-    // // gb_core_scalar!!!
-    // auto start_addr_offset =
-    //     group_index_20 * group_size + group_offset_20 * GB_CORE_SCALAR;
-    auto start_addr_offset = GetGBLargeBaseAddr(
-      Concat(BvConst(0, 4), current_timestep), num_vector_20
-    ) + memory_base_addr;
-
+    // udpate 05022020: The group offset should be multiplied by
+    // gb_core_scalar!!!
+    auto start_addr_offset =
+        group_index_20 * group_size + group_offset_20 * GB_CORE_SCALAR;
     auto next_state = BvConst(GB_ZERO_PADDING_CHILD_STATE_VECTOR,
                               GB_ZERO_PADDING_CHILD_STATE_BITWIDTH);
 

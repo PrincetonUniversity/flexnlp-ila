@@ -27,7 +27,7 @@
 #include <ilang/ilang++.h>
 #include <ilang/util/log.h>
 
-#include <flex/flex.h>
+#include <flex/pe_config.h>
 #include <flex/uninterpreted_func.h>
 #include <flex/util.h>
 

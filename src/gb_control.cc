@@ -25,7 +25,6 @@
 // File: gb_control.cc
 
 #include <flex/flex.h>
-#include <flex/util.h>
 
 namespace ilang {
 
@@ -247,6 +246,13 @@ void AddChild_GB_Control(Ila& m) {
     auto next_state = BvConst(GB_CONTROL_CHILD_STATE_SEND_PREP,
                               GB_CONTROL_CHILD_STATE_BITWIDTH);
 
+    // auto pe_0_is_valid = m.state(PEGetVarName(0,
+    // RNN_LAYER_SIZING_CONFIG_REG_IS_VALID)); auto pe_1_is_valid =
+    // m.state(PEGetVarName(1, RNN_LAYER_SIZING_CONFIG_REG_IS_VALID)); auto
+    // pe_2_is_valid = m.state(PEGetVarName(2,
+    // RNN_LAYER_SIZING_CONFIG_REG_IS_VALID)); auto pe_3_is_valid =
+    // m.state(PEGetVarName(3, RNN_LAYER_SIZING_CONFIG_REG_IS_VALID));
+
     // hard to implement the scheduler if less than 4 PEs are valid
     // TODO: implement the scheduler when less than 4 PEs are valid
     auto pe_valid_num = BvConst(0, PE_VALID_NUM_BITWIDTH);
@@ -419,6 +425,12 @@ void AddChild_GB_Control(Ila& m) {
 
     instr.SetDecode(child_valid & state_pe_start & pe_read_done);
 
+    // update;
+    // auto next_state = Ite(pe_read_done,
+    //                         BvConst(GB_CONTROL_CHILD_STATE_RECV_PREP,
+    //                         GB_CONTROL_CHILD_STATE_BITWIDTH),
+    //                         BvConst(GB_CONTROL_CHILD_STATE_PE_START,
+    //                         GB_CONTROL_CHILD_STATE_BITWIDTH));
     auto pe_start_next =
         Ite(pe_read_done,
             BvConst(GB_CONTROL_VALID, PE_START_SIGNAL_SHARED_BITWIDTH),
@@ -431,6 +443,9 @@ void AddChild_GB_Control(Ila& m) {
           m.state(PEGetVarName(i, ACT_START_SIGNAL)),
           BvConst(GB_CONTROL_VALID, PE_START_SIGNAL_SHARED_BITWIDTH));
     }
+
+    // auto next_state = BvConst(GB_CONTROL_CHILD_STATE_RECV_PREP,
+    // GB_CONTROL_CHILD_STATE_BITWIDTH); instr.SetUpdate(state, next_state);
 
     // 04182020 combine pe_start and recv_prep, avoid unnecessary parallel
     // instructions reset the vector counter
@@ -452,6 +467,40 @@ void AddChild_GB_Control(Ila& m) {
     instr.SetUpdate(cntr_vector, cntr_vector_tmp);
     instr.SetUpdate(timestep_base_addr, timestep_base_addr_tmp);
   }
+
+  // { // instruction 4 ---- recv prep, set the parameters for receiving data
+  //   auto instr = child.NewInstr("gb_control_child_recv_prep");
+  //   auto state_recv_prep = (state == GB_CONTROL_CHILD_STATE_RECV_PREP);
+  //   // auto pe_done_valid = (pe_done == GB_CONTROL_VALID);
+  //   auto data_valid = (data_in_valid_bit == GB_CONTROL_VALID);
+
+  //   instr.SetDecode(child_valid & state_recv_prep & data_valid);
+
+  //   // reset the vector counter
+  //   auto cntr_vector_tmp = BvConst(0, GB_CONTROL_CHILD_VECTOR_CNTR_BITWIDTH);
+
+  //   // calculate the base address for the current timestep in the large
+  //   buffer. (in memory_index_2) auto num_vector_20 = Concat(BvConst(0, 12),
+  //   num_vector_2); auto timestep_size = num_vector_20 * GB_CORE_SCALAR; auto
+  //   group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
+
+  //   auto group_index = timestep_index / g_scalar;
+  //   auto group_offset = URem(timestep_index, g_scalar);
+
+  //   auto group_index_20 = Concat(BvConst(0, 4), group_index);
+  //   auto group_offset_20 = Concat(BvConst(0, 4), group_offset);
+
+  //   auto timestep_base_addr_offset = group_index_20 * group_size +
+  //   group_offset_20; auto timestep_base_addr_tmp = memory_base_addr_2 +
+  //   timestep_base_addr_offset;
+
+  //   auto next_state = BvConst(GB_CONTROL_CHILD_STATE_RECV,
+  //   GB_CONTROL_CHILD_STATE_BITWIDTH);
+
+  //   instr.SetUpdate(state, next_state);
+  //   instr.SetUpdate(cntr_vector, cntr_vector_tmp);
+  //   instr.SetUpdate(timestep_base_addr, timestep_base_addr_tmp);
+  // }
 
   { // instruction 5 ---- receive data from PE
     auto instr = child.NewInstr("gb_control_child_recv");
@@ -574,8 +623,21 @@ void AddChild_GB_Control(Ila& m) {
         mode == 3, Store(data_14_write_small, addr_small_32 + 15, data_in_15),
         mem_small);
 
+#if 0
+    auto next_state = Ite(
+        pe_done == GB_CONTROL_VALID,
+        Ite(is_rnn == GB_CONTROL_VALID,
+            BvConst(GB_CONTROL_CHILD_STATE_SEND_BACK_PREP,
+                    GB_CONTROL_CHILD_STATE_BITWIDTH),
+            BvConst(GB_CONTROL_CHILD_STATE_NEXT,
+                    GB_CONTROL_CHILD_STATE_BITWIDTH)),
+        BvConst(GB_CONTROL_CHILD_STATE_RECV, GB_CONTROL_CHILD_STATE_BITWIDTH));
+#endif
+
     auto data_in_valid_tmp =
         BvConst(GB_CONTROL_INVALID, GB_CONTROL_DATA_IN_VALID_BITWIDTH);
+    // state updates
+    // instr.SetUpdate(state, next_state);
 
     instr.SetUpdate(mem_large, data_15_write_large);
     instr.SetUpdate(mem_small, data_15_write_small);
