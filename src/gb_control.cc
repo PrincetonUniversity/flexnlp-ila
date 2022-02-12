@@ -468,40 +468,6 @@ void AddChild_GB_Control(Ila& m) {
     instr.SetUpdate(timestep_base_addr, timestep_base_addr_tmp);
   }
 
-  // { // instruction 4 ---- recv prep, set the parameters for receiving data
-  //   auto instr = child.NewInstr("gb_control_child_recv_prep");
-  //   auto state_recv_prep = (state == GB_CONTROL_CHILD_STATE_RECV_PREP);
-  //   // auto pe_done_valid = (pe_done == GB_CONTROL_VALID);
-  //   auto data_valid = (data_in_valid_bit == GB_CONTROL_VALID);
-
-  //   instr.SetDecode(child_valid & state_recv_prep & data_valid);
-
-  //   // reset the vector counter
-  //   auto cntr_vector_tmp = BvConst(0, GB_CONTROL_CHILD_VECTOR_CNTR_BITWIDTH);
-
-  //   // calculate the base address for the current timestep in the large
-  //   buffer. (in memory_index_2) auto num_vector_20 = Concat(BvConst(0, 12),
-  //   num_vector_2); auto timestep_size = num_vector_20 * GB_CORE_SCALAR; auto
-  //   group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
-
-  //   auto group_index = timestep_index / g_scalar;
-  //   auto group_offset = URem(timestep_index, g_scalar);
-
-  //   auto group_index_20 = Concat(BvConst(0, 4), group_index);
-  //   auto group_offset_20 = Concat(BvConst(0, 4), group_offset);
-
-  //   auto timestep_base_addr_offset = group_index_20 * group_size +
-  //   group_offset_20; auto timestep_base_addr_tmp = memory_base_addr_2 +
-  //   timestep_base_addr_offset;
-
-  //   auto next_state = BvConst(GB_CONTROL_CHILD_STATE_RECV,
-  //   GB_CONTROL_CHILD_STATE_BITWIDTH);
-
-  //   instr.SetUpdate(state, next_state);
-  //   instr.SetUpdate(cntr_vector, cntr_vector_tmp);
-  //   instr.SetUpdate(timestep_base_addr, timestep_base_addr_tmp);
-  // }
-
   { // instruction 5 ---- receive data from PE
     auto instr = child.NewInstr("gb_control_child_recv");
     auto state_recv = (state == GB_CONTROL_CHILD_STATE_RECV);
