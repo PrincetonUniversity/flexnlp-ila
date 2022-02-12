@@ -42,13 +42,13 @@ void SetUpdateForConfigWr(Ila& m, InstrRef& instr, const ExprRef& next,
 ExprRef FetchClusterLUT_First(Ila& m, const int& pe_idx, const ExprRef& index);
 ExprRef FetchClusterLUT_Second(Ila& m, const int& pe_idx, const ExprRef& index);
 
+ExprRef GetGBLargeBaseAddr(const ExprRef& timestep_idx, const ExprRef& num_vector);
 // helper functions in PEActUnit
 ExprRef PEActInstrFetch(Ila& m, const int& pe_idx, const ExprRef& instr_cntr);
 
 // helper function in PEAttention
 ExprRef GBGetSmallBufBase(Ila& m, const ExprRef& mem_small_index);
 
-void PECoreRunMacOut(Ila& m, const int& pe_idx, const int& idx);
 
 } // namespace flex
 

@@ -27,9 +27,7 @@
 #include <ilang/ilang++.h>
 #include <ilang/util/log.h>
 
-#include <flex/pe_config.h>
-#include <flex/uninterpreted_func.h>
-#include <flex/util.h>
+#include <flex/flex.h>
 
 namespace ilang {
 

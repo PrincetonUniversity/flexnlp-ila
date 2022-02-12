@@ -36,6 +36,7 @@
 #include <flex/interface.h>
 #include <flex/pe_config.h>
 #include <flex/top_config.h>
+#include <flex/util.h>
 
 namespace ilang {
 
