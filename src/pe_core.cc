@@ -28,7 +28,6 @@
 
 #include <flex/flex.h>
 #include <flex/uninterpreted_func.h>
-#include <flex/util.h>
 
 namespace ilang {
 
@@ -619,6 +618,7 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
     }
     instr.SetUpdate(run_mac_flag,
                     BvConst(PE_CORE_INVALID, PE_CORE_CHILD_RUN_MAC_FLAG_BITWIDTH));
+}
 }
 
 } // namespace flex
