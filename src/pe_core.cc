@@ -133,40 +133,11 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
 
     // fetch the data from GB and store them into the input buffer
     auto mem = m.state(PEGetVarName(pe_idx, CORE_INPUT_BUFFER));
-
-    auto mem_next =
-        Store(mem, input_wr_addr + 0, m.state(GB_CONTROL_DATA_OUT_0));
-    mem_next =
-        Store(mem_next, input_wr_addr + 1, m.state(GB_CONTROL_DATA_OUT_1));
-    mem_next =
-        Store(mem_next, input_wr_addr + 2, m.state(GB_CONTROL_DATA_OUT_2));
-    mem_next =
-        Store(mem_next, input_wr_addr + 3, m.state(GB_CONTROL_DATA_OUT_3));
-    mem_next =
-        Store(mem_next, input_wr_addr + 4, m.state(GB_CONTROL_DATA_OUT_4));
-    mem_next =
-        Store(mem_next, input_wr_addr + 5, m.state(GB_CONTROL_DATA_OUT_5));
-    mem_next =
-        Store(mem_next, input_wr_addr + 6, m.state(GB_CONTROL_DATA_OUT_6));
-    mem_next =
-        Store(mem_next, input_wr_addr + 7, m.state(GB_CONTROL_DATA_OUT_7));
-    mem_next =
-        Store(mem_next, input_wr_addr + 8, m.state(GB_CONTROL_DATA_OUT_8));
-    mem_next =
-        Store(mem_next, input_wr_addr + 9, m.state(GB_CONTROL_DATA_OUT_9));
-    mem_next =
-        Store(mem_next, input_wr_addr + 10, m.state(GB_CONTROL_DATA_OUT_10));
-    mem_next =
-        Store(mem_next, input_wr_addr + 11, m.state(GB_CONTROL_DATA_OUT_11));
-    mem_next =
-        Store(mem_next, input_wr_addr + 12, m.state(GB_CONTROL_DATA_OUT_12));
-    mem_next =
-        Store(mem_next, input_wr_addr + 13, m.state(GB_CONTROL_DATA_OUT_13));
-    mem_next =
-        Store(mem_next, input_wr_addr + 14, m.state(GB_CONTROL_DATA_OUT_14));
-    mem_next =
-        Store(mem_next, input_wr_addr + 15, m.state(GB_CONTROL_DATA_OUT_15));
-
+    auto mem_next = mem;
+    for (auto i = 0; i < CORE_SCALAR; i++) {
+        mem_next = Store(mem_next, input_wr_addr+i, 
+                         m.state(PEGetGBDataInName(i, GB_CONTROL_DATA_OUT)));
+    }
     instr.SetUpdate(mem, mem_next);
 
     // update the control parameters
@@ -504,10 +475,7 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
       child_pe_core.NewChild(PEGetChildName(pe_idx, "CORE_RUN_MAC_CHILD"));
   auto run_mac_flag =
       child_pe_core.state(PEGetVarName(pe_idx, CORE_CHILD_RUN_MAC_FLAG));
-  auto run_mac_cntr = child_pe_core.state(PEGetVarName(
-      pe_idx, CORE_CHILD_RUN_MAC_CNTR)); // check cntr_bitwidth > 4 !!
-
-  auto child_valid = ((run_mac_flag == PE_CORE_VALID) & (run_mac_cntr < 16));
+  auto child_valid = (run_mac_flag == PE_CORE_VALID);
 
   child_run_mac.SetValid(child_valid);
 
@@ -535,20 +503,20 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
   auto input_buffer = m.state(PEGetVarName(pe_idx, CORE_INPUT_BUFFER));
 
   // declare child states
-  for (auto i = 0; i < 16; i++) {
-    // declare states for holding weight vector values
-    child_run_mac.NewBvState(
-        PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_WEIGHT_BYTE),
-        PE_CORE_RUN_MAC_CHILD_WEIGHT_BYTE_BITWIDTH);
-    // declare states for holding input vector values
+  for (auto i = 0; i < CORE_SCALAR; i++) {
+    // define input states
     child_run_mac.NewBvState(
         PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_INPUT_BYTE),
-        PE_CORE_RUN_MAC_CHILD_INPUT_BYTE_BITWIDTH);
+        PE_CORE_RUN_MAC_CHILD_INPUT_BYTE_BITWIDTH
+    );
+    for (auto j = 0; j < CORE_SCALAR; j++) {
+        // define the weight states (16x16)
+        child_run_mac.NewBvState(
+            PEGet2DRegName(pe_idx, i, j, CORE_RUN_MAC_CHILD_WEIGHT_BYTE),
+            PE_CORE_RUN_MAC_CHILD_WEIGHT_BYTE_BITWIDTH
+        );
+    }
   }
-
-  auto result_tmp = child_run_mac.NewBvState(
-      PEGetVarName(pe_idx, CORE_RUN_MAC_CHILD_RESULT_TEMP),
-      PE_CORE_RUN_MAC_CHILD_RESULT_TEMP_BITWIDTH);
 
   // update 02062020: seperate the cluster and non-clustered mode data fetch
   // into two different instructions
@@ -558,33 +526,25 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
     auto state_fnc = (state == PE_CORE_RUN_MAC_STATE_FETCH_NON_CLUSTER);
 
     instr.SetDecode(child_valid & state_fnc & !is_cluster);
-
-    // fetch the non-clustered weigth values.
-    // update: 05012020: extend the run_mac_cntr bitwidth to hold values larger
-    // than 31.. Always keep in mind that the result of muliplication is bounded
-    // by the parameter bitwidth!!!
-    auto run_mac_cntr_32 =
-        Concat(BvConst(0, weight_base_b.bit_width() - run_mac_cntr.bit_width()),
-               run_mac_cntr);
-
-    for (auto i = 0; i < 16; i++) {
-      // weight data
-      auto addr_offset = run_mac_cntr_32 * CORE_SCALAR + i;
-      auto addr = weight_base_b + addr_offset;
-      // auto addr = weight_base_b +
-      //       Concat(BvConst(0, weight_base_b.bit_width() -
-      //       addr_offset.bit_width()), addr_offset);
-      auto data = Load(weight_buffer, addr);
-      instr.SetUpdate(child_run_mac.state(PEGetVarNameVector(
-                          pe_idx, i, CORE_RUN_MAC_CHILD_WEIGHT_BYTE)),
-                      data);
-      // input data
-      auto input_addr_offset = i;
-      auto input_addr = input_base_b + i;
-
-      instr.SetUpdate(child_run_mac.state(PEGetVarNameVector(
-                          pe_idx, i, CORE_RUN_MAC_CHILD_INPUT_BYTE)),
-                      Load(input_buffer, input_addr));
+    
+    // get the input vector data
+    for (auto i = 0; i < CORE_SCALAR; i++) {
+        // get input vector data
+        auto input_addr = input_base_b + i;
+        instr.SetUpdate(
+            child_run_mac.state(
+                PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_INPUT_BYTE)
+            ), Load(input_buffer, input_addr));
+    }
+    // get weight vector data
+    for (auto i = 0; i < CORE_SCALAR; i++) { // row_id
+        for (auto j = 0; j < CORE_SCALAR; j++) { // col_id
+            auto wgt_addr = weight_base_b + i * CORE_SCALAR + j;
+            instr.SetUpdate(
+                child_run_mac.state(
+                    PEGet2DRegName(pe_idx, i, j, CORE_RUN_MAC_CHILD_WEIGHT_BYTE)
+                ), Load(weight_buffer, wgt_addr));
+        }
     }
 
     auto next_state = BvConst(PE_CORE_RUN_MAC_STATE_MUL,
@@ -598,53 +558,39 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
     auto state_fc = (state == PE_CORE_RUN_MAC_STATE_FETCH_CLUSTER);
 
     instr.SetDecode(child_valid & state_fc & is_cluster);
-
-    // fetch the non-clustered weigth values.
-    // update: 05012020: extend the run_mac_cntr bitwidth to hold values larger
-    // than 31.. Always keep in mind that the result of muliplication is bounded
-    // by the parameter bitwidth!!!
-    auto run_mac_cntr_32 =
-        Concat(BvConst(0, weight_base_b.bit_width() - run_mac_cntr.bit_width()),
-               run_mac_cntr);
-
-    // fetch the clustered weight values
-    for (auto i = 0; i < 16; i++) {
-      // Update 04302020, the clustering fetching index is different: it will
-      // get the lower half of all the weight in the weight matrix than get the
-      // upper half.
-      auto addr_offset = run_mac_cntr_32 * (CORE_SCALAR / 2) + i / 2;
-      auto addr = weight_base_b + addr_offset;
-      // auto addr = weight_base_b +
-      //       Concat(BvConst(0, weight_base_b.bit_width() -
-      //       addr_offset.bit_width()), addr_offset);
-      auto data = Load(weight_buffer, addr);
-      // get the index after splitting the data for clustered mode.
-      auto ind =
-          Ite(BoolConst(i % 2 == 0), Extract(data, 3, 0), Extract(data, 7, 4));
-      // auto ind = Ite(URem(run_mac_cntr, BvConst(2, run_mac_cntr.bit_width()))
-      // == 0,
-      //                Extract(data, 3, 0), Extract(data, 7, 4));
-
-      // get the cluster lut result
-      auto mgnr_cntr =
-          child_pe_core.state(PEGetVarName(pe_idx, CORE_MNGR_CNTR));
-      // FetchClusterLut is defined in utils.cc
-      auto result = Ite(mgnr_cntr == 0, FetchClusterLUT_First(m, pe_idx, ind),
-                        FetchClusterLUT_Second(m, pe_idx, ind));
-
-      instr.SetUpdate(child_run_mac.state(PEGetVarNameVector(
-                          pe_idx, i, CORE_RUN_MAC_CHILD_WEIGHT_BYTE)),
-                      result);
-
-      // load the input data
-      auto input_addr_offset = i;
-      auto input_addr = input_base_b + i;
-
-      instr.SetUpdate(child_run_mac.state(PEGetVarNameVector(
-                          pe_idx, i, CORE_RUN_MAC_CHILD_INPUT_BYTE)),
-                      Load(input_buffer, input_addr));
+    
+    // load the input data
+    for (auto i = 0; i < CORE_SCALAR; i++) {
+        instr.SetUpdate(child_run_mac.state(
+            PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_INPUT_BYTE)),
+            Load(input_buffer, input_base_b + i));
     }
-
+    // load the clustered weight values
+    for (auto i = 0; i < CORE_SCALAR; i++) { // row_id
+        for (auto j = 0; j < CORE_SCALAR; j+=2) { // col_id
+            auto addr = weight_base_b + i * (CORE_SCALAR / 2) + j / 2;
+            auto data = Load(weight_buffer, addr);
+            // extract the cluster table index from the data
+            auto idx_0 = Extract(data, 3, 0);
+            auto idx_1 = Extract(data, 7, 4);
+            auto mngr_cntr =
+                    child_pe_core.state(PEGetVarName(pe_idx, CORE_MNGR_CNTR));
+            auto wgt_data_0 = Ite(mngr_cntr == 0,
+                                  FetchClusterLUT_First(m, pe_idx, idx_0),
+                                  FetchClusterLUT_Second(m, pe_idx, idx_0));
+            auto wgt_data_1 = Ite(mngr_cntr == 0,
+                                  FetchClusterLUT_First(m, pe_idx, idx_1),
+                                  FetchClusterLUT_Second(m, pe_idx, idx_1));
+            instr.SetUpdate(
+                child_run_mac.state(
+                    PEGet2DRegName(pe_idx, i, j, CORE_RUN_MAC_CHILD_WEIGHT_BYTE)
+                ), wgt_data_0);
+            instr.SetUpdate(
+                child_run_mac.state(
+                    PEGet2DRegName(pe_idx, i, j+1, CORE_RUN_MAC_CHILD_WEIGHT_BYTE)
+                ), wgt_data_1);
+        }
+    }
     auto next_state = BvConst(PE_CORE_RUN_MAC_STATE_MUL,
                               PE_CORE_RUN_MAC_CHILD_STATE_BITWIDTH);
     instr.SetUpdate(state, next_state);
@@ -657,32 +603,22 @@ void AddChild_PECoreRunMac(Ila& m, const int& pe_idx) {
 
     instr.SetDecode(child_valid & state_mul);
 
-    auto accum = BvConst(0, PE_CORE_ACCUM_VECTOR_BITWIDTH);
-
-    // do adaptive flow multiplication
-    for (auto i = 0; i < CORE_SCALAR; i++) {
-      auto weight_byte = child_run_mac.state(
-          PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_WEIGHT_BYTE));
-      auto input_byte = child_run_mac.state(
-          PEGetVarNameVector(pe_idx, i, CORE_RUN_MAC_CHILD_INPUT_BYTE));
-
-      // Need two uninterpreted functions here, one for product sum, one for
-      // signed add
-      auto result = ProductSum(weight_byte, input_byte);
-      accum = AccumAdd(accum, result);
+    for (auto i = 0; i < CORE_SCALAR; i++) { // row_id
+        auto p_accum = BvConst(0, PE_CORE_ACCUM_VECTOR_BITWIDTH); // partial_accum
+        for (auto j = 0; j < CORE_SCALAR; j++) {
+            auto wgt_byte = child_run_mac.state(
+                PEGet2DRegName(pe_idx, i, j, CORE_RUN_MAC_CHILD_WEIGHT_BYTE));
+            auto inp_byte = child_run_mac.state(
+                PEGetVarNameVector(pe_idx, j, CORE_RUN_MAC_CHILD_INPUT_BYTE));
+            auto p_sum = ProductSum(wgt_byte, inp_byte);
+            p_accum = AccumAdd(p_accum, p_sum);
+        }
+        auto accum_state = child_pe_core.state(
+            PEGetVarNameVector(pe_idx, i, CORE_ACCUM_VECTOR));
+        instr.SetUpdate(accum_state, AccumAdd2(accum_state, p_accum));
     }
-
-    instr.SetUpdate(result_tmp, accum);
-
-    auto next_state = BvConst(PE_CORE_RUN_MAC_STATE_OUT,
-                              PE_CORE_RUN_MAC_CHILD_STATE_BITWIDTH);
-    // update the control parameters
-    instr.SetUpdate(state, next_state);
-  }
-
-  for (auto i = 0; i < CORE_SCALAR; i++) {
-    PECoreRunMacOut(m, pe_idx, i);
-  }
+    instr.SetUpdate(run_mac_flag,
+                    BvConst(PE_CORE_INVALID, PE_CORE_CHILD_RUN_MAC_FLAG_BITWIDTH));
 }
 
 } // namespace flex

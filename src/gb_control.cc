@@ -299,19 +299,6 @@ void AddChild_GB_Control(Ila& m) {
 
     // calculating the starting address of the target timestep
     auto num_vector_20 = Concat(BvConst(0, 12), num_vector_1);
-    // auto timestep_size = num_vector_20 * GB_CORE_SCALAR;
-    // auto group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
-
-    // auto group_index = timestep_index_tmp / g_scalar;
-    // auto group_offset = URem(timestep_index_tmp, g_scalar);
-
-    // auto group_index_20 = Concat(BvConst(0, 4), group_index);
-    // auto group_offset_20 = Concat(BvConst(0, 4), group_offset);
-
-    // // update 05022020: The group_offset should multiply gb_scalar!!!!
-    // // bitwidth is enough: 20 bit is enought for 1MB large buffer
-    // auto timestep_base_addr_offset =
-    //     group_index_20 * group_size + group_offset_20 * GB_CORE_SCALAR;
     auto timestep_base_addr_offset = 
         GetGBLargeBaseAddr(
             Concat(BvConst(0,4), timestep_index_tmp), num_vector_20
@@ -452,18 +439,6 @@ void AddChild_GB_Control(Ila& m) {
     // calculate the base address for the current timestep in the large buffer.
     // (in memory_index_2)
     auto num_vector_20 = Concat(BvConst(0, 12), num_vector_2);
-    // auto timestep_size = num_vector_20 * GB_CORE_SCALAR;
-    // auto group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
-
-    // auto group_index = timestep_index / g_scalar;
-    // auto group_offset = URem(timestep_index, g_scalar);
-
-    // auto group_index_20 = Concat(BvConst(0, 4), group_index);
-    // auto group_offset_20 = Concat(BvConst(0, 4), group_offset);
-
-    // // update: 05022020, the group offset should be multiplied by gb_core_scalar
-    // auto timestep_base_addr_offset =
-    //     group_index_20 * group_size + group_offset_20 * GB_CORE_SCALAR;
     auto timestep_base_addr_offset = GetGBLargeBaseAddr(
         Concat(BvConst(0, 4), timestep_index), num_vector_20
     );
@@ -646,19 +621,6 @@ void AddChild_GB_Control(Ila& m) {
     // calculate the base address for the current timestep in the large buffer.
     // (in memory_index_2)
     auto num_vector_20 = Concat(BvConst(0, 12), num_vector_2);
-    // auto timestep_size = num_vector_20 * GB_CORE_SCALAR;
-    // auto group_size = timestep_size * GB_CORE_LARGE_NUM_BANKS;
-
-    // auto group_index = timestep_index / g_scalar;
-    // auto group_offset = URem(timestep_index, g_scalar);
-
-    // auto group_index_20 = Concat(BvConst(0, 4), group_index);
-    // auto group_offset_20 = Concat(BvConst(0, 4), group_offset);
-
-    // // update 05022020: The group_offset should be multiplied by
-    // // gb_core_scalar!!
-    // auto timestep_base_addr_offset =
-    //     group_index_20 * group_size + group_offset_20 * GB_CORE_SCALAR;
     auto timestep_base_addr_offset = GetGBLargeBaseAddr(
         Concat(BvConst(0, 4), timestep_index), num_vector_20
     );

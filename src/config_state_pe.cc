@@ -26,7 +26,7 @@
 
 #include <ilang/ilang++.h>
 
-#include <flex/pe_config.h>
+#include <flex/flex.h>
 
 namespace ilang {
 
@@ -163,6 +163,11 @@ void DefinePEConfigState(Ila& m, const int& pe_idx) {
 
   m.NewBvState(PEGetVarName(pe_idx, ACT_VECTOR_16_31_CONFIG_REG_INST15),
                ACT_VECTOR_16_31_CONFIG_REG_INST15_WIDTH);
+  
+  auto help_cfg_mem = 
+    m.NewMemState(PEGetVarName(pe_idx, ACT_VECTOR_STATE_MEM),
+                  TOP_ADDR_IN_WIDTH, TOP_DATA_IN_WIDTH);
+  help_cfg_mem.SetEntryNum(2*CORE_SCALAR);
 
   // Core cluster table first
   m.NewBvState(PEGetVarName(pe_idx, CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY0),
@@ -212,6 +217,12 @@ void DefinePEConfigState(Ila& m, const int& pe_idx) {
 
   m.NewBvState(PEGetVarName(pe_idx, CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY15),
                CLUSTER_TABLE_FIRST_CONFIG_REG_ENTRY15_WIDTH);
+  // help mem state
+  auto help_mem_ct_0 = 
+    m.NewMemState(PEGetVarName(pe_idx, CLUSTER_TABLE_0_STATE_MEM),
+                TOP_ADDR_IN_WIDTH, TOP_DATA_IN_WIDTH);
+  help_mem_ct_0.SetEntryNum(CORE_SCALAR);
+
 
   //  Core cluster table second
   m.NewBvState(PEGetVarName(pe_idx, CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY0),
@@ -261,6 +272,11 @@ void DefinePEConfigState(Ila& m, const int& pe_idx) {
 
   m.NewBvState(PEGetVarName(pe_idx, CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY15),
                CLUSTER_TABLE_SECOND_CONFIG_REG_ENTRY15_WIDTH);
+  // help mem state
+  auto help_mem_ct_1 = 
+    m.NewMemState(PEGetVarName(pe_idx, CLUSTER_TABLE_1_STATE_MEM),
+                TOP_ADDR_IN_WIDTH, TOP_DATA_IN_WIDTH);
+  help_mem_ct_1.SetEntryNum(CORE_SCALAR);
 
   // Core memory manager first
   m.NewBvState(PEGetVarName(pe_idx, MEM_MNGR_FIRST_CONFIG_REG_ZERO_ACTIVE),

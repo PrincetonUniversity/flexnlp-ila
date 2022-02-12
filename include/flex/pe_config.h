@@ -57,9 +57,9 @@ inline std::string PEGetChildName(const int& idx,
 
 inline std::string PEGetVarNameVector(const int& pe_idx, const int& v_idx,
                                       const std::string& var_name) {
-  ILA_ASSERT(pe_idx >= 0 && pe_idx < 4) << "Invalid PE index" << pe_idx;
+  ILA_ASSERT(pe_idx >= 0 && pe_idx < 4) << "Invalid PE index: " << pe_idx;
   ILA_ASSERT(v_idx >= 0 && v_idx < CORE_SCALAR)
-      << "Invalid PE vector index" << v_idx;
+      << "Invalid PE vector index: " << v_idx;
   auto prefix = std::to_string(pe_idx);
   auto suffix = std::to_string(v_idx);
   return "PE" + prefix + "_" + var_name + "_" + suffix;
@@ -70,6 +70,18 @@ inline std::string PEGetActRegName(const int& pe_idx, const int& reg_idx,
                                    const std::string& var_name) {
   return PEGetVarNameVector(pe_idx, reg_idx, var_name) + "_" +
          std::to_string(v_idx);
+}
+
+inline std::string PEGet2DRegName(const int& pe_idx, const int& row_idx,
+                                  const int& col_idx, const std::string& var_name) {
+  ILA_ASSERT(pe_idx >= 0 && pe_idx < 4) << "Invalid PE index: " << pe_idx;
+  ILA_ASSERT(row_idx >= 0 && row_idx < CORE_SCALAR)
+    << "Invalid row_idx: " << row_idx;
+  ILA_ASSERT(col_idx >= 0 && col_idx < CORE_SCALAR)
+    << "Invalid col_idx: " << col_idx;
+  
+  return ("PE" + std::to_string(pe_idx) + "_" + var_name + "_" + 
+          std::to_string(row_idx) + "_" + std::to_string(col_idx));
 }
 
 inline std::string PEGetGBDataInName(const int& reg_idx,
@@ -89,6 +101,10 @@ inline std::string PEGetClusterData(const int& pe_idx, const int& byte_idx,
   auto suffix = std::to_string(byte_idx);
   return "PE" + prefix + "_" + var_name + suffix;
 }
+
+#define CLUSTER_TABLE_0_STATE_MEM "cluster_table_0_state_mem"
+#define CLUSTER_TABLE_1_STATE_MEM "cluster_table_1_state_mem"
+#define ACT_VECTOR_STATE_MEM "act_vector_state_mem"
 
 } // namespace flex
 
