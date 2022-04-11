@@ -73,11 +73,15 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
                              PE_ACT_REG_IDX_BITWIDTH);
   auto op = child.NewBvState(PEGetVarName(pe_idx, ACT_OP), PE_ACT_OP_BITWIDTH);
 
-  // define the register array as memory here
-  for (auto i = 0; i < PE_ACT_REGS_NUM; i++) {
-    child.NewMemState(PEGetVarNameVector(pe_idx, i, ACT_REGS),
-                      PE_ACT_REGS_ADDR_WIDTH, PE_CORE_ACT_VECTOR_BITWIDTH);
-  }
+  // // define the register array as memory here
+  // for (auto i = 0; i < PE_ACT_REGS_NUM; i++) {
+  //   child.NewMemState(PEGetVarNameVector(pe_idx, i, ACT_REGS),
+  //                     PE_ACT_REGS_ADDR_WIDTH, PE_CORE_ACT_VECTOR_BITWIDTH);
+  // }
+
+  // define the 4 register arrays as 1 big memory
+  child.NewMemState(PEGetVarName(pe_idx, ACT_REGS),
+                    PE_ACT_REGS_ADDR_WIDTH, PE_CORE_ACT_VECTOR_BITWIDTH);
 
   // define the temp register array for holding the data to be stored in to the
   // data
@@ -114,19 +118,29 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
     instr.SetUpdate(instr_cntr, BvConst(0, PE_ACT_INSTR_COUNTER_BITWIDTH));
     instr.SetUpdate(output_cntr, BvConst(0, PE_ACT_OUTPUT_COUNTER_BITWIDTH));
 
-    // // reset the act vector register
+    // // // reset the act vector register
+    // // reset the act vector memory
+    // for (auto i = 0; i < PE_ACT_REGS_NUM; i++) {
+    //   auto reg = child.state(PEGetVarNameVector(pe_idx, i, ACT_REGS));
+    //   auto reg_next = reg;
+    //   for (auto j = 0; j < ACT_SCALAR; j++) {
+    //     auto zero = BvConst(0, PE_CORE_ACT_VECTOR_BITWIDTH);
+    //     auto addr = BvConst(j, PE_ACT_REGS_ADDR_WIDTH) +
+    //                 BvConst(0, PE_ACT_REGS_ADDR_WIDTH);
+    //     reg_next = Store(reg_next, addr, zero + zero);
+    //   }
+    //   instr.SetUpdate(reg, reg_next);
+    // }
+
     // reset the act vector memory
-    for (auto i = 0; i < PE_ACT_REGS_NUM; i++) {
-      auto reg = child.state(PEGetVarNameVector(pe_idx, i, ACT_REGS));
-      auto reg_next = reg;
-      for (auto j = 0; j < ACT_SCALAR; j++) {
-        auto zero = BvConst(0, PE_CORE_ACT_VECTOR_BITWIDTH);
-        auto addr = BvConst(j, PE_ACT_REGS_ADDR_WIDTH) +
-                    BvConst(0, PE_ACT_REGS_ADDR_WIDTH);
-        reg_next = Store(reg_next, addr, zero + zero);
-      }
-      instr.SetUpdate(reg, reg_next);
+    auto act_reg_mem = child.state(PEGetVarName(pe_idx, ACT_REGS));
+    auto act_reg_mem_next = act_reg_mem;
+    for (auto i = 0; i < PE_ACT_REGS_NUM * ACT_SCALAR; i++) {
+      auto addr = BvConst(i, PE_ACT_REGS_ADDR_WIDTH);
+      auto data = BvConst(0, PE_CORE_ACT_VECTOR_BITWIDTH);
+      act_reg_mem_next = Store(act_reg_mem_next, addr, data);
     }
+    instr.SetUpdate(act_reg_mem, act_reg_mem_next);
 
     // set the FSM state to fetch
     instr.SetUpdate(state, BvConst(PE_ACT_STATE_FETCH, PE_ACT_STATE_BITWIDTH));
@@ -591,30 +605,47 @@ void AddChildPEAct(Ila& m, const int& pe_idx, const uint64_t& base) {
 
     instr.SetUpdate(state, BvConst(PE_ACT_STATE_INCR, PE_ACT_STATE_BITWIDTH));
 
-    for (auto i = 0; i < PE_ACT_REGS_NUM; i++) {
-      auto reg = child.state(PEGetVarNameVector(pe_idx, i, ACT_REGS));
-      auto reg_next = reg;
-      for (auto j = 0; j < ACT_SCALAR; j++) {
-        auto data = child.state(PEGetVarNameVector(pe_idx, j, ACT_REG_TEMP));
-        auto addr = BvConst(j, PE_ACT_REGS_ADDR_WIDTH) +
-                    BvConst(0, PE_ACT_REGS_ADDR_WIDTH);
+    // for (auto i = 0; i < PE_ACT_REGS_NUM; i++) {
+    //   auto reg = child.state(PEGetVarNameVector(pe_idx, i, ACT_REGS));
+    //   auto reg_next = reg;
+    //   for (auto j = 0; j < ACT_SCALAR; j++) {
+    //     auto data = child.state(PEGetVarNameVector(pe_idx, j, ACT_REG_TEMP));
+    //     auto addr = BvConst(j, PE_ACT_REGS_ADDR_WIDTH) +
+    //                 BvConst(0, PE_ACT_REGS_ADDR_WIDTH);
 
-        reg_next = Ite(a2 == i, Store(reg_next, addr, data), reg_next);
-      }
-      instr.SetUpdate(reg, reg_next);
+    //     reg_next = Ite(a2 == i, Store(reg_next, addr, data), reg_next);
+    //   }
+    //   instr.SetUpdate(reg, reg_next);
+    // }
+    auto reg_mem = child.state(PEGetVarName(pe_idx, ACT_REGS));
+    auto reg_mem_next = reg_mem;
+    for (auto i = 0; i < ACT_SCALAR; i++) {
+      auto data = child.state(PEGetVarNameVector(pe_idx, i, ACT_REG_TEMP));
+      auto addr = Concat(
+                    BvConst(0, PE_ACT_REGS_ADDR_WIDTH - a2.bit_width()), a2
+                  ) * ACT_SCALAR + i;
+      reg_mem_next = Store(reg_mem_next, addr, data);
     }
+    instr.SetUpdate(reg_mem, reg_mem_next);
   }
 }
 
 /****** helper function for PE Act child instructions **********/
 ExprRef PEActRegLoad_v(Ila& child, const int& pe_idx, const ExprRef& reg_idx,
-                       const ExprRef& addr) {
-  auto result = BvConst(0, PE_CORE_ACT_VECTOR_BITWIDTH);
-  for (auto i = 0; i < PE_ACT_REGS_NUM; i++) {
-    auto reg = child.state(PEGetVarNameVector(pe_idx, i, ACT_REGS));
-    result = Ite(reg_idx == i, Load(reg, addr), result);
-  }
-  return result;
+                       const ExprRef& act_idx) {
+  // auto result = BvConst(0, PE_CORE_ACT_VECTOR_BITWIDTH);
+  // for (auto i = 0; i < PE_ACT_REGS_NUM; i++) {
+  //   auto reg = child.state(PEGetVarNameVector(pe_idx, i, ACT_REGS));
+  //   result = Ite(reg_idx == i, Load(reg, addr), result);
+  // }
+  // return result;
+
+  // load the value from the act reg memory
+  auto addr = Concat(
+                BvConst(0, PE_ACT_REGS_ADDR_WIDTH - reg_idx.bit_width()), reg_idx
+              ) * ACT_SCALAR + act_idx;
+  auto act_reg_mem = child.state(PEGetVarName(pe_idx, ACT_REGS));
+  return Load(act_reg_mem, addr);
 }
 
 } // namespace flex

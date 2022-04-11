@@ -236,7 +236,7 @@ namespace flex {
 
 // PE Act Register
 #define PE_ACT_REGS_NUM 4
-#define PE_ACT_REGS_ADDR_WIDTH 4 // 16 entries per vector
+#define PE_ACT_REGS_ADDR_WIDTH 6 // 16 entries per vector, in total 4 x 16 = 64 entries needed
 #define ACT_REGS "act_regs"
 
 // PE Act control flag
