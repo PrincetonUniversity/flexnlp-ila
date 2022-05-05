@@ -331,7 +331,7 @@ namespace flex {
 #define PE_CORE_ACCUM_VECTOR_LANES CORE_SCALAR
 
 #define CORE_ACT_VECTOR_REG "core_act_vector_reg"
-#define PE_CORE_ACT_VECTOR_REG_BITWIDTH 32
+#define PE_CORE_ACT_VECTOR_REG_BITWIDTH 20
 #define PE_CORE_ACT_VECTOR_REG_LANES CORE_SCALAR
 
 // core input counter

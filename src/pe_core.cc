@@ -227,7 +227,7 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     // and instr 4 shouldn't run
     instr.SetUpdate(run_mac_flag,
                     BvConst(PE_CORE_INVALID,
-                            PE_CORE_CHILD_RUN_MAC_INPUT_BASE_VECTOR_BITWIDTH));
+                            PE_CORE_CHILD_RUN_MAC_FLAG_BITWIDTH));
   }
 
   { // instruction 4 ---- MAC state
@@ -437,8 +437,8 @@ void AddChild_PECore(Ila& m, const int& pe_idx, const uint64_t& base) {
     // use the is_start_reg to end the run mac when there is no new pe_start
     // signal pushed into the channel
     auto is_start_reg_next =
-        Ite(is_output_end, BvConst(PE_CORE_INVALID, PE_CORE_STATE_BITWIDTH),
-            BvConst(PE_CORE_VALID, PE_CORE_STATE_BITWIDTH));
+        Ite(is_output_end, BvConst(PE_CORE_INVALID, PE_CORE_IS_START_BITWIDTH),
+            BvConst(PE_CORE_VALID, PE_CORE_IS_START_BITWIDTH));
 
     instr.SetUpdate(is_start_reg, is_start_reg_next);
 
