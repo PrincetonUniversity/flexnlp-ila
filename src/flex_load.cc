@@ -148,10 +148,10 @@ void DefinePEActLoad(Ila& m, const int& pe_idx, const uint64_t& base) {
   {
     auto instr = m.NewInstr(PEGetInstrName(pe_idx, "LOAD_ACT_BUFFER"));
     auto act_buff_addr_base = TOP_ADDR_BASE + 
-                              pe_idx * TOP_PARTITION_OFFSET + 
+                              (pe_idx + 1) * TOP_PARTITION_OFFSET + 
                               TOP_PE_ACT_BUF_BASE;
     auto act_buff_addr_bound = TOP_ADDR_BASE + 
-                               pe_idx * TOP_PARTITION_OFFSET + 
+                               (pe_idx + 1) * TOP_PARTITION_OFFSET + 
                                TOP_PE_ACT_BUF_BOUND;
     auto is_valid_addr = (m.input(TOP_ADDR_IN) >= act_buff_addr_base) & 
                           (m.input(TOP_ADDR_IN) <= act_buff_addr_bound);
