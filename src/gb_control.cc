@@ -319,7 +319,7 @@ void AddChild_GB_Control(Ila& m) {
     instr.SetUpdate(state, next_state);
     instr.SetUpdate(timestep_index, timestep_index_tmp);
     instr.SetUpdate(cntr_vector, cntr_vector_tmp);
-    instr.SetUpdate(timestep_base_addr, timestep_base_addr_offset);
+    instr.SetUpdate(timestep_base_addr, timestep_base_addr_tmp);
   }
 
   { // instruction 2 ---- sending the current vector into the data out
